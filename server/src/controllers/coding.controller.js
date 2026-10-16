@@ -1,6 +1,7 @@
 import { codingService } from '../services/coding.service.js';
 import { executionService } from '../services/execution.service.js';
 import { submissionService } from '../services/submission.service.js';
+import { replayService } from '../services/replay.service.js';
 
 
 export const codingController = {
@@ -223,6 +224,55 @@ export const codingController = {
       next(error);
     }
   },
+
+  /**
+   * Batch record editor events for session replay
+   */
+  async recordEvents(req, res, next) {
+    try {
+      const { sessionId } = req.params;
+      const { events, isFinal } = req.body || {};
+      const user = req.user;
+
+      const result = await replayService.recordEvents({
+        sessionId,
+        studentId: user.id,
+        events,
+        isFinal,
+      });
+
+      res.status(201).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get chronological session replay timeline
+   */
+  async getReplayTimeline(req, res, next) {
+    try {
+      const { sessionId } = req.params;
+      const user = req.user;
+
+      const result = await replayService.getReplayTimeline(sessionId, user);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+
 
 

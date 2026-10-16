@@ -324,13 +324,13 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Users see only permitted results for their own submissions; hidden tests remain protected.
 
 ### TASK-028 — Editor event recording and replay
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-025, TASK-027
-- [ ] Define versioned event types and schema.
-- [ ] Record relevant actions/timestamps while minimizing collected data.
-- [ ] Batch/throttle event uploads.
-- [ ] Validate ownership, ordering, timestamps, and payload size.
-- [ ] Build authorized replay timeline.
-- [ ] Define retention rules.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-025, TASK-027
+- [x] Define versioned event types and schema.
+- [x] Record relevant actions/timestamps while minimizing collected data.
+- [x] Batch/throttle event uploads.
+- [x] Validate ownership, ordering, timestamps, and payload size.
+- [x] Build authorized replay timeline.
+- [x] Define retention rules.
 
 **Acceptance:** Replay data is access-controlled and treated as context, not conclusive proof of misconduct.
 

@@ -64,6 +64,33 @@ router.post(
   codingController.runSampleTests
 );
 
+const recordEventsSchema = {
+  body: z.object({
+    events: z
+      .array(
+        z.object({
+          sequenceNumber: z.number().int().min(0),
+          eventType: z.enum([
+            'document_change',
+            'paste',
+            'run',
+            'submit',
+            'editor_focus',
+            'editor_blur',
+            'visibility_change',
+            'language_change',
+            'snapshot',
+          ]),
+          occurredAt: z.string(),
+          payload: z.record(z.any()).optional(),
+          clientEventId: z.string().optional(),
+        })
+      )
+      .min(1, 'At least one event required'),
+    isFinal: z.boolean().optional(),
+  }),
+};
+
 // Code Submissions & Execution Jobs (API_SPEC Section 5.9)
 router.post(
   '/coding-sessions/:sessionId/submissions',
@@ -78,6 +105,17 @@ router.get('/submissions/:submissionId/results', authenticate, codingController.
 
 router.get('/execution-jobs/:jobId', authenticate, codingController.getExecutionJob);
 
+// Editor Event Recording & Session Replay (API_SPEC Section 5.9 & TASK-028)
+router.post(
+  '/coding-sessions/:sessionId/events',
+  authenticate,
+  validateRequest(recordEventsSchema),
+  codingController.recordEvents
+);
+
+router.get('/coding-sessions/:sessionId/replay', authenticate, codingController.getReplayTimeline);
+
 export default router;
+
 
 
