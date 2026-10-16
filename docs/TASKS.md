@@ -240,12 +240,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Long jobs do not block ordinary API requests; retries do not duplicate results.
 
 ### TASK-020 — Assessment attempt lifecycle
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-018
-- [ ] Implement start, resume if allowed, answer save, submit, and finalize.
-- [ ] Enforce ownership, timing, and attempt limits server-side.
-- [ ] Make submission/finalization idempotent.
-- [ ] Record required attempt evidence.
-- [ ] Handle interruptions without silently losing saved answers.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-018
+- [x] Implement start, resume if allowed, answer save, submit, and finalize.
+- [x] Enforce ownership, timing, and attempt limits server-side.
+- [x] Make submission/finalization idempotent.
+- [x] Record required attempt evidence.
+- [x] Handle interruptions without silently losing saved answers.
 
 **Acceptance:** Learners cannot alter others' attempts; repeated submissions do not double-grade.
 
