@@ -431,11 +431,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Failures can be diagnosed without logging secrets or full sensitive learner content.
 
 ### TASK-039 — Staging and production deployment
-**Status:** TODO · **Priority:** P1 before release · **Depends on:** TASK-004, TASK-006, TASK-036, TASK-038
-- [ ] Configure environment-specific credentials.
-- [ ] Apply migrations in documented order.
-- [ ] Configure CORS, auth redirects, storage policies, and integrations.
-- [ ] Verify rollback/recovery and post-deploy smoke tests.
+**Status:** DONE · **Priority:** P1 before release · **Depends on:** TASK-004, TASK-006, TASK-036, TASK-038
+- [x] Configure environment-specific credentials.
+- [x] Apply migrations in documented order.
+- [x] Configure CORS, auth redirects, storage policies, and integrations.
+- [x] Verify rollback/recovery and post-deploy smoke tests.
 
 **Acceptance:** Production secrets are separate from development; deployment can be verified and rolled back.
 
