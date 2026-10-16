@@ -281,12 +281,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Values remain in bounds and are reproducible for the same evidence/model version.
 
 ### TASK-024 — Personalized recommendations
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-023, TASK-014, TASK-018
-- [ ] Filter to available, published, authorized activities.
-- [ ] Enforce prerequisites.
-- [ ] Rank by approved mastery-gap/readiness policy.
-- [ ] Return concise reasons and evidence.
-- [ ] Provide deterministic fallback if AI explanations fail.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-023, TASK-014, TASK-018
+- [x] Filter to available, published, authorized activities.
+- [x] Enforce prerequisites.
+- [x] Rank by approved mastery-gap/readiness policy.
+- [x] Return concise reasons and evidence.
+- [x] Provide deterministic fallback if AI explanations fail.
 
 **Acceptance:** Recommendations never bypass access/prerequisite rules; empty states remain useful.
 

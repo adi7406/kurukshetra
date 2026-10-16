@@ -16,6 +16,7 @@ import assessmentsRoutes from './routes/assessments.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
 import attemptsRoutes from './routes/attempts.routes.js';
 import masteryRoutes from './routes/mastery.routes.js';
+import recommendationsRoutes from './routes/recommendations.routes.js';
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use(env.API_PREFIX, assessmentsRoutes);
 app.use(env.API_PREFIX, jobsRoutes);
 app.use(env.API_PREFIX, attemptsRoutes);
 app.use(env.API_PREFIX, masteryRoutes);
+app.use(env.API_PREFIX, recommendationsRoutes);
 
 if (env.API_PREFIX !== '/api') {
   app.use('/api', healthRoutes);
@@ -66,6 +68,7 @@ if (env.API_PREFIX !== '/api') {
   app.use('/api', jobsRoutes);
   app.use('/api', attemptsRoutes);
   app.use('/api', masteryRoutes);
+  app.use('/api', recommendationsRoutes);
 }
 
 // 404 Handler for unmatched endpoints
