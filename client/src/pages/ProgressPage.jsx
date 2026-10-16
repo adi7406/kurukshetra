@@ -40,26 +40,32 @@ export function ProgressPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Student Learning Progress & Mastery Evidence</h1>
-        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)' }}>
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>LEARNING ANALYTICS & EVIDENCE</span>
+        </div>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+          Student Learning Progress & Mastery Evidence
+        </h1>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Detailed prerequisite readiness tracked across verified quizzes, coding assessments, and viva explanations.
         </p>
       </div>
 
       {/* Policy Disclaimer Note */}
       <div
-        className="studdy-card"
+        className="saas-card"
         style={{
-          background: 'var(--surface-muted)',
+          background: '#F8FAFC',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          padding: '14px 18px',
+          padding: '12px 18px',
         }}
       >
-        <Info size={20} color="var(--primary)" style={{ flexShrink: 0 }} />
-        <span style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-          <strong>Assessment Policy:</strong> {progressData?.disclaimer}
+        <Info size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+        <span style={{ fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+          <strong style={{ color: 'var(--text-main)' }}>Assessment Policy:</strong> {progressData?.disclaimer}
         </span>
       </div>
 
@@ -69,7 +75,7 @@ export function ProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Overall Estimated Mastery</span>
             <div className="stat-circle-icon blue">
-              <TrendingUp size={18} />
+              <TrendingUp size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -83,7 +89,7 @@ export function ProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Mastered Concepts</span>
             <div className="stat-circle-icon green">
-              <Award size={18} />
+              <Award size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -97,7 +103,7 @@ export function ProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Developing Concepts</span>
             <div className="stat-circle-icon cyan">
-              <Layers size={18} />
+              <Layers size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -111,7 +117,7 @@ export function ProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Verified Evidence Samples</span>
             <div className="stat-circle-icon amber">
-              <CheckCircle2 size={18} />
+              <CheckCircle2 size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -123,21 +129,30 @@ export function ProgressPage() {
       </div>
 
       {/* Concept Breakdown Table */}
-      <div className="studdy-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-light)' }}>
-          <h2 style={{ fontSize: '16.5px', fontWeight: '700' }}>Concept-Level Mastery Breakdown</h2>
+      <div className="studio-window-card" style={{ marginBottom: 0 }}>
+        <div className="studio-titlebar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="window-traffic-dots">
+              <span className="traffic-dot red" />
+              <span className="traffic-dot yellow" />
+              <span className="traffic-dot green" />
+            </div>
+            <span className="studio-breadcrumb">
+              Pathwise Studio / <strong>Concept-Level Mastery Evidence Breakdown</strong>
+            </span>
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'var(--surface-muted)', borderBottom: '1px solid var(--border-light)' }}>
-                <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)' }}>Concept</th>
-                <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)' }}>Module</th>
-                <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)' }}>Estimated Mastery</th>
-                <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)' }}>Status</th>
-                <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)' }}>Evidence Count</th>
-                <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)' }}>Practice</th>
+              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Concept</th>
+                <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Module</th>
+                <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Estimated Mastery</th>
+                <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Status</th>
+                <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Evidence Count</th>
+                <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em', textAlign: 'right' }}>Practice</th>
               </tr>
             </thead>
             <tbody>
@@ -145,15 +160,15 @@ export function ProgressPage() {
                 const isLocked = item.status.includes('Locked');
 
                 return (
-                  <tr key={item.conceptId} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '16px 18px', fontWeight: '700', fontSize: '13.5px' }}>{item.name}</td>
-                    <td style={{ padding: '16px 18px', fontSize: '13px', color: 'var(--text-muted)' }}>{item.module}</td>
-                    <td style={{ padding: '16px 18px' }}>
+                  <tr key={item.conceptId} style={{ borderBottom: '1px solid var(--border)' }} className="hover-row">
+                    <td style={{ padding: '14px 16px', fontWeight: '600', fontSize: '13px', color: 'var(--text-main)' }}>{item.name}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '12.5px', color: 'var(--text-muted)' }}>{item.module}</td>
+                    <td style={{ padding: '14px 16px' }}>
                       {isLocked ? (
-                        <span style={{ fontSize: '12.5px', color: 'var(--text-light)' }}>Insufficient evidence</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>Insufficient evidence</span>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '80px', height: '6px', background: 'var(--surface-muted)', borderRadius: '9999px', overflow: 'hidden' }}>
+                          <div style={{ width: '70px', height: '5px', background: 'var(--surface-muted)', borderRadius: '9999px', overflow: 'hidden' }}>
                             <div
                               style={{
                                 width: `${item.mastery}%`,
@@ -162,28 +177,28 @@ export function ProgressPage() {
                               }}
                             />
                           </div>
-                          <span style={{ fontSize: '13px', fontWeight: '800' }}>{item.mastery}%</span>
+                          <span style={{ fontSize: '12.5px', fontWeight: '700' }}>{item.mastery}%</span>
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '16px 18px' }}>
-                      <span className={`role-badge ${item.status === 'Mastered' ? 'student' : item.status === 'Developing' ? 'student' : 'teacher'}`}>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span className={`badge-clean ${item.status === 'Mastered' ? 'green' : item.status === 'Developing' ? 'blue' : 'amber'}`}>
                         {item.status}
                       </span>
                     </td>
-                    <td style={{ padding: '16px 18px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                    <td style={{ padding: '14px 16px', fontSize: '12.5px', color: 'var(--text-muted)' }}>
                       {item.evidenceCount > 0 ? `${item.evidenceCount} activities` : 'None yet'}
                     </td>
-                    <td style={{ padding: '16px 18px' }}>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                       {isLocked ? (
-                        <button type="button" className="btn-studdy btn-studdy-secondary" style={{ padding: '5px 10px', fontSize: '12px' }} disabled>
+                        <button type="button" className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11.5px' }} disabled>
                           Locked
                         </button>
                       ) : (
                         <button
                           type="button"
-                          className="btn-studdy btn-studdy-primary"
-                          style={{ padding: '6px 14px', fontSize: '12px' }}
+                          className="btn-primary"
+                          style={{ padding: '4px 12px', fontSize: '11.5px' }}
                           onClick={() => navigate('/content/quizzes')}
                         >
                           Practice Quiz

@@ -10,13 +10,21 @@ import {
   AlertCircle,
   CheckCircle2,
   BookOpen,
+  Code2,
+  TrendingUp,
+  Layers,
+  ArrowRight,
+  Lock,
+  Building2,
+  Shield,
+  User,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../services/authService';
 
 export function LoginPage() {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
-  const [role, setRole] = useState('teacher'); // 'teacher' | 'student'
+  const [role, setRole] = useState('student'); // 'teacher' | 'student'
 
   // Common fields
   const [name, setName] = useState('');
@@ -99,8 +107,8 @@ export function LoginPage() {
             password,
             courseTaught,
           });
-          setSuccessMessage('Teacher account created successfully! Redirecting...');
-          setTimeout(() => navigate('/home'), 1000);
+          setSuccessMessage('Teacher account created successfully. Redirecting...');
+          setTimeout(() => navigate('/home'), 800);
         } else {
           // Student signup
           if (!name || !className || !rollNo || !phone || !email || !password) {
@@ -117,8 +125,8 @@ export function LoginPage() {
             teacherId: selectedTeacherId,
             courseName: chosenTeacher?.courseTaught,
           });
-          setSuccessMessage('Student account created and enrolled successfully! Redirecting...');
-          setTimeout(() => navigate('/home'), 1000);
+          setSuccessMessage('Student account created and enrolled. Redirecting...');
+          setTimeout(() => navigate('/home'), 800);
         }
       }
     } catch (err) {
@@ -136,470 +144,508 @@ export function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'var(--canvas-bg)',
-        padding: '24px 16px',
+        padding: '32px 20px',
       }}
     >
       <div
-        className="studdy-card"
         style={{
           width: '100%',
-          maxWidth: '520px',
-          padding: '36px 36px 28px',
-          boxShadow: '0 20px 40px -10px rgba(22, 38, 80, 0.1)',
+          maxWidth: '920px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1.15fr',
+          background: 'var(--surface)',
+          borderRadius: 'var(--card-radius)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--card-shadow)',
+          overflow: 'hidden',
         }}
       >
-        {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '52px',
-              height: '52px',
-              background: 'var(--primary-gradient)',
-              color: '#FFFFFF',
-              borderRadius: '16px',
-              fontWeight: '800',
-              fontSize: '24px',
-              boxShadow: 'var(--primary-glow)',
-              marginBottom: '12px',
-            }}
-          >
-            P
-          </div>
-          <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '4px' }}>
-            Pathwise
-          </h1>
-          <p style={{ fontSize: '13.5px', color: 'var(--text-muted)' }}>
-            Adaptive Learning & Assessment Workspace
-          </p>
-        </div>
-
-        {/* 1-Click Fast Demo Credentials */}
+        {/* Left Hero & Feature Showcase Column */}
         <div
           style={{
-            background: 'var(--surface-muted)',
-            borderRadius: '16px',
-            padding: '12px 14px',
-            marginBottom: '20px',
-            border: '1px solid var(--border-light)',
+            background: 'var(--primary-gradient)',
+            color: '#FFFFFF',
+            padding: '36px 30px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.05em' }}>
-              Instant Demo Access
-            </span>
-            <span className="ai-badge">Instant Login</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <button
-              type="button"
-              className="btn-studdy btn-studdy-secondary"
-              style={{ padding: '8px 12px', fontSize: '12.5px', borderRadius: '12px' }}
-              onClick={() => handleQuickDemo('teacher')}
-              disabled={loading}
-            >
-              <ShieldCheck style={{ width: '15px', height: '15px', color: 'var(--primary)' }} />
-              Teacher Demo
-            </button>
-            <button
-              type="button"
-              className="btn-studdy btn-studdy-secondary"
-              style={{ padding: '8px 12px', fontSize: '12.5px', borderRadius: '12px' }}
-              onClick={() => handleQuickDemo('student')}
-              disabled={loading}
-            >
-              <UserCheck style={{ width: '15px', height: '15px', color: 'var(--primary)' }} />
-              Student Demo
-            </button>
-          </div>
-        </div>
-
-        {/* Mode Selector Tabs: Sign In vs Sign Up */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            background: 'var(--surface-muted)',
-            borderRadius: '16px',
-            padding: '4px',
-            marginBottom: '16px',
-          }}
-        >
-          <button
-            type="button"
-            className="nav-pill"
-            style={{
-              justifyContent: 'center',
-              padding: '9px 12px',
-              borderRadius: '12px',
-              backgroundColor: mode === 'signin' ? 'var(--primary)' : 'transparent',
-              color: mode === 'signin' ? '#FFFFFF' : 'var(--text-muted)',
-              boxShadow: mode === 'signin' ? 'var(--primary-glow)' : 'none',
-            }}
-            onClick={() => {
-              setMode('signin');
-              setErrorMessage('');
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            className="nav-pill"
-            style={{
-              justifyContent: 'center',
-              padding: '9px 12px',
-              borderRadius: '12px',
-              backgroundColor: mode === 'signup' ? 'var(--primary)' : 'transparent',
-              color: mode === 'signup' ? '#FFFFFF' : 'var(--text-muted)',
-              boxShadow: mode === 'signup' ? 'var(--primary-glow)' : 'none',
-            }}
-            onClick={() => {
-              setMode('signup');
-              setErrorMessage('');
-            }}
-          >
-            Create Account
-          </button>
-        </div>
-
-        {/* Role Selector: Teacher vs Student */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '8px', letterSpacing: '0.04em' }}>
-            Select Workspace Role
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button
-              type="button"
-              className="btn-studdy"
-              style={{
-                borderRadius: '14px',
-                border: role === 'teacher' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                background: role === 'teacher' ? 'var(--primary-subtle)' : 'var(--surface)',
-                color: role === 'teacher' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: '700',
-              }}
-              onClick={() => setRole('teacher')}
-            >
-              <ShieldCheck style={{ width: '16px', height: '16px' }} />
-              Teacher Portal
-            </button>
-            <button
-              type="button"
-              className="btn-studdy"
-              style={{
-                borderRadius: '14px',
-                border: role === 'student' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                background: role === 'student' ? 'var(--primary-subtle)' : 'var(--surface)',
-                color: role === 'student' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: '700',
-              }}
-              onClick={() => setRole('student')}
-            >
-              <GraduationCap style={{ width: '16px', height: '16px' }} />
-              Student Portal
-            </button>
-          </div>
-        </div>
-
-        {/* Error / Success Notifications */}
-        {errorMessage && (
-          <div
-            style={{
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: 'var(--danger-subtle)',
-              border: '1px solid #FECACA',
-              color: 'var(--danger)',
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '16px',
-            }}
-            role="alert"
-          >
-            <AlertCircle style={{ width: '16px', height: '16px', flexShrink: 0 }} />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {successMessage && (
-          <div
-            style={{
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: 'var(--success-subtle)',
-              border: '1px solid #A7F3D0',
-              color: 'var(--success)',
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '16px',
-            }}
-          >
-            <CheckCircle2 style={{ width: '16px', height: '16px', flexShrink: 0 }} />
-            <span>{successMessage}</span>
-          </div>
-        )}
-
-        {/* Dynamic Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Sign Up Specific Fields */}
-          {mode === 'signup' && (
-            <>
-              {/* Full Name */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  placeholder={role === 'teacher' ? 'e.g. Dr. Priya Nair' : 'e.g. Arjun Sharma'}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border)',
-                    outline: 'none',
-                    fontSize: '13.5px',
-                  }}
-                />
-              </div>
-
-              {/* Class & Roll No Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-                    Class / Cohort
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={role === 'teacher' ? 'e.g. CSE Batch 2026' : 'e.g. Section B'}
-                    value={className}
-                    onChange={(e) => setClassName(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      outline: 'none',
-                      fontSize: '13.5px',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-                    {role === 'teacher' ? 'Employee / Roll No' : 'Roll Number'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={role === 'teacher' ? 'e.g. EMP-CS-804' : 'e.g. 23CS104'}
-                    value={rollNo}
-                    onChange={(e) => setRollNo(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      outline: 'none',
-                      fontSize: '13.5px',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Phone No */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border)',
-                    outline: 'none',
-                    fontSize: '13.5px',
-                  }}
-                />
-              </div>
-
-              {/* Teacher-only: which course teacher teaches */}
-              {role === 'teacher' && (
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-                    Which Course Do You Teach?
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. CS201: Data Structures & Algorithms"
-                    value={courseTaught}
-                    onChange={(e) => setCourseTaught(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      outline: 'none',
-                      fontSize: '13.5px',
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Student-only: checking which course student wants to enroll from all available teachers */}
-              {role === 'student' && (
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-                    Select Course & Teacher to Enroll In
-                  </label>
-                  <select
-                    value={selectedTeacherId}
-                    onChange={(e) => setSelectedTeacherId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      outline: 'none',
-                      fontSize: '13.5px',
-                      backgroundColor: 'var(--surface)',
-                    }}
-                  >
-                    {availableTeachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} — {t.courseTaught}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Email Address */}
-          <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="e.g. name@pathwise.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                border: '1px solid var(--border)',
-                outline: 'none',
-                fontSize: '13.5px',
-              }}
-            />
-          </div>
-
-          {/* Password with Show/Hide toggle */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>
-              Password
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+          <div>
+            {/* Brand Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+              <div
                 style={{
-                  width: '100%',
-                  padding: '10px 42px 10px 14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border)',
-                  outline: 'none',
-                  fontSize: '13.5px',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((p) => !p)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--text-light)',
-                  padding: '4px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
                 }}
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                <GraduationCap size={20} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: '800', letterSpacing: '-0.03em' }}>
+                  Pathwise
+                </span>
+                <span className="brand-badge" style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFF', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                  BETA
+                </span>
+              </div>
+            </div>
+
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: '800', color: '#FFFFFF', lineHeight: '1.3', marginBottom: '10px' }}>
+              Structured curriculum.<br />Measurable mastery.
+            </h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.85)', lineHeight: '1.6', marginBottom: '28px' }}>
+              Powered by Bayesian Knowledge Tracing, automated syllabus-to-curriculum extraction, and isolated coding sandboxes.
+            </p>
+
+            {/* Feature Pills */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255, 255, 255, 0.1)', padding: '10px 12px', borderRadius: '8px' }}>
+                <TrendingUp size={16} style={{ color: '#A7F3D0' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '700' }}>Bayesian Mastery Model (BKT)</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.75)' }}>Probabilistic skill estimation with DAG validation</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255, 255, 255, 0.1)', padding: '10px 12px', borderRadius: '8px' }}>
+                <Layers size={16} style={{ color: '#FDE68A' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '700' }}>Syllabus Ingestion Pipeline</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.75)' }}>Multer in-memory document parsing & quiz generation</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255, 255, 255, 0.1)', padding: '10px 12px', borderRadius: '8px' }}>
+                <Code2 size={16} style={{ color: '#BAE6FD' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '700' }}>Judge0 Sandbox & AI Viva</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.75)' }}>Isolated execution with code comprehension viva</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Institutional Trust Badge */}
+          <div style={{ marginTop: '28px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.8)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Building2 size={13} />
+              <span>Kurukshetra Institute of Technology</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Lock size={12} /> Enterprise Grade
+            </span>
+          </div>
+        </div>
+
+        {/* Right Form Column */}
+        <div style={{ padding: '32px 30px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {/* Header Switcher: Sign In vs Sign Up */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <div>
+              <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '2px' }}>
+                {mode === 'signin' ? 'Sign In to Portal' : 'Create an Account'}
+              </h1>
+              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                {mode === 'signin'
+                  ? 'Access your learning and instruction workspace'
+                  : 'Register your academic profile and join your cohort'}
+              </p>
+            </div>
+
+            {/* Mode Toggle Button */}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setMode(mode === 'signin' ? 'signup' : 'signin');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              style={{
+                padding: '4px 10px',
+                fontSize: '11.5px',
+                fontWeight: '600',
+              }}
+            >
+              {mode === 'signin' ? 'Create Account' : 'Back to Sign In'}
+            </button>
+          </div>
+
+          {/* Quick Demo Access */}
+          <div
+            style={{
+              background: 'var(--surface-muted)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              marginBottom: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Instant Evaluator Access
+              </span>
+              <span className="badge-clean blue">1-Click</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ padding: '5px 8px', fontSize: '11.5px', background: '#FFF' }}
+                onClick={() => handleQuickDemo('student')}
+                disabled={loading}
+              >
+                <User size={13} color="var(--primary)" />
+                <span>Demo <strong>Student</strong></span>
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ padding: '5px 8px', fontSize: '11.5px', background: '#FFF' }}
+                onClick={() => handleQuickDemo('teacher')}
+                disabled={loading}
+              >
+                <Shield size={13} color="#C2410C" />
+                <span>Demo <strong>Instructor</strong></span>
               </button>
             </div>
           </div>
 
-          {/* Submit Action */}
-          <button
-            type="submit"
-            className="btn-studdy btn-studdy-primary"
-            style={{ width: '100%', padding: '12px', borderRadius: '14px', fontSize: '14px' }}
-            disabled={loading}
-          >
-            {loading ? (
-              'Processing...'
-            ) : mode === 'signin' ? (
-              `Sign In as ${role === 'teacher' ? 'Teacher' : 'Student'}`
-            ) : role === 'teacher' ? (
-              'Create Teacher Account'
-            ) : (
-              'Complete Student Enrollment'
-            )}
-          </button>
-        </form>
+          {/* Workspace Role Selector */}
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '5px', letterSpacing: '0.04em' }}>
+              Active Workspace Role
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{
+                  border: role === 'student' ? '1px solid var(--primary)' : '1px solid var(--border)',
+                  background: role === 'student' ? 'var(--primary-subtle)' : 'var(--surface)',
+                  color: role === 'student' ? 'var(--primary)' : 'var(--text-muted)',
+                  fontWeight: role === 'student' ? '700' : '500',
+                  padding: '7px 10px',
+                  fontSize: '12.5px',
+                }}
+                onClick={() => setRole('student')}
+              >
+                <GraduationCap size={14} />
+                Student Portal
+              </button>
 
-        {/* Bottom Switcher */}
-        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>
-          {mode === 'signin' ? (
-            <span>
-              Don't have an account yet?{' '}
               <button
                 type="button"
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', cursor: 'pointer', padding: 0 }}
-                onClick={() => setMode('signup')}
+                className="btn-secondary"
+                style={{
+                  border: role === 'teacher' ? '1px solid var(--primary)' : '1px solid var(--border)',
+                  background: role === 'teacher' ? 'var(--primary-subtle)' : 'var(--surface)',
+                  color: role === 'teacher' ? 'var(--primary)' : 'var(--text-muted)',
+                  fontWeight: role === 'teacher' ? '700' : '500',
+                  padding: '7px 10px',
+                  fontSize: '12.5px',
+                }}
+                onClick={() => setRole('teacher')}
               >
-                Sign up here
+                <Shield size={14} />
+                Instructor Workspace
               </button>
-            </span>
-          ) : (
-            <span>
-              Already have an account?{' '}
-              <button
-                type="button"
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', cursor: 'pointer', padding: 0 }}
-                onClick={() => setMode('signin')}
-              >
-                Sign in
-              </button>
-            </span>
+            </div>
+          </div>
+
+          {/* Alerts */}
+          {errorMessage && (
+            <div
+              style={{
+                padding: '8px 10px',
+                borderRadius: '6px',
+                background: 'var(--danger-subtle)',
+                border: '1px solid var(--danger-border)',
+                color: 'var(--danger)',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '12px',
+              }}
+            >
+              <AlertCircle size={14} style={{ flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
           )}
+
+          {successMessage && (
+            <div
+              style={{
+                padding: '8px 10px',
+                borderRadius: '6px',
+                background: 'var(--success-subtle)',
+                border: '1px solid var(--success-border)',
+                color: 'var(--success)',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '12px',
+              }}
+            >
+              <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {mode === 'signup' && (
+              <>
+                {/* Full Name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={role === 'teacher' ? 'Dr. Priya Nair' : 'Aarav Sharma'}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      outline: 'none',
+                      fontSize: '12.5px',
+                    }}
+                  />
+                </div>
+
+                {/* Class & Roll Number */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                      Class / Cohort
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={role === 'teacher' ? 'CSE Faculty' : 'B.Tech CSE Sec A'}
+                      value={className}
+                      onChange={(e) => setClassName(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border)',
+                        outline: 'none',
+                        fontSize: '12.5px',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                      {role === 'teacher' ? 'Faculty ID' : 'Roll Number'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={role === 'teacher' ? 'EMP-8841' : '23CS0104'}
+                      value={rollNo}
+                      onChange={(e) => setRollNo(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border)',
+                        outline: 'none',
+                        fontSize: '12.5px',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      outline: 'none',
+                      fontSize: '12.5px',
+                    }}
+                  />
+                </div>
+
+                {/* Teacher Specific: Course Taught */}
+                {role === 'teacher' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                      Course You Teach
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="CS201: Data Structures & Algorithms"
+                      value={courseTaught}
+                      onChange={(e) => setCourseTaught(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border)',
+                        outline: 'none',
+                        fontSize: '12.5px',
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Student Specific: Dynamic Teacher Selection */}
+                {role === 'student' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                      Select Instructor & Course
+                    </label>
+                    <select
+                      value={selectedTeacherId}
+                      onChange={(e) => setSelectedTeacherId(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border)',
+                        outline: 'none',
+                        fontSize: '12.5px',
+                        background: '#FFF',
+                      }}
+                    >
+                      {availableTeachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} — {t.courseTaught || 'CS201 Data Structures'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Email Address */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder={role === 'teacher' ? 'faculty@college.edu' : 'student@college.edu'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)',
+                  outline: 'none',
+                  fontSize: '12.5px',
+                }}
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '3px' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter secret password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '7px 32px 7px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    outline: 'none',
+                    fontSize: '12.5px',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-light)',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '9px',
+                fontSize: '13px',
+                marginTop: '4px',
+              }}
+            >
+              {loading ? (
+                <span>Authenticating with server...</span>
+              ) : mode === 'signin' ? (
+                <>
+                  <span>Sign In as {role === 'teacher' ? 'Instructor' : 'Student'}</span>
+                  <ArrowRight size={14} />
+                </>
+              ) : (
+                <>
+                  <span>Complete Registration</span>
+                  <ArrowRight size={14} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Note */}
+          <div style={{ marginTop: '14px', textAlign: 'center', fontSize: '11px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <Lock size={11} />
+            <span>Authoritative server-validated authentication with Supabase & JWT.</span>
+          </div>
         </div>
       </div>
     </div>

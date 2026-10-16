@@ -56,12 +56,18 @@ export function TeacherStudentProgressPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Title */}
       <div>
-        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Progress of the Students & Cohort Diagnostics</h1>
-        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)' }}>
-          Detailed learning analytics, concept-level mastery evidence, and intervention management.
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>COHORT PROGRESS & INTERVENTION DOSSIER</span>
+        </div>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+          Progress of the Students & Cohort Diagnostics
+        </h1>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
+          Detailed learning analytics, concept-level mastery evidence, and personalized intervention management.
         </p>
       </div>
 
@@ -71,7 +77,7 @@ export function TeacherStudentProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Total Enrolled</span>
             <div className="stat-circle-icon blue">
-              <Users size={18} />
+              <Users size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -85,7 +91,7 @@ export function TeacherStudentProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Mastery &gt; 75%</span>
             <div className="stat-circle-icon green">
-              <Award size={18} />
+              <Award size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -99,7 +105,7 @@ export function TeacherStudentProgressPage() {
           <div className="stat-widget-header">
             <span className="stat-widget-title">Requires Support</span>
             <div className="stat-circle-icon amber">
-              <AlertTriangle size={18} />
+              <AlertTriangle size={16} />
             </div>
           </div>
           <div className="stat-number-row">
@@ -113,8 +119,10 @@ export function TeacherStudentProgressPage() {
       {/* Two Column Layout: Student Selector Left, Detailed Breakdown Right */}
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '20px' }}>
         {/* Left List of Students */}
-        <div className="studdy-card" style={{ padding: '16px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '12px' }}>Student Directory</h2>
+        <div className="saas-card" style={{ padding: '16px' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em', marginBottom: '12px' }}>
+            Student Directory
+          </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {students.map((s) => {
@@ -126,23 +134,23 @@ export function TeacherStudentProgressPage() {
                   key={s.id}
                   onClick={() => setSelectedStudent(s)}
                   style={{
-                    padding: '12px 14px',
-                    borderRadius: '14px',
-                    background: isSelected ? 'var(--primary-subtle)' : 'var(--surface-subtle)',
-                    border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-light)',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: isSelected ? 'var(--primary-subtle)' : '#FFFFFF',
+                    border: isSelected ? '1.5px solid var(--primary)' : '1px solid var(--border)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    transition: 'all 150ms ease',
+                    transition: 'all 120ms ease',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div className="avatar-circle" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+                    <div className="avatar-circle" style={{ width: '30px', height: '30px', fontSize: '11px', borderRadius: '6px' }}>
                       {s.avatarInitials || s.name[0]}
                     </div>
                     <div>
-                      <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
                         {s.name}
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -151,7 +159,7 @@ export function TeacherStudentProgressPage() {
                     </div>
                   </div>
 
-                  <span style={{ fontSize: '13px', fontWeight: '800', color: mastery >= 75 ? 'var(--success)' : mastery >= 50 ? 'var(--primary)' : 'var(--warning)' }}>
+                  <span className={`badge-clean ${mastery >= 75 ? 'green' : mastery >= 50 ? 'blue' : 'amber'}`}>
                     {mastery}%
                   </span>
                 </div>
@@ -162,99 +170,115 @@ export function TeacherStudentProgressPage() {
 
         {/* Right Detail Panel for Selected Student */}
         {selectedStudent && (
-          <div className="studdy-card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <span className="role-badge student" style={{ marginBottom: '6px' }}>
-                  Student Profile
-                </span>
-                <h2 style={{ fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>
-                  {selectedStudent.name}
-                </h2>
-                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', display: 'flex', gap: '12px', marginTop: '4px' }}>
-                  <span>Roll: <strong>{selectedStudent.rollNo}</strong></span>
-                  <span>Class: <strong>{selectedStudent.className}</strong></span>
-                  <span>Phone: <strong>{selectedStudent.phone}</strong></span>
+          <div className="studio-window-card" style={{ marginBottom: 0 }}>
+            <div className="studio-titlebar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="window-traffic-dots">
+                  <span className="traffic-dot red" />
+                  <span className="traffic-dot yellow" />
+                  <span className="traffic-dot green" />
                 </div>
-              </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '28px', fontWeight: '800', color: selectedStudent.overallMastery >= 75 ? 'var(--success)' : 'var(--primary)' }}>
-                  {selectedStudent.overallMastery}%
+                <span className="studio-breadcrumb">
+                  Pathwise Studio / <strong>Student Progress Dossier</strong> / {selectedStudent.rollNo}
                 </span>
-                <div style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>
-                  Overall Estimated Mastery
-                </div>
               </div>
+              <span className={`badge-clean ${selectedStudent.overallMastery >= 75 ? 'green' : selectedStudent.overallMastery >= 50 ? 'blue' : 'red'}`}>
+                {selectedStudent.overallMastery >= 75 ? 'Excelling' : selectedStudent.overallMastery >= 50 ? 'Developing' : 'Needs Support'}
+              </span>
             </div>
 
-            {/* Concept Level Breakdown */}
-            <h3 style={{ fontSize: '14.5px', fontWeight: '700', marginBottom: '12px' }}>
-              Concept Mastery Levels
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-              {[
-                { name: 'Dynamic Arrays', score: selectedStudent.conceptMastery?.c_arrays || 0 },
-                { name: 'Linked Lists', score: selectedStudent.conceptMastery?.c_linkedlists || 0 },
-                { name: 'Hash Tables', score: selectedStudent.conceptMastery?.c_hashtables || 0 },
-                { name: 'Divide & Conquer', score: selectedStudent.conceptMastery?.c_recursion || 0 },
-                { name: 'Dynamic Programming', score: selectedStudent.conceptMastery?.c_dp || 0 },
-                { name: 'Binary Search Trees', score: selectedStudent.conceptMastery?.c_bst || 0 },
-              ].map((c, i) => (
-                <div key={i} style={{ padding: '12px', background: 'var(--surface-muted)', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
-                    <span>{c.name}</span>
-                    <span style={{ fontWeight: '800' }}>{c.score}%</span>
-                  </div>
-                  <div style={{ width: '100%', height: '6px', background: '#E2E8F0', borderRadius: '9999px', overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        width: `${c.score}%`,
-                        height: '100%',
-                        background: c.score >= 75 ? 'var(--success)' : c.score >= 50 ? 'var(--primary)' : 'var(--warning)',
-                      }}
-                    />
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {selectedStudent.name}
+                  </h2>
+                  <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', display: 'flex', gap: '12px', marginTop: '4px' }}>
+                    <span>Roll: <strong>{selectedStudent.rollNo}</strong></span>
+                    <span>Class: <strong>{selectedStudent.className}</strong></span>
+                    <span>Phone: <strong>{selectedStudent.phone}</strong></span>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Teacher Intervention Note */}
-            <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border-light)', borderRadius: '16px', padding: '16px' }}>
-              <h4 style={{ fontSize: '13.5px', fontWeight: '700', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <MessageSquare size={15} color="var(--primary)" />
-                <span>Assign Targeted Feedback or Adaptive Practice</span>
-              </h4>
-              <textarea
-                rows={3}
-                placeholder={`Send personalized study guidance to ${selectedStudent.name}...`}
-                value={feedbackNote}
-                onChange={(e) => setFeedbackNote(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border)',
-                  fontSize: '13px',
-                  marginBottom: '10px',
-                  outline: 'none',
-                }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {feedbackSent ? (
-                  <span style={{ color: 'var(--success)', fontSize: '12.5px', fontWeight: '600' }}>
-                    ✓ Feedback sent to student's dashboard
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '28px', fontWeight: '800', color: selectedStudent.overallMastery >= 75 ? 'var(--success)' : 'var(--primary)', letterSpacing: '-0.02em' }}>
+                    {selectedStudent.overallMastery}%
                   </span>
-                ) : <span />}
-                <button
-                  type="button"
-                  className="btn-studdy btn-studdy-primary"
-                  style={{ padding: '8px 16px', fontSize: '12.5px' }}
-                  onClick={handleSendFeedback}
-                  disabled={!feedbackNote.trim()}
-                >
-                  Send Intervention Guidance
-                </button>
+                  <div style={{ fontSize: '11px', color: 'var(--text-light)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.04em' }}>
+                    Overall BKT Mastery
+                  </div>
+                </div>
+              </div>
+
+              {/* Concept Level Breakdown */}
+              <h3 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em', marginBottom: '12px' }}>
+                Concept Mastery Levels
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                {[
+                  { name: 'Dynamic Arrays', score: selectedStudent.conceptMastery?.c_arrays || 0 },
+                  { name: 'Linked Lists', score: selectedStudent.conceptMastery?.c_linkedlists || 0 },
+                  { name: 'Hash Tables', score: selectedStudent.conceptMastery?.c_hashtables || 0 },
+                  { name: 'Divide & Conquer', score: selectedStudent.conceptMastery?.c_recursion || 0 },
+                  { name: 'Dynamic Programming', score: selectedStudent.conceptMastery?.c_dp || 0 },
+                  { name: 'Binary Search Trees', score: selectedStudent.conceptMastery?.c_bst || 0 },
+                ].map((c, i) => (
+                  <div key={i} style={{ padding: '12px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
+                      <span style={{ color: 'var(--text-main)' }}>{c.name}</span>
+                      <span style={{ fontWeight: '700', color: c.score >= 75 ? 'var(--success)' : c.score >= 50 ? 'var(--primary)' : 'var(--warning)' }}>{c.score}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: '5px', background: 'var(--surface-muted)', borderRadius: '9999px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          width: `${c.score}%`,
+                          height: '100%',
+                          background: c.score >= 75 ? 'var(--success)' : c.score >= 50 ? 'var(--primary)' : 'var(--warning)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Teacher Intervention Note */}
+              <div style={{ background: '#F8FAFC', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <MessageSquare size={14} color="var(--primary)" />
+                  <span>Assign Targeted Feedback or Adaptive Practice</span>
+                </h4>
+                <textarea
+                  rows={3}
+                  placeholder={`Send personalized study guidance to ${selectedStudent.name}...`}
+                  value={feedbackNote}
+                  onChange={(e) => setFeedbackNote(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    fontSize: '13px',
+                    marginBottom: '10px',
+                    outline: 'none',
+                    background: '#FFFFFF',
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {feedbackSent ? (
+                    <span style={{ color: 'var(--success)', fontSize: '12px', fontWeight: '600' }}>
+                      Feedback sent to student's dashboard
+                    </span>
+                  ) : <span />}
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ padding: '6px 14px', fontSize: '12px' }}
+                    onClick={handleSendFeedback}
+                    disabled={!feedbackNote.trim()}
+                  >
+                    Send Intervention Guidance
+                  </button>
+                </div>
               </div>
             </div>
           </div>

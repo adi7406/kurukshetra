@@ -137,54 +137,48 @@ export function CodeAssessmentsPage() {
   // -------------------------------------------------------------
   if (activeAssessment) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', gap: '14px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', gap: '14px' }}>
         {/* Workspace Sub-header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               type="button"
-              className="btn-studdy btn-studdy-secondary"
-              style={{ padding: '6px 14px', fontSize: '12.5px' }}
+              className="btn-secondary"
+              style={{ padding: '5px 12px', fontSize: '12px' }}
               onClick={() => setActiveAssessment(null)}
             >
               &larr; Exit Workspace
             </button>
-            <h1 style={{ fontSize: '18px', fontWeight: '800' }}>{activeAssessment.title}</h1>
-            <span className="role-badge teacher">{activeAssessment.difficulty}</span>
+            <h1 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>{activeAssessment.title}</h1>
+            <span className="badge-clean blue">{activeAssessment.difficulty}</span>
           </div>
 
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              background: 'var(--surface)',
-              border: '1px solid var(--border-light)',
-              borderRadius: 'var(--pill-radius)',
-              fontSize: '12px',
-              color: 'var(--text-muted)',
-            }}
-          >
-            <Radio size={13} color="var(--danger)" />
-            <span>Keystroke replay capture active for integrity verification</span>
+          <div className="studio-status-pill">
+            <span className="status-dot" />
+            <span>Sandboxed Execution Active</span>
           </div>
         </div>
 
         {/* Split Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 420px) 1fr', gap: '16px', flex: 1, minHeight: 0 }}>
           {/* Left Pane: Problem Description */}
-          <div className="studdy-card" style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '20px' }}>
-            <span className="ai-badge" style={{ marginBottom: '8px' }}>{activeAssessment.conceptName}</span>
-            <h2 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Problem Description & Constraints</h2>
+          <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '20px' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <span className="badge-clean blue">{activeAssessment.conceptName}</span>
+            </div>
+            <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '14px' }}>
+              Problem Description & Invariants
+            </h2>
 
             <div style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--text-main)', whiteSpace: 'pre-wrap', marginBottom: '18px' }}>
               {activeAssessment.problemStatement}
             </div>
 
             <div style={{ marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '6px' }}>Constraints:</h3>
-              <ul style={{ paddingLeft: '18px', fontSize: '12.5px', color: 'var(--text-muted)' }}>
+              <h3 style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                Constraints:
+              </h3>
+              <ul style={{ paddingLeft: '18px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
                 {activeAssessment.constraints.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
@@ -192,11 +186,13 @@ export function CodeAssessmentsPage() {
             </div>
 
             <div>
-              <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '6px' }}>Sample Example:</h3>
+              <h3 style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em', marginBottom: '8px' }}>
+                Sample Test Case:
+              </h3>
               {activeAssessment.sampleTests.map((t, i) => (
-                <div key={i} style={{ padding: '12px', background: 'var(--surface-muted)', borderRadius: '12px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
-                  <div><strong>Input:</strong> {t.input}</div>
-                  <div style={{ marginTop: '4px' }}><strong>Expected:</strong> {t.expectedOutput}</div>
+                <div key={i} style={{ padding: '12px', background: '#F8FAFC', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
+                  <div><strong style={{ color: 'var(--text-main)' }}>Input:</strong> {t.input}</div>
+                  <div style={{ marginTop: '4px' }}><strong style={{ color: 'var(--text-main)' }}>Expected:</strong> {t.expectedOutput}</div>
                 </div>
               ))}
             </div>
@@ -204,21 +200,29 @@ export function CodeAssessmentsPage() {
 
           {/* Right Pane: Code Editor + Terminal Console */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
-            <div className="studdy-card" style={{ padding: 0, overflow: 'hidden', flex: '1 1 65%', display: 'flex', flexDirection: 'column' }}>
-              {/* Editor Bar */}
-              <div style={{ padding: '10px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Editor Window */}
+            <div className="studio-window-card" style={{ padding: 0, overflow: 'hidden', flex: '1 1 65%', display: 'flex', flexDirection: 'column', marginBottom: 0 }}>
+              {/* Studio Titlebar */}
+              <div className="studio-titlebar" style={{ padding: '8px 14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <FileCode size={16} color="var(--primary)" />
-                  <span style={{ fontSize: '13px', fontWeight: '700' }}>Editor</span>
+                  <div className="window-traffic-dots">
+                    <span className="traffic-dot red" />
+                    <span className="traffic-dot yellow" />
+                    <span className="traffic-dot green" />
+                  </div>
+                  <span className="studio-breadcrumb">
+                    solution.{selectedLanguage === 'python' ? 'py' : selectedLanguage === 'javascript' ? 'js' : 'java'}
+                  </span>
                   <select
                     value={selectedLanguage}
                     onChange={(e) => handleLanguageChange(e.target.value)}
                     style={{
-                      padding: '4px 10px',
-                      borderRadius: '8px',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
                       border: '1px solid var(--border)',
-                      fontSize: '12px',
-                      background: 'var(--surface)',
+                      fontSize: '11.5px',
+                      background: '#FFFFFF',
+                      fontFamily: 'var(--font-mono)',
                     }}
                   >
                     {activeAssessment.allowedLanguages.map((l) => (
@@ -230,23 +234,23 @@ export function CodeAssessmentsPage() {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"
-                    className="btn-studdy btn-studdy-secondary"
-                    style={{ padding: '6px 14px', fontSize: '12px' }}
+                    className="btn-secondary"
+                    style={{ padding: '4px 12px', fontSize: '12px' }}
                     onClick={handleRunCode}
                     disabled={isRunning || isSubmitting}
                   >
-                    <Play size={13} />
+                    <Play size={12} />
                     <span>{isRunning ? 'Running...' : 'Run Code'}</span>
                   </button>
 
                   <button
                     type="button"
-                    className="btn-studdy btn-studdy-primary"
-                    style={{ padding: '6px 14px', fontSize: '12px' }}
+                    className="btn-primary"
+                    style={{ padding: '4px 12px', fontSize: '12px' }}
                     onClick={handleSubmitSolution}
                     disabled={isRunning || isSubmitting}
                   >
-                    <Send size={13} />
+                    <Send size={12} />
                     <span>{isSubmitting ? 'Evaluating...' : 'Submit Solution'}</span>
                   </button>
                 </div>
@@ -264,11 +268,11 @@ export function CodeAssessmentsPage() {
                     padding: '16px',
                     fontFamily: 'var(--font-mono)',
                     fontSize: '13px',
-                    lineHeight: '1.5',
+                    lineHeight: '1.6',
                     border: 'none',
                     resize: 'none',
                     outline: 'none',
-                    background: '#FAFAFC',
+                    background: '#FFFFFF',
                     color: '#0F172A',
                   }}
                 />
@@ -276,20 +280,24 @@ export function CodeAssessmentsPage() {
             </div>
 
             {/* Terminal Console */}
-            <div className="studdy-card" style={{ padding: 0, overflow: 'hidden', flex: '1 1 35%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '8px 16px', background: '#0F172A', color: '#94A3B8', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', fontWeight: '700' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Terminal size={14} />
-                  <span>Execution Output</span>
+            <div className="studio-window-card" style={{ padding: 0, overflow: 'hidden', flex: '1 1 35%', display: 'flex', flexDirection: 'column', marginBottom: 0, background: '#0F172A', borderColor: '#334155' }}>
+              <div style={{ padding: '8px 14px', background: '#0F172A', borderBottom: '1px solid #1E293B', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: '#94A3B8' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="window-traffic-dots">
+                    <span className="traffic-dot red" />
+                    <span className="traffic-dot yellow" />
+                    <span className="traffic-dot green" />
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '600', color: '#CBD5E1' }}>Sandboxed Output</span>
                 </div>
                 {runStatus && (
-                  <span style={{ color: runStatus.includes('Passed') || runStatus.includes('Accepted') ? '#34D399' : '#F87171' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: runStatus.includes('Passed') || runStatus.includes('Accepted') ? '#34D399' : '#F87171' }}>
                     {runStatus}
                   </span>
                 )}
               </div>
-              <div style={{ flex: 1, padding: '12px 16px', background: '#0F172A', color: '#E2E8F0', fontFamily: 'var(--font-mono)', fontSize: '12px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
-                {outputLog || 'Click "Run Code" to test sample test cases, or "Submit Solution" for official grading.'}
+              <div style={{ flex: 1, padding: '12px 14px', background: '#0F172A', color: '#E2E8F0', fontFamily: 'var(--font-mono)', fontSize: '12px', overflowY: 'auto', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                {outputLog || 'Click "Run Code" to test sample cases, or "Submit Solution" for official grading.'}
               </div>
             </div>
           </div>
@@ -298,47 +306,59 @@ export function CodeAssessmentsPage() {
         {/* FR-15: Code Viva Modal */}
         {vivaModalOpen && (
           <div className="modal-overlay">
-            <div className="modal-dialog-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <Sparkles size={20} color="var(--primary)" />
-                <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Code-Specific Viva & Explanation</h2>
-              </div>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                Explain your submitted implementation to verify your algorithmic reasoning and update your concept mastery estimate.
-              </p>
-
-              {vivaQuestions.map((vq, idx) => (
-                <div key={vq.id} style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px' }}>
-                    Question {idx + 1}: {vq.question}
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Describe your reasoning, pointer movements, and time complexity bounds..."
-                    value={vivaAnswers[vq.id] || ''}
-                    onChange={(e) => setVivaAnswers({ ...vivaAnswers, [vq.id]: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '13px', outline: 'none' }}
-                  />
-                </div>
-              ))}
-
-              {vivaFeedback && (
-                <div style={{ padding: '12px 16px', background: 'var(--success-subtle)', borderRadius: '12px', border: '1px solid #A7F3D0', marginBottom: '14px' }}>
-                  <div style={{ fontWeight: '700', color: 'var(--success)', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <CheckCircle2 size={16} />
-                    <span>Understanding Verified: {vivaFeedback.score}% Score</span>
+            <div className="modal-dialog-card" style={{ maxWidth: '640px' }}>
+              <div className="studio-titlebar" style={{ padding: '12px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className="window-traffic-dots">
+                    <span className="traffic-dot red" />
+                    <span className="traffic-dot yellow" />
+                    <span className="traffic-dot green" />
                   </div>
-                  <p style={{ fontSize: '12.5px', marginTop: '4px', color: 'var(--text-main)' }}>
-                    {vivaFeedback.feedback}
-                  </p>
+                  <span className="studio-breadcrumb">
+                    Pathwise Studio / <strong>Algorithmic Reasoning Viva</strong>
+                  </span>
                 </div>
-              )}
+                <span className="badge-clean blue">Integrity Verification</span>
+              </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+              <div style={{ padding: '24px', overflowY: 'auto', maxHeight: '65vh', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                  Explain your implementation invariants and algorithmic decisions to update your posterior concept mastery estimate.
+                </p>
+
+                {vivaQuestions.map((vq, idx) => (
+                  <div key={vq.id}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
+                      Question {idx + 1}: {vq.question}
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Describe your reasoning, pointer movements, and complexity bounds..."
+                      value={vivaAnswers[vq.id] || ''}
+                      onChange={(e) => setVivaAnswers({ ...vivaAnswers, [vq.id]: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', outline: 'none', background: '#FFFFFF' }}
+                    />
+                  </div>
+                ))}
+
+                {vivaFeedback && (
+                  <div style={{ padding: '12px 16px', background: 'var(--success-subtle)', borderRadius: '6px', border: '1px solid var(--success-border)' }}>
+                    <div style={{ fontWeight: '700', color: '#065F46', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={15} />
+                      <span>Understanding Verified: {vivaFeedback.score}% Score</span>
+                    </div>
+                    <p style={{ fontSize: '12.5px', marginTop: '4px', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                      {vivaFeedback.feedback}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ padding: '14px 24px', background: '#F8FAFC', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 {vivaFeedback ? (
                   <button
                     type="button"
-                    className="btn-studdy btn-studdy-primary"
+                    className="btn-primary"
                     onClick={() => {
                       setVivaModalOpen(false);
                       setActiveAssessment(null);
@@ -349,7 +369,7 @@ export function CodeAssessmentsPage() {
                 ) : (
                   <button
                     type="button"
-                    className="btn-studdy btn-studdy-primary"
+                    className="btn-primary"
                     onClick={handleEvaluateViva}
                     disabled={evaluatingViva}
                   >
@@ -370,22 +390,28 @@ export function CodeAssessmentsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Coding Assessments & Problem Workspace</h1>
-        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)' }}>
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>SANDBOXED EVALUATION ENVIRONMENT</span>
+        </div>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+          Coding Assessments & Problem Workspace
+        </h1>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Solve algorithmic challenges with real-time test execution, sandbox compilation, and code explanation viva.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
         {assessments.map((item) => (
-          <div key={item.id} className="studdy-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div key={item.id} className="saas-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span className="ai-badge">{item.conceptName}</span>
-                <span className="role-badge teacher">{item.difficulty}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span className="badge-clean blue">{item.conceptName}</span>
+                <span className="badge-clean green">{item.difficulty}</span>
               </div>
 
-              <h2 style={{ fontSize: '16.5px', fontWeight: '700', marginBottom: '8px' }}>{item.title}</h2>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>{item.title}</h2>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '14px' }}>
                 {item.problemStatement.slice(0, 140)}...
               </p>
@@ -399,11 +425,11 @@ export function CodeAssessmentsPage() {
 
             <button
               type="button"
-              className="btn-studdy btn-studdy-primary"
+              className="btn-primary"
               style={{ width: '100%' }}
               onClick={() => handleOpenWorkspace(item)}
             >
-              <Code2 size={15} />
+              <Code2 size={14} />
               <span>{item.status === 'completed' ? 'Open & Inspect Solution' : 'Open Coding Workspace'}</span>
             </button>
           </div>

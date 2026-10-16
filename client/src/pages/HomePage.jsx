@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Clock,
-  Sparkles,
   BookOpen,
   HelpCircle,
   Code2,
@@ -15,6 +14,10 @@ import {
   Award,
   ChevronRight,
   Zap,
+  Check,
+  FileText,
+  Shield,
+  Radio,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { learningService } from '../services/learningService';
@@ -45,412 +48,427 @@ export function HomePage() {
   }, []);
 
   if (loading) {
-    return <LoadingState message="Loading your workspace..." />;
+    return <LoadingState message="Loading workspace..." />;
   }
 
   const primaryCourse = courses[0];
   const nextAction = primaryCourse?.nextRecommendedAction;
   const firstName = user?.name ? user.name.split(' ')[0] : 'Learner';
 
-  // -------------------------------------------------------------
+  // =============================================================
   // TEACHER HOME VIEW
-  // -------------------------------------------------------------
+  // =============================================================
   if (role === 'teacher') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {/* Studdy-Style Hero Banner for Instructor */}
-        <div className="hero-studdy-card">
-          <div className="hero-content">
-            <h1 className="hero-title">Welcome back, {firstName}! 👨‍🏫</h1>
-            <p className="hero-desc">
-              Your students have completed <strong>74%</strong> of scheduled assessments this week.
-              Ready to upload new curriculum or review AI-extracted concepts?
-            </p>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="btn-studdy"
-                style={{ background: '#FFFFFF', color: 'var(--primary)' }}
-                onClick={() => navigate('/teacher/content-upload')}
-              >
-                <UploadCloud size={16} />
-                <span>Upload Syllabus & Run AI Extraction</span>
-              </button>
-              <button
-                type="button"
-                className="btn-studdy"
-                style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
-                onClick={() => navigate('/dashboard')}
-              >
-                <Users size={16} />
-                <span>View All Students Progress</span>
-              </button>
-            </div>
+      <div style={{ padding: '0 24px 32px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Clean Hero Section */}
+        <div className="hero-section-clean">
+          <div className="hero-pill-badge">
+            <span className="dot" />
+            <span>Curriculum Engineering, Made Systematic</span>
           </div>
 
-          {/* Friendly Mascot SVG Badge */}
-          <div className="hero-mascot-wrapper">
-            <div
-              style={{
-                width: '110px',
-                height: '110px',
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '56px',
-              }}
+          <h1 className="hero-headline-clean">
+            Automated curriculum.<br />
+            <span className="highlight">Evidence-based instruction.</span>
+          </h1>
+
+          <p className="hero-subtitle-clean">
+            Upload course syllabi in PDF or DOCX format. Experience automated prerequisite DAG extraction, diagnostic quiz generation, and isolated sandbox coding assessments.
+          </p>
+
+          <div className="hero-actions-row">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigate('/teacher/content-upload')}
+              style={{ padding: '10px 20px', fontSize: '14px' }}
             >
-              🎓
-            </div>
+              <span>Upload Syllabus & Extract</span>
+              <ArrowRight size={15} />
+            </button>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate('/dashboard')}
+              style={{ padding: '10px 20px', fontSize: '14px' }}
+            >
+              <span>View Student Roster</span>
+            </button>
+          </div>
+
+          <div className="hero-specs-row">
+            <span><span className="check">✓</span> LLM In-Memory Processing</span>
+            <span>&bull;</span>
+            <span><span className="check">✓</span> Acyclic DAG Verification</span>
+            <span>&bull;</span>
+            <span><span className="check">✓</span> Zero Hallucination Grounding</span>
           </div>
         </div>
 
-        {/* 3 Stat Cards (Studdy Aesthetic) */}
-        <div className="stat-widgets-grid">
-          <div className="stat-widget-card">
-            <div className="stat-widget-header">
-              <span className="stat-widget-title">Active Cohort Size</span>
-              <div className="stat-circle-icon blue">
-                <Users size={20} />
-              </div>
+        {/* Studio Window Card (Traffic Light Mac-style Window Bar) */}
+        <div className="studio-window-card">
+          <div className="studio-titlebar">
+            <div className="window-traffic-dots">
+              <span className="traffic-dot red" />
+              <span className="traffic-dot yellow" />
+              <span className="traffic-dot green" />
             </div>
-            <div className="stat-number-row">
-              <span className="stat-huge-number">38</span>
-              <span className="stat-unit-text">students enrolled</span>
+
+            <div className="studio-breadcrumb">
+              <strong>Pathwise Studio</strong> / Curriculum & Cohort Analysis Workspace
             </div>
-            <span className="stat-footer-text">
-              CS201 Data Structures &bull; Batch 2026
-            </span>
+
+            <div className="studio-status-pill">
+              <span className="status-dot" />
+              <span>Ready &bull; Ingestion & AI Pipeline Active</span>
+            </div>
           </div>
 
-          <div className="stat-widget-card">
-            <div className="stat-widget-header">
-              <span className="stat-widget-title">Average Mastery</span>
-              <div className="stat-circle-icon green">
-                <Award size={20} />
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Cohort Stats Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+              <div className="saas-card" style={{ padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Active Cohort Size</span>
+                  <Users size={16} color="var(--primary)" />
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                  38
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>
+                  Enrolled in CS201 Data Structures
+                </div>
               </div>
-            </div>
-            <div className="stat-number-row">
-              <span className="stat-huge-number">74%</span>
-              <span className="stat-unit-text">cohort readiness</span>
-            </div>
-            <span className="stat-footer-text">
-              High comprehension in Arrays & Recursion
-            </span>
-          </div>
 
-          <div className="stat-widget-card">
-            <div className="stat-widget-header">
-              <span className="stat-widget-title">AI Content Status</span>
-              <div className="stat-circle-icon amber">
-                <Sparkles size={20} />
+              <div className="saas-card" style={{ padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Average Mastery Level</span>
+                  <Award size={16} color="var(--success)" />
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--success)', letterSpacing: '-0.02em' }}>
+                  74%
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>
+                  High comprehension in Arrays & Recursion
+                </div>
+              </div>
+
+              <div className="saas-card" style={{ padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Curriculum Pipeline Items</span>
+                  <Layers size={16} color="var(--warning)" />
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                  3 Items
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>
+                  Synthesized concepts & quizzes pending publish
+                </div>
               </div>
             </div>
-            <div className="stat-number-row">
-              <span className="stat-huge-number">3</span>
-              <span className="stat-unit-text">items in review</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="ai-badge">AI Powered ✨</span>
-              <button
-                type="button"
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+
+            {/* Quick Action Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="saas-card"
                 onClick={() => navigate('/teacher/content-upload')}
+                style={{ cursor: 'pointer', transition: 'border-color 150ms ease' }}
               >
-                Review Items &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                    <UploadCloud size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700' }}>AI Syllabus Extractor</h3>
+                    <p style={{ fontSize: '12.5px' }}>Ingest syllabus document to auto-generate Concepts, Quizzes, and Code Tasks</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: '12.5px', color: 'var(--primary)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    Open Ingestion Studio &rarr;
+                  </span>
+                </div>
+              </div>
 
-        {/* Quick Launchpad to Teacher Sections */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <div className="studdy-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '10px' }}>
-              <div className="stat-circle-icon blue">
-                <Users size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: '700' }}>Student Mastery Dashboard</h3>
-                <p style={{ fontSize: '13px' }}>See all student progress with each individual mastery level</p>
-              </div>
-            </div>
-            <button type="button" className="btn-studdy btn-studdy-secondary" style={{ width: '100%', marginTop: '6px' }}>
-              <span>Open Student Roster</span>
-              <ChevronRight size={15} />
-            </button>
-          </div>
-
-          <div className="studdy-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/teacher/content-upload')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '10px' }}>
-              <div className="stat-circle-icon amber">
-                <UploadCloud size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: '700' }}>AI Syllabus Extractor</h3>
-                <p style={{ fontSize: '13px' }}>Upload syllabus to auto-generate Concepts, Quizzes & Code Tasks</p>
+              <div
+                className="saas-card"
+                onClick={() => navigate('/dashboard')}
+                style={{ cursor: 'pointer', transition: 'border-color 150ms ease' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--success-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700' }}>Student Mastery Roster</h3>
+                    <p style={{ fontSize: '12.5px' }}>Inspect all 38 students with individual concept mastery percentages</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: '12.5px', color: 'var(--primary)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    Open Student Matrix &rarr;
+                  </span>
+                </div>
               </div>
             </div>
-            <button type="button" className="btn-studdy btn-studdy-primary" style={{ width: '100%', marginTop: '6px' }}>
-              <span>Launch Content Extractor</span>
-              <Sparkles size={15} />
-            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // -------------------------------------------------------------
-  // STUDENT HOME VIEW (Directly Matching Studdy Reference Image!)
-  // -------------------------------------------------------------
+  // =============================================================
+  // STUDENT HOME VIEW (Matching Samjho AI Clean Style)
+  // =============================================================
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: '20px' }}>
-      {/* Left / Center Main Column */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        {/* Studdy Hero Banner Card */}
-        <div className="hero-studdy-card">
-          <div className="hero-content">
-            <h1 className="hero-title">Welcome back, {firstName}! 👋</h1>
-            <p className="hero-desc">
-              You've learned <strong>78%</strong> of your goal this week! Keep it up and improve your progress.
-            </p>
-            <div className="hero-progress-pill">
-              <Sparkles size={14} />
-              <span>Adaptive learning path actively personalized</span>
-            </div>
-          </div>
-
-          {/* Cute Studdy Monster Mascot Graphic */}
-          <div className="hero-mascot-wrapper">
-            <svg width="120" height="120" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="25" y="30" width="90" height="90" rx="30" fill="#00D2FF" />
-              <path d="M40 25L30 10M100 25L110 10" stroke="#FF7A00" strokeWidth="8" strokeLinecap="round" />
-              <circle cx="52" cy="65" r="18" fill="white" />
-              <circle cx="88" cy="65" r="18" fill="white" />
-              <circle cx="54" cy="65" r="9" fill="#1E293B" />
-              <circle cx="86" cy="65" r="9" fill="#1E293B" />
-              <circle cx="57" cy="62" r="3" fill="white" />
-              <circle cx="89" cy="62" r="3" fill="white" />
-              <path d="M56 94C62 102 78 102 84 94" stroke="#1E293B" strokeWidth="6" strokeLinecap="round" />
-              <rect x="75" y="85" width="40" height="48" rx="8" fill="#FF4E78" />
-              <path d="M85 96H105M85 106H100" stroke="white" strokeWidth="4" strokeLinecap="round" />
-            </svg>
-          </div>
+    <div style={{ padding: '0 24px 32px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Clean Hero Section */}
+      <div className="hero-section-clean">
+        <div className="hero-pill-badge">
+          <span className="dot" />
+          <span>Adaptive Learning, Made Systematic</span>
         </div>
 
-        {/* Three Stat Cards matching Reference Image */}
-        <div className="stat-widgets-grid">
-          {/* Card 1: Attendance */}
-          <div className="stat-widget-card">
-            <div className="stat-widget-header">
-              <span className="stat-widget-title">Attendance</span>
-              <div className="stat-circle-icon blue">
-                <Clock size={18} />
-              </div>
-            </div>
-            <div className="stat-number-row">
-              <span className="stat-huge-number">19/20</span>
-              <span className="stat-unit-text">days active</span>
-            </div>
-            <span className="stat-footer-text">
-              Well done! You're attending all lessons. Keep going!
-            </span>
-          </div>
+        <h1 className="hero-headline-clean">
+          Complex algorithms.<br />
+          <span className="highlight">Clear understanding.</span>
+        </h1>
 
-          {/* Card 2: Homework / Assessments */}
-          <div className="stat-widget-card">
-            <div className="stat-widget-header">
-              <span className="stat-widget-title">Diagnostics</span>
-              <div className="stat-circle-icon cyan">
-                <CheckCircle2 size={18} />
-              </div>
-            </div>
-            <div className="stat-number-row">
-              <span className="stat-huge-number">53/56</span>
-              <span className="stat-unit-text">tasks completed</span>
-            </div>
-            <span className="stat-footer-text">
-              Don't forget about your next diagnostic practice.
-            </span>
-          </div>
+        <p className="hero-subtitle-clean">
+          Study syllabus-aligned data structures, solve isolated sandbox coding problems, verify conceptual reasoning via AI viva, and track Bayesian Knowledge Tracing progress.
+        </p>
 
-          {/* Card 3: Rating (AI Powered) */}
-          <div className="stat-widget-card">
-            <div className="stat-widget-header">
-              <span className="stat-widget-title">Concept Rating</span>
-              <span className="ai-badge">AI Powered ✨</span>
-            </div>
-            <div className="stat-number-row">
-              <span className="stat-huge-number">89/100</span>
-              <span className="stat-unit-text">mastery score</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="stat-footer-text">Overall readiness</span>
-              <button
-                type="button"
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
-                onClick={() => navigate('/progress')}
-              >
-                Go to report &rarr;
-              </button>
-            </div>
-          </div>
+        <div className="hero-actions-row">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => navigate('/content/concepts')}
+            style={{ padding: '10px 20px', fontSize: '14px' }}
+          >
+            <span>Continue Learning</span>
+            <ArrowRight size={15} />
+          </button>
+
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => navigate('/dashboard')}
+            style={{ padding: '10px 20px', fontSize: '14px' }}
+          >
+            <span>View Syllabus Graph</span>
+          </button>
         </div>
 
-        {/* Timetable / Recommended Action Section */}
-        <div className="studdy-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Calendar size={18} color="var(--primary)" />
-              <h2 style={{ fontSize: '16px', fontWeight: '700' }}>Active Learning Schedule & Timetable</h2>
-            </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-light)', fontWeight: '600' }}>
-              Oct 16, 2026
-            </span>
-          </div>
-
-          {/* Date Picker Pills (Matching Image) */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
-            {['Mon 13', 'Tue 14', 'Wed 15', 'Thu 16', 'Fri 17', 'Sat 18', 'Sun 19'].map((day, i) => {
-              const isToday = day.includes('Thu 16');
-              return (
-                <div
-                  key={i}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: '14px',
-                    background: isToday ? 'var(--primary)' : 'var(--surface-muted)',
-                    color: isToday ? '#FFFFFF' : 'var(--text-muted)',
-                    fontWeight: '700',
-                    fontSize: '12.5px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    boxShadow: isToday ? 'var(--primary-glow)' : 'none',
-                  }}
-                >
-                  {day}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Next Recommended Concept Action Banner */}
-          {nextAction && (
-            <div
-              style={{
-                padding: '16px 20px',
-                borderRadius: '16px',
-                background: 'var(--primary-subtle)',
-                border: '1px solid #BFDBFE',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '16px',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '11.5px', fontWeight: '700', textTransform: 'uppercase' }}>
-                  <Zap size={13} />
-                  <span>Next Adaptive Milestone</span>
-                </div>
-                <h3 style={{ fontSize: '15px', fontWeight: '700', marginTop: '2px', color: 'var(--text-main)' }}>
-                  {nextAction.activityTitle}
-                </h3>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '3px' }}>
-                  {nextAction.reason}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="btn-studdy btn-studdy-primary"
-                onClick={() => navigate('/content/quizzes')}
-              >
-                <span>Start Now</span>
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          )}
+        <div className="hero-specs-row">
+          <span><span className="check">✓</span> Bayesian Knowledge Tracing</span>
+          <span>&bull;</span>
+          <span><span className="check">✓</span> Judge0 Sandboxed Execution</span>
+          <span>&bull;</span>
+          <span><span className="check">✓</span> Zero Hallucination Grounding</span>
         </div>
       </div>
 
-      {/* Right Column: Homework & Assessment Progress (Matching Image!) */}
-      <div className="homework-progress-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700' }}>Homework progress</h2>
-          <span style={{ fontSize: '12.5px', color: 'var(--text-light)', fontWeight: '600', cursor: 'pointer' }}>
-            All ▾
-          </span>
+      {/* Studio Window Card (Matching Reference Image) */}
+      <div className="studio-window-card">
+        <div className="studio-titlebar">
+          <div className="window-traffic-dots">
+            <span className="traffic-dot red" />
+            <span className="traffic-dot yellow" />
+            <span className="traffic-dot green" />
+          </div>
+
+          <div className="studio-breadcrumb">
+            <strong>Pathwise Studio</strong> / Student Learning & Assessment Workspace
+          </div>
+
+          <div className="studio-status-pill">
+            <span className="status-dot" />
+            <span>Ready &bull; CS201 Data Structures Active</span>
+          </div>
         </div>
 
-        {/* Section: To do */}
-        <div>
-          <div className="homework-section-title">To do</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {tasks.filter((t) => t.status === 'todo').map((task) => (
+        <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '24px' }}>
+          {/* Main Left Studio Column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* 3 Metric Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+              <div className="saas-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  Attendance Rate
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)' }}>
+                  19 / 20
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--success)', marginTop: '4px', fontWeight: '600' }}>
+                  95% Active Sessions
+                </div>
+              </div>
+
+              <div className="saas-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  Diagnostic Quizzes
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)' }}>
+                  53 / 56
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Concept checks passed
+                </div>
+              </div>
+
+              <div className="saas-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  BKT Estimated Mastery
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--primary)' }}>
+                  78%
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Overall readiness
+                </div>
+              </div>
+            </div>
+
+            {/* Next Recommended Adaptive Milestone */}
+            {nextAction && (
               <div
-                key={task.id}
-                className="task-item"
-                onClick={() => {
-                  if (task.category === 'quiz') navigate('/content/quizzes');
-                  else navigate('/content/coding');
+                style={{
+                  padding: '18px 20px',
+                  borderRadius: '10px',
+                  background: 'var(--primary-subtle)',
+                  border: '1px solid var(--primary-border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '16px',
                 }}
               >
-                <div className="task-checkbox-circle" />
-                <div style={{ flex: 1 }}>
-                  <div className="task-title">{task.title}</div>
-                  <div className="task-meta">
-                    <Clock size={11} />
-                    <span>Deadline {task.deadline}</span>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '0.04em' }}>
+                    Recommended Next Action
                   </div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
+                    {nextAction.activityTitle}
+                  </h3>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {nextAction.reason}
+                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Section: On review */}
-        <div>
-          <div className="homework-section-title">On review</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {tasks.filter((t) => t.status === 'on_review').map((task) => (
-              <div key={task.id} className="task-item">
-                <div className="task-checkbox-circle" style={{ borderColor: 'var(--warning)' }} />
-                <div style={{ flex: 1 }}>
-                  <div className="task-title">{task.title}</div>
-                  <div className="task-meta">
-                    <Clock size={11} />
-                    <span>Submitted &bull; Awaiting Feedback</span>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => navigate('/content/quizzes')}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  <span>Start Activity</span>
+                  <ArrowRight size={14} />
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
+            )}
 
-        {/* Section: Completed */}
-        <div>
-          <div className="homework-section-title">Completed</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {tasks.filter((t) => t.status === 'completed').map((task) => (
-              <div key={task.id} className="task-item" style={{ opacity: 0.9 }}>
-                <div className="task-checkbox-circle completed">
-                  <CheckCircle2 size={14} color="#FFFFFF" />
+            {/* Timetable Schedule */}
+            <div className="saas-card" style={{ padding: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Calendar size={16} color="var(--primary)" />
+                  <h3 style={{ fontSize: '14px', fontWeight: '700' }}>Scheduled Lectures & Diagnostic Sessions</h3>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div className="task-title" style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>
-                    {task.title}
+                <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
+                  Fall Semester 2026
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--surface-muted)', borderRadius: '8px', fontSize: '13px' }}>
+                  <div>
+                    <span style={{ fontWeight: '600' }}>CS201 Lecture: Self-Balancing AVL Rotations</span>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '2px' }}>Hall 302 &bull; Dr. Priya Nair</div>
                   </div>
-                  <div className="task-meta">
-                    <CheckCircle2 size={11} color="var(--success)" />
-                    <span>Verified: 100% Score</span>
+                  <span className="badge-clean blue">Today &bull; 11:30 AM</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--surface-muted)', borderRadius: '8px', fontSize: '13px' }}>
+                  <div>
+                    <span style={{ fontWeight: '600' }}>CS201 Lab: LRU Cache Isolated Sandbox Test</span>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '2px' }}>Computing Lab 4 &bull; Judge0 Sandbox</div>
                   </div>
+                  <span className="badge-clean green">Tomorrow &bull; 02:00 PM</span>
                 </div>
               </div>
-            ))}
+            </div>
+          </div>
+
+          {/* Right Homework & Task Progress Column */}
+          <div className="saas-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '700' }}>Task & Diagnostic Queue</h3>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>{tasks.length} Total</span>
+            </div>
+
+            {/* To Do */}
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '6px' }}>
+                Pending Action
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {tasks.filter((t) => t.status === 'todo').map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => {
+                      if (task.category === 'quiz') navigate('/content/quizzes');
+                      else navigate('/content/coding');
+                    }}
+                    style={{
+                      padding: '8px 10px',
+                      background: 'var(--surface-muted)',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      fontSize: '12.5px',
+                    }}
+                  >
+                    <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>{task.title}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                      <Clock size={11} />
+                      <span>Due {task.deadline}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Completed */}
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '6px' }}>
+                Completed
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {tasks.filter((t) => t.status === 'completed').map((task) => (
+                  <div
+                    key={task.id}
+                    style={{
+                      padding: '8px 10px',
+                      background: 'var(--surface-subtle)',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      fontSize: '12px',
+                      opacity: 0.8,
+                    }}
+                  >
+                    <div style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>
+                      {task.title}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                      <Check size={11} />
+                      <span>Verified & Evaluated</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
