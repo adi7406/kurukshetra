@@ -303,13 +303,13 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Editor state belongs to the correct attempt; hidden tests are never sent to the client.
 
 ### TASK-026 — Isolated code execution
-**Status:** TODO · **Priority:** P0 before coding launch · **Depends on:** TASK-004, TASK-025
-- [ ] Configure Judge0 or the explicitly approved equivalent.
-- [ ] Execute only in an isolated runner, never in Express.
-- [ ] Enforce language allowlists, CPU/time/memory and payload limits.
-- [ ] Disable unnecessary network/privileged access.
-- [ ] Keep hidden tests and expected outputs server-side.
-- [ ] Rate-limit execution and protect against resource exhaustion.
+**Status:** DONE · **Priority:** P0 before coding launch · **Depends on:** TASK-004, TASK-025
+- [x] Configure Judge0 or the explicitly approved equivalent.
+- [x] Execute only in an isolated runner, never in Express.
+- [x] Enforce language allowlists, CPU/time/memory and payload limits.
+- [x] Disable unnecessary network/privileged access.
+- [x] Keep hidden tests and expected outputs server-side.
+- [x] Rate-limit execution and protect against resource exhaustion.
 
 **Acceptance:** Isolation and hidden-test confidentiality are security-tested before production.
 

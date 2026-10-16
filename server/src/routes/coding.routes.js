@@ -22,6 +22,13 @@ const saveDraftSchema = {
   }),
 };
 
+const runCodeSchema = {
+  body: z.object({
+    sourceCode: z.string().optional(),
+    language: z.enum(['javascript', 'python', 'java', 'cpp', 'c', 'go']).optional(),
+  }),
+};
+
 // Coding session endpoints (API_SPEC Section 5.9)
 router.post(
   '/assessments/:assessmentId/coding-sessions',
@@ -41,4 +48,12 @@ router.put(
 
 router.post('/coding-sessions/:sessionId/close', authenticate, codingController.closeSession);
 
+router.post(
+  '/coding-sessions/:sessionId/run',
+  authenticate,
+  validateRequest(runCodeSchema),
+  codingController.runSampleTests
+);
+
 export default router;
+

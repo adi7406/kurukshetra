@@ -1,4 +1,6 @@
 import { codingService } from '../services/coding.service.js';
+import { executionService } from '../services/execution.service.js';
+
 
 export const codingController = {
   /**
@@ -96,4 +98,37 @@ export const codingController = {
       next(error);
     }
   },
+
+  /**
+   * Run sample tests for active coding session
+   */
+  async runSampleTests(req, res, next) {
+    try {
+      const { sessionId } = req.params;
+      const { language, sourceCode } = req.body || {};
+      const user = req.user;
+
+      const session = await codingService.getSessionById(sessionId, user);
+
+      const codeToRun = sourceCode !== undefined ? sourceCode : session.currentCode;
+      const langToRun = language || session.language;
+
+      const result = await executionService.runSampleTests({
+        studentId: user.id,
+        questionVersionId: session.questionVersionId,
+        language: langToRun,
+        sourceCode: codeToRun,
+      });
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+

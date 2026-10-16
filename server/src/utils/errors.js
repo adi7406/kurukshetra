@@ -47,3 +47,6 @@ export class RateLimitError extends AppError {
     super(message, 429, 'RATE_LIMITED');
   }
 }
+
+export const TooManyRequestsError = RateLimitError;
+
