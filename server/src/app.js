@@ -21,6 +21,7 @@ import codingRoutes from './routes/coding.routes.js';
 import vivaRoutes from './routes/viva.routes.js';
 import integrityRoutes from './routes/integrity.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use(env.API_PREFIX, codingRoutes);
 app.use(env.API_PREFIX, vivaRoutes);
 app.use(env.API_PREFIX, integrityRoutes);
 app.use(env.API_PREFIX, dashboardRoutes);
+app.use(env.API_PREFIX, reportsRoutes);
 
 if (env.API_PREFIX !== '/api') {
   app.use('/api', healthRoutes);
@@ -84,6 +86,7 @@ if (env.API_PREFIX !== '/api') {
   app.use('/api', vivaRoutes);
   app.use('/api', integrityRoutes);
   app.use('/api', dashboardRoutes);
+  app.use('/api', reportsRoutes);
 }
 
 

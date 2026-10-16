@@ -392,11 +392,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Trainers see only assigned/authorized courses and accurate aggregates.
 
 ### TASK-035 — Reports and export
-**Status:** TODO · **Priority:** P2 · **Depends on:** TASK-033, TASK-034
-- [ ] Define approved reports and formats.
-- [ ] Enforce authorization and data minimization.
-- [ ] Use private storage and expiring links for exports.
-- [ ] Audit privileged exports where required.
+**Status:** DONE · **Priority:** P2 · **Depends on:** TASK-033, TASK-034
+- [x] Define approved reports and formats.
+- [x] Enforce authorization and data minimization.
+- [x] Use private storage and expiring links for exports.
+- [x] Audit privileged exports where required.
 
 **Acceptance:** Export contains only permitted data for the requester.
 
