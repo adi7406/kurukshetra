@@ -293,12 +293,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 ## 10. M7 — Coding Assessments and Replay
 
 ### TASK-025 — Coding editor
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-018
-- [ ] Integrate Monaco Editor or the editor approved by the PRD.
-- [ ] Support configured languages only.
-- [ ] Load starter code and constraints.
-- [ ] Save drafts according to attempt rules.
-- [ ] Show execution and error states clearly.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-018
+- [x] Integrate Monaco Editor or the editor approved by the PRD.
+- [x] Support configured languages only.
+- [x] Load starter code and constraints.
+- [x] Save drafts according to attempt rules.
+- [x] Show execution and error states clearly.
 
 **Acceptance:** Editor state belongs to the correct attempt; hidden tests are never sent to the client.
 
