@@ -383,11 +383,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Values come from authorized APIs; missing data is not fabricated.
 
 ### TASK-034 — Trainer dashboard
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-010, TASK-018, TASK-021
-- [ ] Show course participation and assessment summaries.
-- [ ] Show drafts awaiting review.
-- [ ] Provide authorized learner progress views.
-- [ ] Minimize unnecessary personal data.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-010, TASK-018, TASK-021
+- [x] Show course participation and assessment summaries.
+- [x] Show drafts awaiting review.
+- [x] Provide authorized learner progress views.
+- [x] Minimize unnecessary personal data.
 
 **Acceptance:** Trainers see only assigned/authorized courses and accurate aggregates.
 
