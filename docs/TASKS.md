@@ -376,9 +376,9 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 ## 12. M9 — Dashboards and Reports
 
 ### TASK-033 — Learner dashboard
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-021, TASK-023, TASK-024
-- [ ] Show courses, progress, assessment history, mastery, and recommendations.
-- [ ] Include loading, empty, error, and stale-data states.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-021, TASK-023, TASK-024
+- [x] Show courses, progress, assessment history, mastery, and recommendations.
+- [x] Include loading, empty, error, and stale-data states.
 
 **Acceptance:** Values come from authorized APIs; missing data is not fabricated.
 
