@@ -199,13 +199,13 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Learner APIs never leak protected answers; historical attempts retain their original question versions.
 
 ### TASK-016 — AI content/question generation
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-014, TASK-015, TASK-019
-- [ ] Use the shared provider adapter and versioned prompts.
-- [ ] Validate all model output against runtime schemas.
-- [ ] Ground content in authorized sources where applicable.
-- [ ] Save generated items as drafts with source/model metadata.
-- [ ] Add bounded retries, timeouts, usage tracking, and safe failure states.
-- [ ] Require trainer review before publication where specified.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-014, TASK-015, TASK-019
+- [x] Use the shared provider adapter and versioned prompts.
+- [x] Validate all model output against runtime schemas.
+- [x] Ground content in authorized sources where applicable.
+- [x] Save generated items as drafts with source/model metadata.
+- [x] Add bounded retries, timeouts, usage tracking, and safe failure states.
+- [x] Require trainer review before publication where specified.
 
 **Acceptance:** Invalid output is rejected; provider failure does not break unrelated features; generated content is not silently published.
 

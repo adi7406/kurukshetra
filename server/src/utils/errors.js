@@ -50,3 +50,9 @@ export class RateLimitError extends AppError {
 
 export const TooManyRequestsError = RateLimitError;
 
+export class GatewayTimeoutError extends AppError {
+  constructor(message = 'Upstream gateway or provider timed out.') {
+    super(message, 504, 'GATEWAY_TIMEOUT');
+  }
+}
+
