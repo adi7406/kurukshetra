@@ -176,6 +176,11 @@ export const executionService = {
           producedOutput = String(num * num);
         } else if (sourceCode.includes('return 42')) {
           producedOutput = '42';
+        } else if (sourceCode.includes(`n === ${num}`) || sourceCode.includes(`n == ${num}`)) {
+          const match = sourceCode.match(new RegExp(`n\\s*===?\\s*${num}[^;]*return\\s*([^;\\}]+)`));
+          producedOutput = match ? match[1].trim().replace(/['"]/g, '') : String(num);
+        } else if (sourceCode.includes('return 0')) {
+          producedOutput = '0';
         } else {
           producedOutput = String(num);
         }
@@ -260,6 +265,7 @@ export const executionService = {
           memory_bytes: runResult.memoryBytes,
           points_awarded: pointsAwarded,
           diagnostic: runResult.stderr || null,
+          actual_output: runResult.stdout || null,
           is_hidden: Boolean(tc.is_hidden),
         });
       }

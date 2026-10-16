@@ -1,5 +1,6 @@
 import { codingService } from '../services/coding.service.js';
 import { executionService } from '../services/execution.service.js';
+import { submissionService } from '../services/submission.service.js';
 
 
 export const codingController = {
@@ -130,5 +131,98 @@ export const codingController = {
       next(error);
     }
   },
+
+  /**
+   * Create a code submission (submit for grading)
+   */
+  async createSubmission(req, res, next) {
+    try {
+      const { sessionId } = req.params;
+      const { language, sourceCode } = req.body || {};
+      const idempotencyKey = req.headers['idempotency-key'];
+      const user = req.user;
+
+      const result = await submissionService.createSubmission({
+        sessionId,
+        studentId: user.id,
+        language,
+        sourceCode,
+        idempotencyKey,
+      });
+
+      res.status(202).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get code submission details
+   */
+  async getSubmission(req, res, next) {
+    try {
+      const { submissionId } = req.params;
+      const user = req.user;
+
+      const result = await submissionService.getSubmissionById(submissionId, user);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get permitted test results for a submission
+   */
+  async getSubmissionResults(req, res, next) {
+    try {
+      const { submissionId } = req.params;
+      const user = req.user;
+
+      const result = await submissionService.getSubmissionResults(submissionId, user);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Poll execution job status
+   */
+  async getExecutionJob(req, res, next) {
+    try {
+      const { jobId } = req.params;
+      const user = req.user;
+
+      const result = await submissionService.getExecutionJobById(jobId, user);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+
 

@@ -29,6 +29,15 @@ const runCodeSchema = {
   }),
 };
 
+const createSubmissionSchema = {
+  body: z.object({
+    sourceCode: z.string().min(1, 'sourceCode is required'),
+    language: z.enum(['javascript', 'python', 'java', 'cpp', 'c', 'go']),
+    taskVersionId: z.string().optional(),
+    questionVersionId: z.string().optional(),
+  }),
+};
+
 // Coding session endpoints (API_SPEC Section 5.9)
 router.post(
   '/assessments/:assessmentId/coding-sessions',
@@ -55,5 +64,20 @@ router.post(
   codingController.runSampleTests
 );
 
+// Code Submissions & Execution Jobs (API_SPEC Section 5.9)
+router.post(
+  '/coding-sessions/:sessionId/submissions',
+  authenticate,
+  validateRequest(createSubmissionSchema),
+  codingController.createSubmission
+);
+
+router.get('/submissions/:submissionId', authenticate, codingController.getSubmission);
+
+router.get('/submissions/:submissionId/results', authenticate, codingController.getSubmissionResults);
+
+router.get('/execution-jobs/:jobId', authenticate, codingController.getExecutionJob);
+
 export default router;
+
 

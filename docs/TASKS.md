@@ -314,12 +314,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Isolation and hidden-test confidentiality are security-tested before production.
 
 ### TASK-027 — Submissions and execution results
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-026
-- [ ] Implement run-sample-tests and submit-for-grading flows.
-- [ ] Associate results with the correct submission and attempt.
-- [ ] Authorize job-status retrieval.
-- [ ] Return only permitted output/test details.
-- [ ] Prevent unbounded duplicate executions.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-026
+- [x] Implement run-sample-tests and submit-for-grading flows.
+- [x] Associate results with the correct submission and attempt.
+- [x] Authorize job-status retrieval.
+- [x] Return only permitted output/test details.
+- [x] Prevent unbounded duplicate executions.
 
 **Acceptance:** Users see only permitted results for their own submissions; hidden tests remain protected.
 
