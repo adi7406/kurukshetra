@@ -221,11 +221,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 ## 8. M5 — Assessments and Grading
 
 ### TASK-018 — Assessments and test series
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-015, TASK-017
-- [ ] Implement assessment creation and question assignment.
-- [ ] Implement test-series organization and access rules.
-- [ ] Enforce timing, attempt limits, availability, and scoring rules.
-- [ ] Snapshot question versions for attempts.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-015, TASK-017
+- [x] Implement assessment creation and question assignment.
+- [x] Implement test-series organization and access rules.
+- [x] Enforce timing, attempt limits, availability, and scoring rules.
+- [x] Snapshot question versions for attempts.
 
 **Acceptance:** Only published/authorized assessments can be started; historical attempts reference the correct versions.
 
