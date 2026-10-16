@@ -15,6 +15,7 @@ import ProgressPage from './pages/ProgressPage';
 import ProfilePage from './pages/ProfilePage';
 import TeacherContentUploadPage from './pages/TeacherContentUploadPage';
 import TeacherStudentProgressPage from './pages/TeacherStudentProgressPage';
+import SessionReplayPage from './pages/SessionReplayPage';
 
 import './App.css';
 
@@ -97,6 +98,7 @@ function AppRoutes() {
         {/* Teacher Specific Routes */}
         <Route path="/teacher/content-upload" element={<TeacherContentUploadPage />} />
         <Route path="/teacher/student-progress" element={<TeacherStudentProgressPage />} />
+        <Route path="/teacher/replay/:sessionId" element={<SessionReplayPage />} />
       </Route>
 
       {/* Fallback & Root Redirects */}

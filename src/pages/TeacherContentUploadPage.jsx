@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   UploadCloud,
   FileText,
@@ -7,18 +8,21 @@ import {
   HelpCircle,
   Code2,
   ArrowRight,
-  RefreshCw,
   Check,
   Edit2,
   Lock,
   X,
-  FileCode,
 } from 'lucide-react';
 import { SAMPLE_SYLLABUS_TEXT } from '../services/mockData';
-import { learningService } from '../services/learningService';
+import PillTabs from '../components/common/PillTabs';
+import Chip from '../components/common/Chip';
+import { useToast } from '../context/ToastContext';
 
 export function TeacherContentUploadPage() {
-  const [activeUploadTab, setActiveUploadTab] = useState('pdf'); // 'pdf' | 'text'
+  const navigate = useNavigate();
+  const toast = useToast();
+
+  const [activeUploadTab, setActiveUploadTab] = useState('pdf');
   const [syllabusText, setSyllabusText] = useState(SAMPLE_SYLLABUS_TEXT);
   const [fileName, setFileName] = useState('cs201_data_structures_syllabus.pdf');
   const [isExtracting, setIsExtracting] = useState(false);
@@ -26,15 +30,13 @@ export function TeacherContentUploadPage() {
   const [currentStepText, setCurrentStepText] = useState('');
   const [pipelineLogs, setPipelineLogs] = useState([]);
   const [extractedData, setExtractedData] = useState(null);
-  const [activeTab, setActiveTab] = useState('concepts'); // 'concepts' | 'quizzes' | 'coding'
+  const [activeTab, setActiveTab] = useState('concepts');
   const [published, setPublished] = useState(false);
 
-  // Form options matching Screenshot 2
   const [targetCourse, setTargetCourse] = useState('CS201 Data Structures & Algorithmic Problem Solving');
   const [detailLevel, setDetailLevel] = useState('Comprehensive (Concepts, Quizzes & Code)');
   const [validationRule, setValidationRule] = useState('Strict DAG (Cycle Validation)');
 
-  // Edit modal
   const [editingItem, setEditingItem] = useState(null);
 
   const handleFileUpload = (e) => {
@@ -45,6 +47,7 @@ export function TeacherContentUploadPage() {
         `Course Syllabus: ${file.name.replace(/\.[^/.]+$/, '')}\n\n` +
           `Module 1: Advanced Computing Foundations\n- Concept 1: Memory Layout & Pointers\n- Concept 2: Cache Hierarchies\n\nModule 2: Algorithmic Paradigms\n- Concept 3: Divide and Conquer Bounds\n- Concept 4: Dynamic Programming Invariants`
       );
+      toast.info(`Loaded ${file.name}`);
     }
   };
 
@@ -53,7 +56,7 @@ export function TeacherContentUploadPage() {
     setExtractionProgress(10);
     setCurrentStepText('Document stream ingested. Parsing modules and candidate concepts...');
     setPipelineLogs([
-      '[01/04] Document stream ingested via Multer in-memory stream buffer.',
+      '[01/04] Document stream ingested via in-memory stream buffer.',
       '[01/04] Parsed 2 modules, identifying candidate concept entities...',
     ]);
 
@@ -69,19 +72,19 @@ export function TeacherContentUploadPage() {
 
     setTimeout(() => {
       setExtractionProgress(65);
-      setCurrentStepText('Synthesizing diagnostic Quizzes with distractors & pedagogical explanations...');
+      setCurrentStepText('Synthesizing diagnostic Quizzes with Bloom-aligned rationales...');
       setPipelineLogs((prev) => [
         ...prev,
-        '[03/04] Formulated 2 diagnostic MCQs with Bloom-aligned distractor rationales.',
+        '[03/04] Formulated 2 diagnostic MCQs with distractor rationales.',
       ]);
     }, 1400);
 
     setTimeout(() => {
       setExtractionProgress(85);
-      setCurrentStepText('Formulating isolated Judge0 Coding Assessments & test suites...');
+      setCurrentStepText('Formulating isolated Coding Assessments & test suites...');
       setPipelineLogs((prev) => [
         ...prev,
-        '[04/04] Formulated 2 coding challenges with 18 unit tests & post-submit viva prompts.',
+        '[04/04] Formulated 2 coding challenges with 18 unit tests & viva prompts.',
       ]);
     }, 2100);
 
@@ -138,296 +141,270 @@ export function TeacherContentUploadPage() {
               'It uses variable probe intervals computed from i^2 rather than a fixed step of 1',
               'It permanently allocates twice as much RAM per element',
               'It converts the hash table into a circular linked list',
-              'It eliminates the need for modulo arithmetic',
             ],
             correct: 0,
-            explanation: 'Quadratic probing introduces non-linear intervals (h(k) + i^2) mod M, breaking contiguous runs of filled slots.',
-          },
-          {
-            id: 'ext_q2',
-            concept: 'Self-Balancing AVL Trees',
-            prompt: 'Under what balance factor condition does a node in an AVL tree require a rotation?',
-            options: [
-              'When balance factor is 0',
-              'When the balance factor becomes strictly greater than 1 or less than -1',
-              'Whenever a new node is inserted at the leaf level',
-              'When all leaves are at prime depths',
-            ],
-            correct: 1,
-            explanation: 'The AVL property permits balance factors of only -1, 0, or +1. Any discrepancy beyond this triggers rebalancing rotations.',
+            explanation: 'Quadratic probing offsets probes by quadratic polynomial increments, dispersing clusters across non-consecutive buckets.',
           },
         ],
         codingAssessments: [
           {
-            id: 'ext_code1',
-            concept: 'Hash Tables & Collision Resolution',
-            title: 'LRU Cache Design with Doubly-Linked Sentinel Nodes',
+            id: 'ext_ca1',
+            concept: 'Hash Tables & Quadratic Probing',
+            title: 'LRU Cache Design (Doubly-Linked Sentinel)',
             difficulty: 'Medium',
-            constraints: 'O(1) get and put time complexity; capacity <= 3000',
-            sampleTest: 'Input: LRUCache(2), put(1,1), put(2,2), get(1) -> Expected: 1',
-          },
-          {
-            id: 'ext_code2',
-            concept: 'Dynamic Arrays & Geometric Doubling',
-            title: 'In-Place Dynamic Array Compaction',
-            difficulty: 'Easy',
-            constraints: 'Time O(N), Extra Space O(1)',
-            sampleTest: 'Input: [0,1,0,3,12] -> Expected: [1,3,12,0,0]',
+            constraints: 'O(1) average time complexity for both get and put operations.',
+            sampleTest: 'cache = LRUCache(2)\ncache.put(1, 1)\ncache.put(2, 2)\nassert cache.get(1) == 1',
           },
         ],
       });
-
       setIsExtracting(false);
+      toast.success('Curriculum extracted and validated!');
     }, 2800);
   };
 
-  const handlePublishCurriculum = async () => {
+  const handlePublishCurriculum = () => {
     setPublished(true);
-    setTimeout(() => {
-      alert('Content successfully published to active student curriculum.');
-    }, 200);
+    toast.success('Curriculum successfully published to active student graph!');
   };
 
-  return (
-    <div style={{ padding: '0 24px 32px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Syllabus Document Ingestion & Pipeline</h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            Upload syllabus documents to extract prerequisite DAGs, diagnostic quizzes, and coding assessments.
-          </p>
-        </div>
+  const reviewTabs = [
+    { id: 'concepts', label: 'Concepts', count: extractedData?.concepts?.length || 3 },
+    { id: 'quizzes', label: 'Quizzes', count: extractedData?.quizzes?.length || 1 },
+    { id: 'coding', label: 'Coding Challenges', count: extractedData?.codingAssessments?.length || 1 },
+  ];
 
-        <div className="badge-clean blue">
-          Multer In-Memory Processing Active
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      {/* Title */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>Home</span>
+          <span>/</span>
+          <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>Syllabus & Upload</span>
         </div>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em' }}>
+          Instructor Syllabus Ingestion
+        </div>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.01em', margin: '4px 0 0 0' }}>
+          Syllabus & Curriculum Upload Studio
+        </h1>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
+          Transform course syllabi into validated concept graphs, diagnostic quizzes, and coding challenges.
+        </p>
       </div>
 
-      {/* Main Studio Ingestion Window (Matching Reference Images 1 & 2) */}
-      <div className="studio-window-card">
-        {/* Titlebar with Mac Traffic Dots */}
-        <div className="studio-titlebar">
-          <div className="window-traffic-dots">
-            <span className="traffic-dot red" />
-            <span className="traffic-dot yellow" />
-            <span className="traffic-dot green" />
-          </div>
+      {/* Main Upload Frame */}
+      <div
+        style={{
+          background: 'var(--surface)',
+          borderRadius: '20px',
+          border: '1px solid var(--border-hairline)',
+          boxShadow: 'var(--shadow-card)',
+          padding: '24px',
+        }}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 340px)', gap: '24px', alignItems: 'start' }}>
+          {/* Left: Upload Input */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className={activeUploadTab === 'pdf' ? 'btn-coral-pill btn-compact' : 'btn-ghost-pill btn-compact'}
+                onClick={() => setActiveUploadTab('pdf')}
+              >
+                <FileText size={13} strokeWidth={1.5} />
+                <span>Upload PDF / Document</span>
+              </button>
+              <button
+                type="button"
+                className={activeUploadTab === 'text' ? 'btn-coral-pill btn-compact' : 'btn-ghost-pill btn-compact'}
+                onClick={() => setActiveUploadTab('text')}
+              >
+                <span>Paste Syllabus Text</span>
+              </button>
+            </div>
 
-          <div className="studio-breadcrumb">
-            <strong>Pathwise Studio</strong> / Syllabus Ingestion & Extraction Workspace
-          </div>
-
-          <div className="studio-status-pill">
-            <span className="status-dot" />
-            <span>Ready &bull; In-Memory Stream & AI Engine</span>
-          </div>
-        </div>
-
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {/* Upload Method Tabs matching Image 2 */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setActiveUploadTab('pdf')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '12.5px',
-                background: activeUploadTab === 'pdf' ? 'var(--primary-subtle)' : '#FFF',
-                borderColor: activeUploadTab === 'pdf' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeUploadTab === 'pdf' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: activeUploadTab === 'pdf' ? '700' : '500',
-              }}
-            >
-              <UploadCloud size={14} />
-              <span>Upload PDF / DOCX</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setActiveUploadTab('text')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '12.5px',
-                background: activeUploadTab === 'text' ? 'var(--primary-subtle)' : '#FFF',
-                borderColor: activeUploadTab === 'text' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeUploadTab === 'text' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: activeUploadTab === 'text' ? '700' : '500',
-              }}
-            >
-              <FileText size={14} />
-              <span>Paste Text</span>
-            </button>
-          </div>
-
-          {/* Upload Dropzone (Directly matching Image 2 dropzone) */}
-          {activeUploadTab === 'pdf' ? (
-            <label className="studio-dropzone">
-              <input type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
-              <div className="studio-dropzone-icon">
-                <UploadCloud size={20} />
-              </div>
-
-              <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>
-                Drag and drop your syllabus here, or click to browse
-              </div>
-
-              <div style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '14px' }}>
-                PDF or DOCX documents up to 10 MB (Official syllabi, course guidelines, university curriculum)
-              </div>
-
-              <div className="btn-secondary" style={{ padding: '6px 16px', fontSize: '12.5px', pointerEvents: 'none' }}>
-                Browse Document
-              </div>
-
-              {fileName && (
-                <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--primary)', fontWeight: '600' }}>
-                  Selected: {fileName}
+            {activeUploadTab === 'pdf' ? (
+              <label
+                style={{
+                  border: '2px dashed var(--border-hairline)',
+                  background: 'var(--surface-muted)',
+                  borderRadius: '16px',
+                  padding: '36px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--coral)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-hairline)'; }}
+              >
+                <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border-hairline)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--coral)',
+                    marginBottom: '12px',
+                    boxShadow: 'var(--shadow-card)',
+                  }}
+                >
+                  <UploadCloud size={22} strokeWidth={1.5} />
                 </div>
-              )}
-            </label>
-          ) : (
-            <textarea
-              rows={6}
-              value={syllabusText}
-              onChange={(e) => setSyllabusText(e.target.value)}
-              placeholder="Paste syllabus text here..."
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                fontSize: '13px',
-                fontFamily: 'var(--font-mono)',
-                outline: 'none',
-              }}
-            />
-          )}
-
-          {/* Form Controls matching Image 2 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
-                Target Course Title (Curriculum Grounding)
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  Click to choose PDF or drag & drop
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  {fileName ? `Selected: ${fileName}` : 'Supports PDF, Word, and text syllabi (up to 25MB)'}
+                </div>
               </label>
-              <input
-                type="text"
+            ) : (
+              <textarea
+                rows={8}
+                value={syllabusText}
+                onChange={(e) => setSyllabusText(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  border: '1px solid var(--border-hairline)',
+                  fontFamily: 'inherit',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  background: 'var(--surface-muted)',
+                  color: 'var(--text-main)',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            )}
+          </div>
+
+          {/* Right: Extraction Configuration */}
+          <div
+            style={{
+              padding: '20px',
+              borderRadius: '16px',
+              background: 'var(--surface-muted)',
+              border: '1px solid var(--border-hairline)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Target Course Curriculum
+              </label>
+              <select
                 value={targetCourse}
                 onChange={(e) => setTargetCourse(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border)',
-                  fontSize: '13px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-hairline)',
+                  fontSize: '12.5px',
+                  background: 'var(--surface)',
+                  color: 'var(--text-main)',
                   outline: 'none',
                 }}
-              />
+              >
+                <option value="CS201 Data Structures & Algorithmic Problem Solving">
+                  CS201 Data Structures
+                </option>
+                <option value="CS301 Advanced Algorithms & Graph Theory">
+                  CS301 Advanced Algorithms
+                </option>
+              </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
-                  Extraction Detail Level
-                </label>
-                <select
-                  value={detailLevel}
-                  onChange={(e) => setDetailLevel(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    fontSize: '12.5px',
-                    background: '#FFF',
-                  }}
-                >
-                  <option value="Comprehensive (Concepts, Quizzes & Code)">Comprehensive (Concepts, Quizzes & Code)</option>
-                  <option value="Standard (Concepts & Quizzes)">Standard (Concepts & Quizzes)</option>
-                  <option value="Fast (Concepts Only)">Fast (Concepts Only)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
-                  Prerequisite Graph Model
-                </label>
-                <select
-                  value={validationRule}
-                  onChange={(e) => setValidationRule(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    fontSize: '12.5px',
-                    background: '#FFF',
-                  }}
-                >
-                  <option value="Strict DAG (Cycle Validation)">Strict DAG (Cycle Validation)</option>
-                  <option value="Relaxed Prerequisite Edges">Relaxed Prerequisite Edges</option>
-                </select>
-              </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Prerequisite Graph Soundness
+              </label>
+              <select
+                value={validationRule}
+                onChange={(e) => setValidationRule(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-hairline)',
+                  fontSize: '12.5px',
+                  background: 'var(--surface)',
+                  color: 'var(--text-main)',
+                  outline: 'none',
+                }}
+              >
+                <option value="Strict DAG (Cycle Validation)">Strict DAG (Cycle Validation)</option>
+                <option value="Relaxed Prerequisite Edges">Relaxed Prerequisite Edges</option>
+              </select>
             </div>
 
-            {/* Action Button matching Image 2 */}
             <button
               type="button"
-              className="btn-primary"
+              className="btn-coral-pill"
               onClick={handleRunLLMExtraction}
               disabled={isExtracting}
-              style={{ width: '100%', padding: '10px', fontSize: '14px', marginTop: '4px' }}
+              style={{ width: '100%', marginTop: '6px' }}
             >
-              {isExtracting ? 'Extracting Curriculum via AI Pipeline...' : 'Extract This Document'}
+              {isExtracting ? 'Extracting Curriculum...' : 'Extract This Document'}
             </button>
 
-            {/* Privacy Guarantee line matching Image 2 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-light)', marginTop: '2px' }}>
-              <Lock size={13} color="var(--success)" />
-              <span><strong>Privacy Guarantee:</strong> Documents are processed in-memory and verified for acyclic prerequisite soundness.</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+              <Lock size={13} strokeWidth={1.5} color="var(--mastery-solid)" />
+              <span>Documents processed in-memory with acyclic validation.</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Extraction Multi-Stage Progress Terminal */}
+      {/* Extraction Terminal */}
       {isExtracting && (
-        <div className="saas-card animate-fade-in" style={{ padding: '18px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: '20px',
+            border: '1px solid var(--border-hairline)',
+            boxShadow: 'var(--shadow-card)',
+            padding: '22px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>
               {currentStepText}
             </span>
-            <span style={{ fontSize: '13.5px', fontWeight: '800', color: 'var(--primary)' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--coral)' }}>
               {extractionProgress}%
             </span>
           </div>
 
-          <div style={{ width: '100%', height: '6px', background: 'var(--surface-muted)', borderRadius: '9999px', overflow: 'hidden', marginBottom: '14px' }}>
-            <div
-              style={{
-                width: `${extractionProgress}%`,
-                height: '100%',
-                background: 'var(--primary)',
-                transition: 'width 250ms ease',
-              }}
-            />
+          <div style={{ width: '100%', height: '6px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-pill)', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ width: `${extractionProgress}%`, height: '100%', background: 'var(--coral)', transition: 'width 250ms ease' }} />
           </div>
 
           <div
             style={{
-              background: '#0F172A',
-              color: '#F8FAFC',
-              borderRadius: '8px',
-              padding: '12px 14px',
+              background: '#16161A',
+              color: '#ECEAE8',
+              borderRadius: '14px',
+              padding: '14px 16px',
               fontFamily: 'var(--font-mono)',
-              fontSize: '11.5px',
+              fontSize: '12px',
               lineHeight: '1.6',
             }}
           >
             {pipelineLogs.map((log, i) => (
-              <div key={i} style={{ color: log.includes('[COMPLETE]') ? '#34D399' : '#94A3B8' }}>
+              <div key={i} style={{ color: log.includes('[COMPLETE]') ? '#17A673' : '#9E9EA8' }}>
                 &gt; {log}
               </div>
             ))}
@@ -435,273 +412,236 @@ export function TeacherContentUploadPage() {
         </div>
       )}
 
-      {/* Extracted Curriculum Review Workspace (3 Tabs) */}
+      {/* Extracted Curriculum Review Workspace */}
       {extractedData && (
-        <div className="saas-card animate-fade-in" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: '20px',
+            border: '1px solid var(--border-hairline)',
+            boxShadow: 'var(--shadow-card)',
+            padding: '24px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 size={16} color="var(--success)" />
-                <h2 style={{ fontSize: '16px', fontWeight: '700' }}>Synthesized Curriculum Review</h2>
+              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em' }}>
+                Review & Publish
               </div>
-              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Review generated Concepts, Quizzes on Concepts, and Coding Assessments before publishing.
-              </p>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
+                Synthesized Curriculum Review
+              </h2>
             </div>
 
             <button
               type="button"
-              className="btn-primary"
-              style={{ background: published ? 'var(--success)' : undefined, borderColor: published ? 'var(--success)' : undefined }}
+              className={published ? 'btn-ghost-pill' : 'btn-coral-pill'}
               onClick={handlePublishCurriculum}
               disabled={published}
             >
               {published ? (
                 <>
-                  <Check size={14} />
+                  <Check size={14} strokeWidth={2} />
                   <span>Curriculum Live for Students</span>
                 </>
               ) : (
                 <>
-                  <ArrowRight size={14} />
                   <span>Approve & Publish to Curriculum</span>
+                  <ArrowRight size={14} strokeWidth={1.5} />
                 </>
               )}
             </button>
           </div>
 
-          {/* 3 Review Tabs */}
-          <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--border)', paddingBottom: '10px', marginBottom: '16px' }}>
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{
-                padding: '6px 12px',
-                fontSize: '12.5px',
-                background: activeTab === 'concepts' ? 'var(--primary-subtle)' : '#FFF',
-                borderColor: activeTab === 'concepts' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeTab === 'concepts' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: activeTab === 'concepts' ? '700' : '500',
-              }}
-              onClick={() => setActiveTab('concepts')}
-            >
-              Concepts ({extractedData.concepts.length})
-            </button>
+          {/* Review Tabs */}
+          <PillTabs tabs={reviewTabs} activeTab={activeTab} onChange={(id) => setActiveTab(id)} />
 
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{
-                padding: '6px 12px',
-                fontSize: '12.5px',
-                background: activeTab === 'quizzes' ? 'var(--primary-subtle)' : '#FFF',
-                borderColor: activeTab === 'quizzes' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeTab === 'quizzes' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: activeTab === 'quizzes' ? '700' : '500',
-              }}
-              onClick={() => setActiveTab('quizzes')}
-            >
-              Quizzes on Concepts ({extractedData.quizzes.length})
-            </button>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{
-                padding: '6px 12px',
-                fontSize: '12.5px',
-                background: activeTab === 'coding' ? 'var(--primary-subtle)' : '#FFF',
-                borderColor: activeTab === 'coding' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeTab === 'coding' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: activeTab === 'coding' ? '700' : '500',
-              }}
-              onClick={() => setActiveTab('coding')}
-            >
-              Coding Assessments ({extractedData.codingAssessments.length})
-            </button>
-          </div>
-
-          {/* TAB 1: CONCEPTS */}
-          {activeTab === 'concepts' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
-              {extractedData.concepts.map((concept) => (
-                <div
-                  key={concept.id}
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface-subtle)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="badge-clean blue">{concept.module}</span>
-                      <button
-                        type="button"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}
-                        onClick={() => setEditingItem(concept)}
-                      >
-                        <Edit2 size={13} />
-                      </button>
-                    </div>
-
-                    <h3 style={{ fontSize: '14.5px', fontWeight: '700', marginTop: '6px', color: 'var(--text-main)' }}>
-                      {concept.name}
-                    </h3>
-                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {concept.description}
-                    </p>
-
-                    <div style={{ marginTop: '8px', fontSize: '11.5px', color: 'var(--text-light)' }}>
-                      <strong>Prerequisite:</strong> {concept.prerequisite}
-                    </div>
-                  </div>
-
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '6px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
-                    <strong>Objectives:</strong>
-                    <ul style={{ paddingLeft: '14px', marginTop: '2px' }}>
-                      {concept.objectives.map((obj, i) => (
-                        <li key={i}>{obj}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* TAB 2: QUIZZES */}
-          {activeTab === 'quizzes' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {extractedData.quizzes.map((q) => (
-                <div
-                  key={q.id}
-                  style={{
-                    padding: '16px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface-subtle)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="badge-clean blue">Concept: {q.concept}</span>
-                    <span className="badge-clean amber">Diagnostic Item</span>
-                  </div>
-
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '10px' }}>
-                    {q.prompt}
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {q.options.map((opt, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          padding: '7px 10px',
-                          borderRadius: '6px',
-                          background: i === q.correct ? 'var(--success-subtle)' : 'var(--surface)',
-                          border: i === q.correct ? '1px solid var(--success-border)' : '1px solid var(--border)',
-                          fontSize: '12.5px',
-                          fontWeight: i === q.correct ? '600' : '400',
-                          color: i === q.correct ? '#065F46' : 'var(--text-main)',
-                        }}
-                      >
-                        {i === q.correct ? '✓ Correct: ' : '• '} {opt}
+          <div style={{ marginTop: '18px' }}>
+            {/* TAB 1: CONCEPTS */}
+            {activeTab === 'concepts' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                {extractedData.concepts.map((concept) => (
+                  <div
+                    key={concept.id}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-hairline)',
+                      background: 'var(--surface-muted)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Chip variant="default" size="sm">{concept.module}</Chip>
+                        <button
+                          type="button"
+                          className="icon-btn-circle"
+                          style={{ width: '28px', height: '28px' }}
+                          onClick={() => setEditingItem(concept)}
+                        >
+                          <Edit2 size={12} strokeWidth={1.5} />
+                        </button>
                       </div>
-                    ))}
-                  </div>
 
-                  <div style={{ marginTop: '8px', padding: '8px 10px', background: 'var(--surface-muted)', borderRadius: '6px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
-                    <strong>Pedagogical Rationale:</strong> {q.explanation}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      <h3 style={{ fontSize: '15px', fontWeight: 600, marginTop: '8px', color: 'var(--text-main)', margin: '8px 0 4px 0' }}>
+                        {concept.name}
+                      </h3>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                        {concept.description}
+                      </p>
 
-          {/* TAB 3: CODING */}
-          {activeTab === 'coding' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {extractedData.codingAssessments.map((ca) => (
-                <div
-                  key={ca.id}
-                  style={{
-                    padding: '16px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface-subtle)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="badge-clean blue">Concept: {ca.concept}</span>
-                    <span className="badge-clean amber">{ca.difficulty}</span>
+                      <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        <strong>Prerequisite:</strong> {concept.prerequisite}
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid var(--border-hairline)', paddingTop: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                      <strong>Objectives:</strong>
+                      <ul style={{ paddingLeft: '16px', marginTop: '2px', margin: 0 }}>
+                        {concept.objectives.map((obj, i) => (
+                          <li key={i}>{obj}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>
-                    {ca.title}
-                  </h3>
-                  <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                    <strong>Constraints:</strong> {ca.constraints}
+                ))}
+              </div>
+            )}
+
+            {/* TAB 2: QUIZZES */}
+            {activeTab === 'quizzes' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {extractedData.quizzes.map((q) => (
+                  <div
+                    key={q.id}
+                    style={{
+                      padding: '18px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-hairline)',
+                      background: 'var(--surface-muted)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <Chip variant="default" size="sm">Concept: {q.concept}</Chip>
+                      <Chip variant="warning" size="sm">Diagnostic Item</Chip>
+                    </div>
+
+                    <div style={{ fontSize: '14.5px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '12px' }}>
+                      {q.prompt}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {q.options.map((opt, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '10px',
+                            background: i === q.correct ? 'var(--mastery-solid-soft)' : 'var(--surface)',
+                            border: i === q.correct ? '1px solid var(--success-border)' : '1px solid var(--border-hairline)',
+                            fontSize: '13px',
+                            fontWeight: i === q.correct ? 600 : 400,
+                            color: i === q.correct ? 'var(--mastery-solid)' : 'var(--text-main)',
+                          }}
+                        >
+                          {i === q.correct ? '✓ Correct: ' : '• '} {opt}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{ padding: '8px 12px', background: '#0F172A', color: '#F8FAFC', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '11.5px' }}>
-                    {ca.sampleTest}
+                ))}
+              </div>
+            )}
+
+            {/* TAB 3: CODING */}
+            {activeTab === 'coding' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {extractedData.codingAssessments.map((ca) => (
+                  <div
+                    key={ca.id}
+                    style={{
+                      padding: '18px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-hairline)',
+                      background: 'var(--surface-muted)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <Chip variant="default" size="sm">Concept: {ca.concept}</Chip>
+                      <Chip variant="warning" size="sm">{ca.difficulty}</Chip>
+                    </div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+                      {ca.title}
+                    </h3>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                      <strong>Constraints:</strong> {ca.constraints}
+                    </div>
+                    <div style={{ padding: '12px 14px', background: '#16161A', color: '#ECEAE8', borderRadius: '12px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                      {ca.sampleTest}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Edit Modal */}
       {editingItem && (
         <div className="modal-overlay" onClick={() => setEditingItem(null)}>
-          <div className="modal-dialog-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: '700' }}>Edit Concept Definition</h2>
-              <button type="button" onClick={() => setEditingItem(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                <X size={16} />
+          <div
+            className="modal-dialog-card animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '480px', borderRadius: '20px', border: '1px solid var(--border-hairline)' }}
+          >
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                Edit Concept Definition
+              </h2>
+              <button type="button" onClick={() => setEditingItem(null)} className="icon-btn-circle" style={{ width: '30px', height: '30px' }}>
+                <X size={15} strokeWidth={1.5} />
               </button>
             </div>
-            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Concept Name</label>
+                <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Concept Name</label>
                 <input
                   type="text"
                   value={editingItem.name}
                   onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--border-hairline)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Description</label>
+                <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Description</label>
                 <textarea
                   rows={3}
                   value={editingItem.description}
                   onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--border-hairline)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
-            <div style={{ padding: '10px 16px', background: 'var(--surface-muted)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="btn-secondary" onClick={() => setEditingItem(null)} style={{ padding: '5px 12px' }}>
+            <div style={{ padding: '14px 20px', background: 'var(--surface-muted)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" className="btn-ghost-pill btn-compact" onClick={() => setEditingItem(null)}>
                 Cancel
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="btn-coral-pill btn-compact"
                 onClick={() => {
                   setExtractedData((prev) => ({
                     ...prev,
                     concepts: prev.concepts.map((c) => (c.id === editingItem.id ? editingItem : c)),
                   }));
                   setEditingItem(null);
+                  toast.success('Concept definition saved');
                 }}
-                style={{ padding: '5px 12px' }}
               >
                 Save Changes
               </button>

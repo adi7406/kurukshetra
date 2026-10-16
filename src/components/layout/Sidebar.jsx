@@ -1,39 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home,
-  LayoutDashboard,
-  BookOpen,
   Layers,
   HelpCircle,
   Code2,
   TrendingUp,
   UploadCloud,
   Users,
-  ChevronDown,
-  ChevronRight,
-  Shield,
-  User,
   GraduationCap,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export function Sidebar({ isOpen, onCloseMobile }) {
-  const location = useLocation();
+  const { user, role, logout } = useAuth();
   const navigate = useNavigate();
-  const { user, role } = useAuth();
-
-  const isContentActive = location.pathname.startsWith('/content');
-  const [contentOpen, setContentOpen] = useState(isContentActive || true);
-
-  useEffect(() => {
-    if (isContentActive) {
-      setContentOpen(true);
-    }
-  }, [isContentActive]);
 
   const handleLinkClick = () => {
     if (onCloseMobile) onCloseMobile();
+  };
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/login');
   };
 
   const userInitials = user?.name
@@ -46,178 +37,214 @@ export function Sidebar({ isOpen, onCloseMobile }) {
     : 'PW';
 
   return (
-    <aside className={`app-sidebar ${isOpen ? 'open' : ''}`} aria-label="Main Navigation">
-      {/* Brand Header */}
-      <div className="sidebar-header">
-        <NavLink to="/home" className="brand-logo" onClick={handleLinkClick}>
-          <div className="brand-icon">
-            <GraduationCap size={18} />
+    <aside
+      className={`app-sidebar ${isOpen ? 'open' : ''}`}
+      aria-label="Main Application Navigation"
+    >
+      {/* Brand at top */}
+      <div className="sidebar-brand-wrapper">
+        <NavLink to="/home" className="sidebar-brand" onClick={handleLinkClick}>
+          <div className="sidebar-brand-icon">
+            <GraduationCap size={18} strokeWidth={1.5} />
           </div>
-          <span className="brand-text">Pathwise</span>
-          <span className="brand-badge">BETA</span>
+          <span className="sidebar-brand-title">Pathwise</span>
+          <span className="sidebar-brand-tag">ADAPTIVE</span>
         </NavLink>
       </div>
 
-      {/* Navigation Menu */}
-      <nav className="sidebar-nav">
-        <div className="nav-section-label">
-          {role === 'teacher' ? 'Instructor Portal' : 'Student Portal'}
-        </div>
-
-        {/* STUDENT NAVIGATION */}
-        {role !== 'teacher' && (
+      {/* Nav grouped under tiny uppercase grey labels */}
+      <nav className="sidebar-nav-scroll">
+        {role !== 'teacher' ? (
           <>
-            <NavLink
-              to="/home"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <Home className="nav-pill-icon" />
-              <span>Home</span>
-            </NavLink>
-
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <LayoutDashboard className="nav-pill-icon" />
-              <span>Dashboard</span>
-            </NavLink>
-
-            {/* Content (Collapsible Parent) */}
-            <div>
-              <button
-                type="button"
-                className={`nav-pill ${isContentActive ? 'active' : ''}`}
-                onClick={() => setContentOpen((prev) => !prev)}
-                style={{ justifyContent: 'space-between' }}
+            {/* Student Group 1: LEARNING */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">LEARNING</span>
+              <NavLink
+                to="/home"
+                end
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <BookOpen className="nav-pill-icon" />
-                  <span>Content</span>
-                </div>
-                {contentOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
+                <Home size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Home</span>
+              </NavLink>
 
-              {contentOpen && (
-                <div className="nested-pills">
-                  <NavLink
-                    to="/content/concepts"
-                    className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-                    onClick={handleLinkClick}
-                  >
-                    <Layers size={14} />
-                    <span>Concepts</span>
-                    <span className="nav-pill-badge">DAG</span>
-                  </NavLink>
-
-                  <NavLink
-                    to="/content/quizzes"
-                    className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-                    onClick={handleLinkClick}
-                  >
-                    <HelpCircle size={14} />
-                    <span>Quizzes on Concepts</span>
-                  </NavLink>
-
-                  <NavLink
-                    to="/content/coding"
-                    className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-                    onClick={handleLinkClick}
-                  >
-                    <Code2 size={14} />
-                    <span>Coding Assessment</span>
-                    <span className="nav-pill-badge">Sandbox</span>
-                  </NavLink>
-                </div>
-              )}
+              <NavLink
+                to="/content/concepts"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <Layers size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Concept Map</span>
+              </NavLink>
             </div>
 
-            <NavLink
-              to="/progress"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <TrendingUp className="nav-pill-icon" />
-              <span>Progress</span>
-              <span className="nav-pill-badge">BKT</span>
-            </NavLink>
+            {/* Student Group 2: PRACTICE */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">PRACTICE</span>
+              <NavLink
+                to="/content/quizzes"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <HelpCircle size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Practice Quizzes</span>
+              </NavLink>
+
+              <NavLink
+                to="/content/coding"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <Code2 size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Coding Practice</span>
+              </NavLink>
+            </div>
+
+            {/* Student Group 3: INSIGHTS */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">INSIGHTS</span>
+              <NavLink
+                to="/progress"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <TrendingUp size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Mastery & Progress</span>
+              </NavLink>
+            </div>
           </>
-        )}
-
-        {/* TEACHER NAVIGATION */}
-        {role === 'teacher' && (
+        ) : (
           <>
-            <NavLink
-              to="/home"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <Home className="nav-pill-icon" />
-              <span>Home</span>
-            </NavLink>
+            {/* Instructor Group 1: MANAGE */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">MANAGE</span>
+              <NavLink
+                to="/home"
+                end
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <Home size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Home</span>
+              </NavLink>
+            </div>
 
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <Users className="nav-pill-icon" />
-              <span>Dashboard (Students)</span>
-              <span className="nav-pill-badge">38</span>
-            </NavLink>
+            {/* Instructor Group 2: STUDENTS */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">STUDENTS</span>
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <Users size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Cohort Roster</span>
+              </NavLink>
 
-            <NavLink
-              to="/teacher/content-upload"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <UploadCloud className="nav-pill-icon" />
-              <span>Content Uploading</span>
-              <span className="nav-pill-badge">AI Pipeline</span>
-            </NavLink>
+              <NavLink
+                to="/teacher/student-progress"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <TrendingUp size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Class Analytics</span>
+              </NavLink>
+            </div>
 
-            <NavLink
-              to="/teacher/student-progress"
-              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
-              onClick={handleLinkClick}
-            >
-              <TrendingUp className="nav-pill-icon" />
-              <span>Students Progress</span>
-            </NavLink>
+            {/* Instructor Group 3: CONTENT */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">CONTENT</span>
+              <NavLink
+                to="/teacher/content-upload"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <UploadCloud size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Syllabus & Upload</span>
+              </NavLink>
+            </div>
           </>
         )}
       </nav>
 
-      {/* Footer User Profile Card */}
-      <div className="sidebar-footer">
-        <div
-          className="sidebar-user-card"
-          onClick={() => navigate('/profile')}
-          style={{ cursor: 'pointer' }}
-          title="Click to view profile"
-        >
-          <div className="sidebar-user-avatar">
+      {/* Profile lives ONLY at the bottom of the sidebar */}
+      <div className="sidebar-bottom-profile">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          <div className="sidebar-avatar-circle">
             {userInitials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: '600',
+                color: 'var(--text-main)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={user?.name || 'User'}
+            >
               {user?.name || 'Authorized User'}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-light)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {role === 'teacher' ? (user?.courseTaught || 'Instructor') : (user?.className || 'Student')}
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--text-secondary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {role === 'teacher' ? (user?.courseTaught?.split(':')[0] || 'Instructor') : (user?.className || 'Student')}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-          <span className={`badge-clean ${role === 'teacher' ? 'amber' : 'blue'}`}>
-            {role === 'teacher' ? 'Instructor' : 'Student'}
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '500' }}>
-            v2.4 Production
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-hairline)' }}>
+          <button
+            type="button"
+            onClick={() => {
+              handleLinkClick();
+              navigate('/profile');
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              fontSize: '11.5px',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--coral)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          >
+            <User size={13} strokeWidth={1.5} />
+            <span>Profile</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              fontSize: '11.5px',
+              color: 'var(--mastery-weak)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <LogOut size={13} strokeWidth={1.5} />
+            <span>Sign out</span>
+          </button>
         </div>
       </div>
     </aside>
