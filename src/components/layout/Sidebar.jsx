@@ -116,9 +116,9 @@ export function Sidebar({ isOpen, onCloseMobile }) {
           </>
         ) : (
           <>
-            {/* Instructor Group 1: MANAGE */}
+            {/* Instructor Group 1: OVERVIEW */}
             <div className="sidebar-nav-group">
-              <span className="sidebar-group-title">MANAGE</span>
+              <span className="sidebar-group-title">OVERVIEW</span>
               <NavLink
                 to="/home"
                 end
@@ -130,9 +130,49 @@ export function Sidebar({ isOpen, onCloseMobile }) {
               </NavLink>
             </div>
 
-            {/* Instructor Group 2: STUDENTS */}
+            {/* Instructor Group 2: CURRICULUM & STUDIO */}
             <div className="sidebar-nav-group">
-              <span className="sidebar-group-title">STUDENTS</span>
+              <span className="sidebar-group-title">CURRICULUM & STUDIO</span>
+              <NavLink
+                to="/teacher/content-upload"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <UploadCloud size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Syllabus Studio</span>
+              </NavLink>
+
+              <NavLink
+                to="/content/concepts"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <Layers size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Concept Map</span>
+              </NavLink>
+
+              <NavLink
+                to="/content/quizzes"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <HelpCircle size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Practice Quizzes</span>
+              </NavLink>
+
+              <NavLink
+                to="/content/coding"
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+              >
+                <Code2 size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Coding Sandbox</span>
+              </NavLink>
+            </div>
+
+            {/* Instructor Group 3: COHORT & ANALYTICS */}
+            <div className="sidebar-nav-group">
+              <span className="sidebar-group-title">COHORT & ANALYTICS</span>
               <NavLink
                 to="/dashboard"
                 className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
@@ -150,18 +190,14 @@ export function Sidebar({ isOpen, onCloseMobile }) {
                 <TrendingUp size={18} strokeWidth={1.5} className="sidebar-item-icon" />
                 <span className="sidebar-item-label">Class Analytics</span>
               </NavLink>
-            </div>
 
-            {/* Instructor Group 3: CONTENT */}
-            <div className="sidebar-nav-group">
-              <span className="sidebar-group-title">CONTENT</span>
               <NavLink
-                to="/teacher/content-upload"
+                to="/progress"
                 className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
                 onClick={handleLinkClick}
               >
-                <UploadCloud size={18} strokeWidth={1.5} className="sidebar-item-icon" />
-                <span className="sidebar-item-label">Syllabus & Upload</span>
+                <TrendingUp size={18} strokeWidth={1.5} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">Mastery Evidence</span>
               </NavLink>
             </div>
           </>

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { authService } from '../services/authService';
 import LoadingState from '../components/feedback/LoadingState';
+import EmptyState from '../components/feedback/EmptyState';
 import StatCard from '../components/common/StatCard';
 import MasteryChip from '../components/common/MasteryChip';
 import Chip from '../components/common/Chip';
@@ -79,29 +80,56 @@ export function TeacherStudentProgressPage() {
         </p>
       </div>
 
-      {/* Cohort Health Summary Cards */}
-      <div className="stat-cards-grid">
-        <StatCard
-          label="Total Enrolled"
-          value={students.length}
-          caption="CS201 Data Structures cohort"
-        />
+      {students.length === 0 ? (
+        <div style={{ background: 'var(--surface)', borderRadius: '20px', border: '1px solid var(--border-hairline)', padding: '48px 24px', textAlign: 'center' }}>
+          <EmptyState
+            title="No Students Registered Yet"
+            description="Student records and diagnostic mastery profiles will appear here as students enroll in your course or when connected to the backend database."
+            actionLabel="Open Syllabus Studio"
+            onAction={() => navigate('/teacher/content-upload')}
+          />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px' }}>
+            <button
+              type="button"
+              className="btn-ghost-pill btn-compact"
+              onClick={() => navigate('/content/concepts')}
+            >
+              <span>Explore Concept Map</span>
+            </button>
+            <button
+              type="button"
+              className="btn-ghost-pill btn-compact"
+              onClick={() => navigate('/dashboard')}
+            >
+              <span>View Cohort Roster</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Cohort Health Summary Cards */}
+          <div className="stat-cards-grid">
+            <StatCard
+              label="Total Enrolled"
+              value={students.length}
+              caption="Course cohort size"
+            />
 
-        <StatCard
-          label="Solid Mastery (>70%)"
-          value={highMasteryCount}
-          caption="Excelling in curriculum"
-        />
+            <StatCard
+              label="Solid Mastery (>70%)"
+              value={highMasteryCount}
+              caption="Excelling in curriculum"
+            />
 
-        <StatCard
-          label="Requires Intervention"
-          value={atRiskCount}
-          caption="Developing or weak in prerequisites"
-        />
-      </div>
+            <StatCard
+              label="Requires Intervention"
+              value={atRiskCount}
+              caption="Developing or weak in prerequisites"
+            />
+          </div>
 
-      {/* Two Column Layout: Student Selector Left, Detailed Breakdown Right */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '20px', alignItems: 'start' }}>
+          {/* Two Column Layout: Student Selector Left, Detailed Breakdown Right */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '20px', alignItems: 'start' }}>
         {/* Left List of Students */}
         <div
           style={{
@@ -229,33 +257,33 @@ export function TeacherStudentProgressPage() {
                   Concept Mastery Breakdown
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                  {[
-                    { name: 'Dynamic Arrays', score: selectedStudent.conceptMastery?.c_arrays || 0 },
-                    { name: 'Linked Lists', score: selectedStudent.conceptMastery?.c_linkedlists || 0 },
-                    { name: 'Hash Tables', score: selectedStudent.conceptMastery?.c_hashtables || 0 },
-                    { name: 'Recursion Bounds', score: selectedStudent.conceptMastery?.c_recursion || 0 },
-                    { name: 'Dynamic Programming', score: selectedStudent.conceptMastery?.c_dp || 0 },
-                    { name: 'AVL Trees', score: selectedStudent.conceptMastery?.c_bst || 0 },
-                  ].map((c, i) => {
-                    const norm = normalizeMastery(c.score);
-                    return (
-                      <div key={i} style={{ padding: '14px', background: 'var(--surface-muted)', borderRadius: '14px', border: '1px solid var(--border-hairline)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-main)' }}>{c.name}</span>
-                          <MasteryChip score={norm} size="sm" />
+                  {Object.keys(selectedStudent.conceptMastery || {}).length === 0 ? (
+                    <div style={{ gridColumn: '1 / -1', padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      No individual concept assessments submitted yet by this learner.
+                    </div>
+                  ) : (
+                    Object.entries(selectedStudent.conceptMastery || {}).map(([key, score], i) => {
+                      const norm = normalizeMastery(score || 0);
+                      const displayName = key.replace('c_', '').replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+                      return (
+                        <div key={i} style={{ padding: '14px', background: 'var(--surface-muted)', borderRadius: '14px', border: '1px solid var(--border-hairline)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-main)' }}>{displayName}</span>
+                            <MasteryChip score={norm} size="sm" />
+                          </div>
+                          <div style={{ width: '100%', height: '5px', background: 'var(--border-hairline)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                width: `${norm}%`,
+                                height: '100%',
+                                background: norm >= 70 ? 'var(--mastery-solid)' : norm >= 40 ? 'var(--mastery-developing)' : 'var(--mastery-weak)',
+                              }}
+                            />
+                          </div>
                         </div>
-                        <div style={{ width: '100%', height: '5px', background: 'var(--border-hairline)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              width: `${norm}%`,
-                              height: '100%',
-                              background: norm >= 70 ? 'var(--mastery-solid)' : norm >= 40 ? 'var(--mastery-developing)' : 'var(--mastery-weak)',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -305,6 +333,8 @@ export function TeacherStudentProgressPage() {
           </div>
         )}
       </div>
+      </>
+    )}
     </div>
   );
 }

@@ -6,21 +6,20 @@ import MasteryChip from '../common/MasteryChip';
 
 export function ClassHeatmap({ students = [], concepts = [] }) {
   const navigate = useNavigate();
-
-  // Fallback concept list if none provided
-  const conceptCols = concepts.length > 0 ? concepts : [
-    { id: 'c_arrays', name: 'Dynamic Arrays' },
-    { id: 'c_linkedlists', name: 'Linked Lists' },
-    { id: 'c_hashtables', name: 'Hash Tables' },
-    { id: 'c_recursion', name: 'Recursion Bounds' },
-    { id: 'c_dp', name: 'Dynamic Prog.' },
-    { id: 'c_bst', name: 'AVL Trees' },
-  ];
+  const conceptCols = concepts || [];
 
   if (!students || students.length === 0) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-        No cohort student records available for heatmap analysis.
+      <div style={{ padding: '28px', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--surface)', borderRadius: '20px', border: '1px solid var(--border-hairline)' }}>
+        No cohort student records available for heatmap analysis yet. Connect live students or sign up in the portal.
+      </div>
+    );
+  }
+
+  if (conceptCols.length === 0) {
+    return (
+      <div style={{ padding: '28px', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--surface)', borderRadius: '20px', border: '1px solid var(--border-hairline)' }}>
+        No course concepts published yet. Upload or extract a syllabus to generate concept columns.
       </div>
     );
   }

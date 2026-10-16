@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
+import EmptyState from '../components/feedback/EmptyState';
 import Chip from '../components/common/Chip';
 import MasteryChip from '../components/common/MasteryChip';
 
@@ -390,57 +391,68 @@ export function QuizPage() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '18px' }}>
-        {quizzes.map((quiz) => (
-          <div
-            key={quiz.id}
-            style={{
-              background: 'var(--surface)',
-              borderRadius: '20px',
-              border: '1px solid var(--border-hairline)',
-              boxShadow: 'var(--shadow-card)',
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '16px',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                <Chip variant="default" size="sm">{quiz.conceptName}</Chip>
-                <Chip variant={quiz.status === 'completed' ? 'success' : 'warning'} size="sm">
-                  {quiz.status === 'completed' ? 'Passed' : 'Available'}
-                </Chip>
-              </div>
-
-              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-                {quiz.title}
-              </h2>
-              <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                <span>{quiz.questionsCount} Questions</span>
-                <span>&bull;</span>
-                <span>~{quiz.estimatedMinutes} mins</span>
-              </div>
-
-              {quiz.status === 'completed' && quiz.lastAttemptScore !== null && (
-                <div style={{ padding: '8px 12px', background: 'var(--mastery-solid-soft)', borderRadius: '10px', fontSize: '12px', color: 'var(--mastery-solid)', fontWeight: 600, border: '1px solid var(--success-border)' }}>
-                  Latest score: {quiz.lastAttemptScore}% ({quiz.lastAttemptDate})
-                </div>
-              )}
-            </div>
-
-            <button
-              type="button"
-              className="btn-coral-pill btn-compact"
-              style={{ width: '100%' }}
-              onClick={() => startQuiz(quiz)}
+      {quizzes.length === 0 ? (
+        <div style={{ background: 'var(--surface)', borderRadius: '20px', border: '1px solid var(--border-hairline)', padding: '36px', textAlign: 'center' }}>
+          <EmptyState
+            title="No Diagnostic Quizzes Available"
+            description="No quizzes have been published yet. Once the instructor uploads and synthesizes a syllabus or when connected to the backend API, diagnostic items will appear here."
+            actionLabel="Return Home"
+            onAction={() => navigate('/home')}
+          />
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '18px' }}>
+          {quizzes.map((quiz) => (
+            <div
+              key={quiz.id}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '20px',
+                border: '1px solid var(--border-hairline)',
+                boxShadow: 'var(--shadow-card)',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '16px',
+              }}
             >
-              {quiz.status === 'completed' ? 'Retake Diagnostic Quiz' : 'Start Diagnostic Quiz'}
-            </button>
-          </div>
-        ))}
-      </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <Chip variant="default" size="sm">{quiz.conceptName}</Chip>
+                  <Chip variant={quiz.status === 'completed' ? 'success' : 'warning'} size="sm">
+                    {quiz.status === 'completed' ? 'Passed' : 'Available'}
+                  </Chip>
+                </div>
+
+                <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+                  {quiz.title}
+                </h2>
+                <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+                  <span>{quiz.questionsCount || quiz.questions?.length || 5} Questions</span>
+                  <span>&bull;</span>
+                  <span>~{quiz.estimatedMinutes || 10} mins</span>
+                </div>
+
+                {quiz.status === 'completed' && quiz.lastAttemptScore !== null && (
+                  <div style={{ padding: '8px 12px', background: 'var(--mastery-solid-soft)', borderRadius: '10px', fontSize: '12px', color: 'var(--mastery-solid)', fontWeight: 600, border: '1px solid var(--success-border)' }}>
+                    Latest score: {quiz.lastAttemptScore}% ({quiz.lastAttemptDate})
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="btn-coral-pill btn-compact"
+                style={{ width: '100%' }}
+                onClick={() => startQuiz(quiz)}
+              >
+                {quiz.status === 'completed' ? 'Retake Diagnostic Quiz' : 'Start Diagnostic Quiz'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

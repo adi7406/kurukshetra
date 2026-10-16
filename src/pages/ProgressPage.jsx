@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
+import EmptyState from '../components/feedback/EmptyState';
 import StatCard from '../components/common/StatCard';
 import ProgressRing from '../components/common/ProgressRing';
 import MasteryChip from '../components/common/MasteryChip';
@@ -43,7 +44,7 @@ export function ProgressPage() {
     return <LoadingState message="Calculating evidence-based concept mastery..." />;
   }
 
-  const overallScore = normalizeMastery(progressData?.overallEstimatedMastery ?? 78);
+  const overallScore = normalizeMastery(progressData?.overallEstimatedMastery ?? 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
@@ -114,19 +115,19 @@ export function ProgressPage() {
 
         <StatCard
           label="Mastered Concepts"
-          value={progressData?.completedConceptsCount || 3}
+          value={progressData?.completedConceptsCount ?? 0}
           caption="Solid mastery (>70%)"
         />
 
         <StatCard
           label="Developing Concepts"
-          value={progressData?.developingConceptsCount || 2}
+          value={progressData?.developingConceptsCount ?? 0}
           caption="In progress (40% - 70%)"
         />
 
         <StatCard
           label="Verified Evidence"
-          value={progressData?.totalAssessmentsSubmitted || 14}
+          value={progressData?.totalAssessmentsSubmitted ?? 0}
           caption="Quizzes & code executions"
         />
       </div>
@@ -168,61 +169,75 @@ export function ProgressPage() {
               </tr>
             </thead>
             <tbody>
-              {progressData?.conceptBreakdown?.map((item) => {
-                const isLocked = item.status?.includes('Locked');
-                const score = normalizeMastery(item.mastery || 0);
+              {(!progressData?.conceptBreakdown || progressData.conceptBreakdown.length === 0) ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '40px 20px', textAlign: 'center' }}>
+                    <EmptyState
+                      icon={TrendingUp}
+                      title="No Learning Evidence Recorded Yet"
+                      description="Complete quizzes or coding assessments to see Bayesian Knowledge Tracing scores and concept breakdown."
+                      actionText="Browse Assessments"
+                      onAction={() => navigate('/content/coding')}
+                    />
+                  </td>
+                </tr>
+              ) : (
+                progressData.conceptBreakdown.map((item) => {
+                  const isLocked = item.status?.includes('Locked');
+                  const score = normalizeMastery(item.mastery || 0);
 
-                return (
-                  <tr key={item.conceptId} style={{ borderBottom: '1px solid var(--border-hairline)' }} className="hover-row">
-                    <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-main)' }}>
-                      {item.name}
-                    </td>
-                    <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
-                      {item.module || 'Module 1: Foundations'}
-                    </td>
-                    <td style={{ padding: '14px 18px' }}>
-                      {isLocked ? (
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Insufficient evidence</span>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '64px', height: '5px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
-                            <div
-                              style={{
-                                width: `${score}%`,
-                                height: '100%',
-                                background: score >= 70 ? 'var(--mastery-solid)' : score >= 40 ? 'var(--mastery-developing)' : 'var(--mastery-weak)',
-                              }}
-                            />
+                  return (
+                    <tr key={item.conceptId} style={{ borderBottom: '1px solid var(--border-hairline)' }} className="hover-row">
+                      <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-main)' }}>
+                        {item.name}
+                      </td>
+                      <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                        {item.module || 'Module 1: Foundations'}
+                      </td>
+                      <td style={{ padding: '14px 18px' }}>
+                        {isLocked ? (
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Insufficient evidence</span>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '64px', height: '5px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${score}%`,
+                                  height: '100%',
+                                  background: score >= 70 ? 'var(--mastery-solid)' : score >= 40 ? 'var(--mastery-developing)' : 'var(--mastery-weak)',
+                                }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-main)' }}>{score}%</span>
                           </div>
-                          <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-main)' }}>{score}%</span>
-                        </div>
-                      )}
-                    </td>
-                    <td style={{ padding: '14px 18px' }}>
-                      <MasteryChip score={score} size="sm" />
-                    </td>
-                    <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
-                      {item.evidenceCount > 0 ? `${item.evidenceCount} activities` : 'None yet'}
-                    </td>
-                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                      {isLocked ? (
-                        <button type="button" className="btn-ghost-pill btn-compact" style={{ opacity: 0.5 }} disabled>
-                          Locked
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-coral-pill btn-compact"
-                          onClick={() => navigate('/content/quizzes')}
-                        >
-                          <span>Practice</span>
-                          <ArrowRight size={13} strokeWidth={1.5} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                        )}
+                      </td>
+                      <td style={{ padding: '14px 18px' }}>
+                        <MasteryChip score={score} size="sm" />
+                      </td>
+                      <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                        {item.evidenceCount > 0 ? `${item.evidenceCount} activities` : 'None yet'}
+                      </td>
+                      <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                        {isLocked ? (
+                          <button type="button" className="btn-ghost-pill btn-compact" style={{ opacity: 0.5 }} disabled>
+                            Locked
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-coral-pill btn-compact"
+                            onClick={() => navigate('/content/quizzes')}
+                          >
+                            <span>Practice</span>
+                            <ArrowRight size={13} strokeWidth={1.5} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -24,9 +24,10 @@ export function MobileBottomNav() {
 
   const instructorItems = [
     { to: '/home', label: 'Home', icon: Home, end: true },
+    { to: '/teacher/content-upload', label: 'Studio', icon: UploadCloud },
+    { to: '/content/concepts', label: 'Concepts', icon: Layers },
     { to: '/dashboard', label: 'Cohort', icon: Users },
     { to: '/teacher/student-progress', label: 'Analytics', icon: TrendingUp },
-    { to: '/teacher/content-upload', label: 'Syllabus', icon: UploadCloud },
   ];
 
   const items = role === 'teacher' ? instructorItems : studentItems;

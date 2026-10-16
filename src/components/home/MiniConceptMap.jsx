@@ -7,6 +7,25 @@ import { normalizeMastery } from '../../utils/mastery';
 export function MiniConceptMap({ concepts = [], activeConceptId }) {
   const navigate = useNavigate();
 
+  if (!concepts || concepts.length === 0) {
+    return (
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: '20px',
+          boxShadow: 'var(--shadow-card)',
+          padding: '24px',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+          fontSize: '13px',
+        }}
+      >
+        Curriculum concept path is empty. Publish a course syllabus to track your progression.
+      </div>
+    );
+  }
+
   // Top sequential concepts
   const displayConcepts = concepts.slice(0, 5);
 
@@ -76,12 +95,9 @@ export function MiniConceptMap({ concepts = [], activeConceptId }) {
         aria-label="Horizontal prerequisite concept path"
       >
         {displayConcepts.map((c, index) => {
-          const rawScore =
-            c.masteryScore ??
-            c.mastery ??
-            (index === 0 ? 94 : index === 1 ? 72 : index === 2 ? 48 : index === 3 ? 86 : 38);
+          const rawScore = c.masteryScore ?? c.mastery ?? 0;
           const normalizedScore = normalizeMastery(rawScore);
-          const isTarget = c.id === activeConceptId || index === 2;
+          const isTarget = c.id === activeConceptId || (activeConceptId ? false : index === 0);
           const isLast = index === displayConcepts.length - 1;
 
           return (

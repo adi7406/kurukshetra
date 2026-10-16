@@ -1,34 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check, Edit2, Layers, HelpCircle, Code2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import RailCard from '../common/RailCard';
 
 export function PendingApprovalQueue({ items = [], onApproveItem }) {
   const toast = useToast();
-  const [queue, setQueue] = useState(
-    items.length > 0
-      ? items
-      : [
-          {
-            id: 'appr_01',
-            title: 'Hash Tables Collision Diagnostic',
-            type: 'Practice Quiz',
-            module: 'Module 1: Linear & Key-Value',
-          },
-          {
-            id: 'appr_02',
-            title: 'LRU Cache Design Challenge',
-            type: 'Coding Challenge',
-            module: 'Module 1: Linear & Key-Value',
-          },
-          {
-            id: 'appr_03',
-            title: 'Self-Balancing AVL Trees',
-            type: 'Concept DAG Node',
-            module: 'Module 2: Tree & Graph',
-          },
-        ]
-  );
+  const navigate = useNavigate();
+  const [queue, setQueue] = useState(items);
+
+  React.useEffect(() => {
+    setQueue(items);
+  }, [items]);
+
 
   const handleApprove = (id, title) => {
     setQueue((prev) => prev.filter((item) => item.id !== id));
@@ -37,7 +21,8 @@ export function PendingApprovalQueue({ items = [], onApproveItem }) {
   };
 
   const handleEdit = (title) => {
-    toast.info(`Opening editor for "${title}"`);
+    toast.info(`Opening Syllabus Studio for "${title}"`);
+    navigate('/teacher/content-upload');
   };
 
   return (

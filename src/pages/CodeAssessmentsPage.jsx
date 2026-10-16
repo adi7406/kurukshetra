@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
+import EmptyState from '../components/feedback/EmptyState';
 import PillTabs from '../components/common/PillTabs';
 import RailCard from '../components/common/RailCard';
 import ChecklistItem from '../components/common/ChecklistItem';
@@ -227,37 +228,47 @@ export function CodeAssessmentsPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '18px' }}>
-          {assessments.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                background: 'var(--surface)',
-                borderRadius: '20px',
-                border: '1px solid var(--border-hairline)',
-                boxShadow: 'var(--shadow-card)',
-                padding: '22px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '16px',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <Chip variant="default" size="sm">{item.conceptName}</Chip>
-                  <Chip variant={item.difficulty === 'Hard' ? 'danger' : item.difficulty === 'Medium' ? 'warning' : 'success'} size="sm">
-                    {item.difficulty}
-                  </Chip>
-                </div>
+        {assessments.length === 0 ? (
+          <div style={{ background: 'var(--surface)', borderRadius: '20px', border: '1px solid var(--border-hairline)', padding: '36px', textAlign: 'center' }}>
+            <EmptyState
+              title="No Coding Challenges Available"
+              description="No coding assessments have been registered yet. Once the instructor uploads a syllabus in the studio or when connected to the backend API, coding challenges will appear here."
+              actionLabel="Return Home"
+              onAction={() => navigate('/home')}
+            />
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '18px' }}>
+            {assessments.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  background: 'var(--surface)',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border-hairline)',
+                  boxShadow: 'var(--shadow-card)',
+                  padding: '22px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <Chip variant="default" size="sm">{item.conceptName || item.concept}</Chip>
+                    <Chip variant={item.difficulty === 'Hard' ? 'danger' : item.difficulty === 'Medium' ? 'warning' : 'success'} size="sm">
+                      {item.difficulty}
+                    </Chip>
+                  </div>
 
-                <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-                  {item.title}
-                </h2>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
-                  {item.problemStatement.slice(0, 140)}...
-                </p>
-              </div>
+                  <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+                    {item.title}
+                  </h2>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                    {(item.problemStatement || item.description || '').slice(0, 140)}...
+                  </p>
+                </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--border-hairline)' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
@@ -275,9 +286,10 @@ export function CodeAssessmentsPage() {
             </div>
           ))}
         </div>
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
+}
 
   // -------------------------------------------------------------
   // ACTIVE CODING WORKSPACE (MATCHING REFERENCE VIDEO LESSON PAGE)

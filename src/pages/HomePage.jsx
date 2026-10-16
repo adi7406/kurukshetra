@@ -101,40 +101,45 @@ export function HomePage() {
   const pendingTaskCount = pendingQuizzes.length + pendingAssessments.length;
 
   const rawMastery =
-    user?.overallMastery !== undefined
+    user?.overallMastery !== undefined && user.overallMastery !== null
       ? user.overallMastery
       : progressData?.overallEstimatedMastery !== undefined
       ? progressData.overallEstimatedMastery
-      : 78;
+      : 0;
 
   const studentMastery = normalizeMastery(rawMastery);
 
-  const solidConceptsCount = progressData?.conceptBreakdown
+  const solidConceptsCount = progressData?.conceptBreakdown?.length > 0
     ? progressData.conceptBreakdown.filter((c) => normalizeMastery(c.mastery) >= 70).length
-    : 3;
-  const totalConceptsCount = progressData?.conceptBreakdown?.length || allConcepts.length || 6;
+    : allConcepts.filter((c) => normalizeMastery(c.mastery || c.masteryScore || 0) >= 70).length;
 
-  // Recommended Next Action
-  const targetConcept = allConcepts.find((c) => c.name?.includes('Hash Tables')) || allConcepts[1] || {
-    name: 'Hash Tables & Collision Resolution',
-  };
+  const totalConceptsCount = progressData?.conceptBreakdown?.length || allConcepts.length || 0;
 
-  const recommendation = {
-    title: 'Collision Resolution & Load Factor Quiz',
-    conceptName: targetConcept.name || 'Hash Tables & Collision Resolution',
-    targetMastery: 48,
-    description: 'Your estimated mastery of Hash Tables is 48% (Developing). Prerequisite Hash Functions (52%) was identified as the primary bottleneck.',
-    duration: '8 min',
-    questionCount: '5 questions',
-    difficulty: 'Adaptive',
-    route: '/content/quizzes',
-    prerequisitePath: [
-      { name: 'Dynamic Arrays & Memory', score: 92, status: 'solid' },
-      { name: 'Hash Functions & Distribution', score: 52, status: 'developing', isWeakest: true },
-      { name: targetConcept.name || 'Hash Tables & Collision Resolution', score: 48, status: 'developing', isTarget: true },
-    ],
-    reasoning: 'Your mastery of Hash Tables is 48% (Developing). Diagnostic quiz attempts show error patterns clustering around hash collision handling, where prerequisite concept Hash Functions (52%) is the primary bottleneck. Practicing this diagnostic quiz strengthens prerequisite retention before advancing to hierarchical tree structures.',
-  };
+  // Recommended Next Action (Derived dynamically from lowest mastery concept)
+  const sortedConcepts = [...allConcepts].sort(
+    (a, b) => (a.mastery || a.masteryScore || 0) - (b.mastery || b.masteryScore || 0)
+  );
+  const targetConcept = sortedConcepts[0] || null;
+
+  const recommendation = targetConcept
+    ? {
+        title: `${targetConcept.name} Calibration Practice`,
+        conceptName: targetConcept.name,
+        targetMastery: normalizeMastery(targetConcept.mastery || targetConcept.masteryScore || 0),
+        description: `Your estimated readiness for ${targetConcept.name} is ${normalizeMastery(targetConcept.mastery || targetConcept.masteryScore || 0)}%. Completing diagnostic evaluations will calibrate your prerequisite retention.`,
+        duration: '10 min',
+        questionCount: '5 questions',
+        difficulty: 'Adaptive',
+        route: '/content/quizzes',
+        prerequisitePath: allConcepts.slice(0, 3).map((c, i) => ({
+          name: c.name,
+          score: normalizeMastery(c.mastery || c.masteryScore || 0),
+          status: normalizeMastery(c.mastery || c.masteryScore || 0) >= 70 ? 'solid' : 'developing',
+          isTarget: i === 0,
+        })),
+        reasoning: `Prerequisite calibration for ${targetConcept.name}: Diagnostic practice strengthens retention across continuous evaluations.`,
+      }
+    : null;
 
   // Instructor View calculations
   const teacherCourse = user?.courseTaught || primaryCourse?.title || 'Data Structures & Algorithms';
@@ -144,24 +149,20 @@ export function HomePage() {
       ? Math.round(students.reduce((acc, s) => acc + (s.overallMastery || 0), 0) / cohortCount)
       : 0;
 
-  const weakestConceptInClass = {
-    name: 'Dynamic Programming & Memoization',
-    score: 38,
-    strugglingCount: 6,
-  };
+  const weakestConceptInClass = allConcepts.length > 0
+    ? {
+        name: sortedConcepts[0].name,
+        score: normalizeMastery(sortedConcepts[0].mastery || sortedConcepts[0].masteryScore || 0),
+        strugglingCount: students.filter((s) => (s.overallMastery || 0) < 50).length,
+      }
+    : {
+        name: 'No concepts recorded yet',
+        score: 0,
+        strugglingCount: 0,
+      };
 
-  const needsAttentionStudents = students.filter((s) => s.overallMastery < 50 || s.status === 'Needs Guidance');
-
-  const sessionsToReview = [
-    {
-      id: 'rev_02',
-      studentName: 'Rohan Mehra',
-      assessmentTitle: 'LRU Cache Design (Doubly-Linked Sentinel)',
-      signalText: 'Review suggested · Sudden large paste (+340 chars) at 02:14',
-      timestamp: 'Today at 01:14 PM',
-      testsPassed: '18/18 Tests Passed',
-    },
-  ];
+  const needsAttentionStudents = students.filter((s) => (s.overallMastery || 0) < 50 || s.status === 'Needs Guidance');
+  const sessionsToReview = [];
 
   // =============================================================
   // INSTRUCTOR HOME VIEW
@@ -194,11 +195,159 @@ export function HomePage() {
               <button
                 type="button"
                 className="btn-ghost-pill btn-compact"
-                onClick={() => navigate('/teacher/student-progress')}
+                onClick={() => navigate('/dashboard')}
               >
                 <Users size={14} strokeWidth={1.5} />
-                <span>Class Roster</span>
+                <span>Cohort Roster</span>
               </button>
+            </div>
+          </div>
+
+          {/* Quick Hub Navigation Cards for Instructor */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            <div
+              onClick={() => navigate('/teacher/content-upload')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate('/teacher/content-upload'); }}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-hairline)',
+                padding: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: 'var(--shadow-card)',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--coral)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-hairline)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--coral-soft)', color: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <UploadCloud size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Syllabus Studio</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>Ingest PDF / Text</div>
+              </div>
+            </div>
+
+            <div
+              onClick={() => navigate('/content/concepts')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate('/content/concepts'); }}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-hairline)',
+                padding: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: 'var(--shadow-card)',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--coral)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-hairline)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Layers size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Concept Map</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>Prerequisite DAG</div>
+              </div>
+            </div>
+
+            <div
+              onClick={() => navigate('/content/quizzes')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate('/content/quizzes'); }}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-hairline)',
+                padding: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: 'var(--shadow-card)',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--coral)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-hairline)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(234, 179, 8, 0.12)', color: '#CA8A04', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <HelpCircle size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Topic Quizzes</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>Bloom Assessments</div>
+              </div>
+            </div>
+
+            <div
+              onClick={() => navigate('/content/coding')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate('/content/coding'); }}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-hairline)',
+                padding: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: 'var(--shadow-card)',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--coral)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-hairline)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Code2 size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Coding Sandbox</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>Problem Challenges</div>
+              </div>
+            </div>
+
+            <div
+              onClick={() => navigate('/dashboard')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate('/dashboard'); }}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-hairline)',
+                padding: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: 'var(--shadow-card)',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--coral)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-hairline)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Users size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Cohort Roster</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>Student Tracking</div>
+              </div>
             </div>
           </div>
 
@@ -304,53 +453,58 @@ export function HomePage() {
               </Chip>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {sessionsToReview.map((session) => (
-                <div
-                  key={session.id}
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: '14px',
-                    background: 'var(--surface-muted)',
-                    border: '1px solid var(--border-hairline)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                    <div>
-                      <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>
-                        {session.studentName} &bull; {session.assessmentTitle}
+            {sessionsToReview.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                ✓ No integrity flags or anomalous activity sessions pending review.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {sessionsToReview.map((session) => (
+                  <div
+                    key={session.id}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '14px',
+                      background: 'var(--surface-muted)',
+                      border: '1px solid var(--border-hairline)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                      <div>
+                        <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                          {session.studentName} &bull; {session.assessmentTitle}
+                        </div>
+                        <div style={{ marginTop: '4px' }}>
+                          <Chip variant="warning" size="sm">
+                            Review suggested
+                          </Chip>
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                            {session.signalText}
+                          </span>
+                        </div>
                       </div>
-                      {/* Integrity signal: amber chip with wording "Review suggested", never red and never "cheating" */}
-                      <div style={{ marginTop: '4px' }}>
-                        <Chip variant="warning" size="sm">
-                          Review suggested
-                        </Chip>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>
-                          Sudden large paste (+340 chars) at 02:14
-                        </span>
-                      </div>
+                      <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                        {session.timestamp}
+                      </span>
                     </div>
-                    <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                      {session.timestamp}
-                    </span>
-                  </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--border-hairline)' }}>
-                    <button
-                      type="button"
-                      className="btn-ghost-pill btn-compact"
-                      onClick={() => navigate(`/teacher/replay/${session.id}`)}
-                    >
-                      <Terminal size={13} strokeWidth={1.5} />
-                      <span>Open Replay</span>
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--border-hairline)' }}>
+                      <button
+                        type="button"
+                        className="btn-ghost-pill btn-compact"
+                        onClick={() => navigate(`/teacher/replay/${session.id}`)}
+                      >
+                        <Terminal size={13} strokeWidth={1.5} />
+                        <span>Open Replay</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 4. Class Mastery Heatmap Card */}
@@ -429,121 +583,153 @@ export function HomePage() {
         </div>
 
         {/* 2. HERO CARD for "Recommended next action" */}
-        {/* large (min 260px), 24px radius, soft coral-to-warm gradient on one side showing a mini concept-path graphic, title, one-line reason, meta chips (8 min · 5 questions · Adaptive), coral pill "Start activity" button and ghost pill "Why this?" button that opens popover with prerequisite path. No left border strip. */}
-        <div
-          className="hero-action-card"
-          style={{
-            minHeight: '260px',
-            borderRadius: '24px',
-            background: 'var(--surface)',
-            border: '1px solid var(--border-hairline)',
-            boxShadow: 'var(--shadow-card)',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Soft coral-to-warm gradient background graphic */}
+        {recommendation ? (
           <div
+            className="hero-action-card"
             style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: '40%',
-              background: 'radial-gradient(ellipse at 80% 30%, var(--coral-soft) 0%, transparent 70%)',
-              pointerEvents: 'none',
-              zIndex: 0,
+              minHeight: '260px',
+              borderRadius: '24px',
+              background: 'var(--surface)',
+              border: '1px solid var(--border-hairline)',
+              boxShadow: 'var(--shadow-card)',
+              padding: '28px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              position: 'relative',
+              overflow: 'hidden',
             }}
-            aria-hidden="true"
-          />
+          >
+            <div
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: '40%',
+                background: 'radial-gradient(ellipse at 80% 30%, var(--coral-soft) 0%, transparent 70%)',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+              aria-hidden="true"
+            />
 
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span
+            <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    color: 'var(--coral)',
+                    background: 'var(--coral-soft)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                  }}
+                >
+                  Recommended Next Action
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Target: {recommendation.conceptName} ({recommendation.targetMastery}%)
+                </span>
+              </div>
+
+              <h2
                 style={{
-                  fontSize: '11px',
+                  fontSize: '20px',
                   fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  color: 'var(--coral)',
-                  background: 'var(--coral-soft)',
-                  padding: '2px 8px',
-                  borderRadius: 'var(--radius-pill)',
+                  color: 'var(--text-main)',
+                  letterSpacing: '-0.01em',
+                  margin: '6px 0 0 0',
                 }}
               >
-                Recommended Next Action
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                Target: {recommendation.conceptName} (48% · Developing)
-              </span>
+                {recommendation.title}
+              </h2>
+
+              <p
+                style={{
+                  fontSize: '13.5px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.5',
+                  marginTop: '6px',
+                  marginBottom: 0,
+                }}
+              >
+                {recommendation.description}
+              </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+                <Chip variant="default" size="sm">
+                  <Clock size={12} strokeWidth={1.5} style={{ marginRight: '4px' }} />
+                  {recommendation.duration}
+                </Chip>
+                <Chip variant="default" size="sm">
+                  <HelpCircle size={12} strokeWidth={1.5} style={{ marginRight: '4px' }} />
+                  {recommendation.questionCount}
+                </Chip>
+                <Chip variant="default" size="sm">
+                  {recommendation.difficulty}
+                </Chip>
+              </div>
             </div>
 
-            <h2
-              style={{
-                fontSize: '20px',
-                fontWeight: 600,
-                color: 'var(--text-main)',
-                letterSpacing: '-0.01em',
-                margin: '6px 0 0 0',
-              }}
-            >
-              {recommendation.title}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '22px', position: 'relative', zIndex: 1 }}>
+              <button
+                type="button"
+                className="btn-coral-pill"
+                onClick={() => navigate(recommendation.route)}
+              >
+                <span>Start activity</span>
+                <ArrowRight size={14} strokeWidth={1.5} />
+              </button>
+
+              <button
+                type="button"
+                className="btn-ghost-pill"
+                onClick={() => setWhyThisOpen(true)}
+              >
+                <Info size={14} strokeWidth={1.5} color="var(--text-secondary)" />
+                <span>Why this?</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              minHeight: '200px',
+              borderRadius: '24px',
+              background: 'var(--surface)',
+              border: '1px solid var(--border-hairline)',
+              boxShadow: 'var(--shadow-card)',
+              padding: '28px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: '12px',
+            }}
+          >
+            <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em' }}>
+              Adaptive Recommendation Engine
+            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+              Welcome to Your Personalized Learning Portal
             </h2>
-
-            {/* One-line reason */}
-            <p
-              style={{
-                fontSize: '13.5px',
-                color: 'var(--text-secondary)',
-                lineHeight: '1.5',
-                marginTop: '6px',
-                marginBottom: 0,
-              }}
-            >
-              Strengthen Hash Functions bottleneck retention before advancing to hierarchical tree structures.
+            <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0, maxWidth: '600px', lineHeight: '1.5' }}>
+              No activities or courses loaded yet. Once connected to the live API or after an instructor publishes a syllabus in the studio, adaptive recommendations will appear here automatically.
             </p>
-
-            {/* Meta chips (8 min · 5 questions · Adaptive) */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-              <Chip variant="default" size="sm">
-                <Clock size={12} strokeWidth={1.5} style={{ marginRight: '4px' }} />
-                8 min
-              </Chip>
-              <Chip variant="default" size="sm">
-                <HelpCircle size={12} strokeWidth={1.5} style={{ marginRight: '4px' }} />
-                5 questions
-              </Chip>
-              <Chip variant="default" size="sm">
-                Adaptive
-              </Chip>
+            <div style={{ marginTop: '8px' }}>
+              <button
+                type="button"
+                className="btn-coral-pill btn-compact"
+                onClick={() => navigate('/content/concepts')}
+              >
+                <Layers size={14} strokeWidth={1.5} />
+                <span>View Concept Map</span>
+              </button>
             </div>
           </div>
-
-          {/* Buttons: coral pill "Start activity" + ghost pill "Why this?" */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '22px', position: 'relative', zIndex: 1 }}>
-            <button
-              type="button"
-              className="btn-coral-pill"
-              onClick={() => navigate(recommendation.route)}
-            >
-              <span>Start activity</span>
-              <ArrowRight size={14} strokeWidth={1.5} />
-            </button>
-
-            <button
-              type="button"
-              className="btn-ghost-pill"
-              onClick={() => setWhyThisOpen(true)}
-            >
-              <Info size={14} strokeWidth={1.5} color="var(--text-secondary)" />
-              <span>Why this?</span>
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* 3. ROW OF 3-4 COMPACT STAT CARDS */}
         {/* Each has small uppercase grey label, large number (28px weight 600), one grey caption. No tinted inner boxes. */}
@@ -597,8 +783,8 @@ export function HomePage() {
           />
         </div>
 
-        {/* 4. CONCEPT PATH: Horizontal scroller of rounded step cards with mastery chip and arrows; recommended step has coral outline and Next pill */}
-        <MiniConceptMap concepts={allConcepts} activeConceptId={targetConcept.id} />
+        {/* 4. CONCEPT PATH: Horizontal scroller of rounded step cards with mastery chip and arrows */}
+        <MiniConceptMap concepts={allConcepts} activeConceptId={targetConcept?.id} />
       </div>
 
       {/* Right Rail (320px, stacked cards, same card style, 16px gap) */}
@@ -608,16 +794,22 @@ export function HomePage() {
         pendingAssessments={pendingAssessments}
         completedQuizzes={completedQuizzes}
         completedAssessments={completedAssessments}
-        onOpenWhyThis={() => setWhyThisOpen(true)}
+        totalConcepts={totalConceptsCount}
+        masteredConcepts={solidConceptsCount}
+        overallProgress={studentMastery}
+        courseName={primaryCourse?.title || 'Curriculum Sequence'}
+        onOpenWhyThis={recommendation ? () => setWhyThisOpen(true) : undefined}
       />
 
       {/* "Why this?" Modal with prerequisite path popover */}
-      <WhyThisModal
-        isOpen={whyThisOpen}
-        onClose={() => setWhyThisOpen(false)}
-        recommendation={recommendation}
-        onStartActivity={() => navigate(recommendation.route)}
-      />
+      {recommendation && (
+        <WhyThisModal
+          isOpen={whyThisOpen}
+          onClose={() => setWhyThisOpen(false)}
+          recommendation={recommendation}
+          onStartActivity={() => navigate(recommendation.route)}
+        />
+      )}
 
       <OnboardingTour role={role} />
     </div>
@@ -625,3 +817,4 @@ export function HomePage() {
 }
 
 export default HomePage;
+

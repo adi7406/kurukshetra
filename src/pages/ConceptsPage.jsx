@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
+import EmptyState from '../components/feedback/EmptyState';
 import MasteryChip from '../components/common/MasteryChip';
 import Chip from '../components/common/Chip';
 import { normalizeMastery } from '../utils/mastery';
@@ -136,10 +137,20 @@ export function ConceptsPage() {
       </div>
 
       {/* Modules & Concepts Grid */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {primaryCourse?.modules?.map((module) => {
-          const visibleConcepts = module.concepts.filter(filterConcept);
-          if (visibleConcepts.length === 0 && searchQuery) return null;
+      {!primaryCourse || !primaryCourse.modules || primaryCourse.modules.length === 0 ? (
+        <div style={{ background: 'var(--surface)', borderRadius: '20px', border: '1px solid var(--border-hairline)', padding: '36px', textAlign: 'center' }}>
+          <EmptyState
+            title="No Course Concepts Available"
+            description="No course syllabus has been published yet. Once connected to the live backend API or when an instructor uploads a syllabus in the studio, curriculum concepts will appear here."
+            actionLabel="Go to Syllabus Studio"
+            onAction={() => navigate('/teacher/upload')}
+          />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {primaryCourse.modules.map((module) => {
+            const visibleConcepts = module.concepts.filter(filterConcept);
+            if (visibleConcepts.length === 0 && searchQuery) return null;
 
           return (
             <div
@@ -259,6 +270,7 @@ export function ConceptsPage() {
           );
         })}
       </div>
+    )}
 
       {/* Theory & Objectives Modal */}
       {selectedConcept && (
