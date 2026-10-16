@@ -83,10 +83,12 @@ alter table public.integrity_signals enable row level security;
 alter table public.integrity_reviews enable row level security;
 
 -- Policies for viva_sessions
+drop policy if exists "Students can view and update own viva sessions" on public.viva_sessions;
 create policy "Students can view and update own viva sessions"
   on public.viva_sessions for all
   using (student_id = auth.uid());
 
+drop policy if exists "Trainers and admins can view viva sessions" on public.viva_sessions;
 create policy "Trainers and admins can view viva sessions"
   on public.viva_sessions for select
   using (
@@ -97,6 +99,7 @@ create policy "Trainers and admins can view viva sessions"
   );
 
 -- Policies for viva_questions
+drop policy if exists "Students can view viva questions in own sessions" on public.viva_questions;
 create policy "Students can view viva questions in own sessions"
   on public.viva_questions for select
   using (
@@ -106,6 +109,7 @@ create policy "Students can view viva questions in own sessions"
     )
   );
 
+drop policy if exists "Trainers and admins can view viva questions" on public.viva_questions;
 create policy "Trainers and admins can view viva questions"
   on public.viva_questions for select
   using (
@@ -116,10 +120,12 @@ create policy "Trainers and admins can view viva questions"
   );
 
 -- Policies for viva_answers
+drop policy if exists "Students can view and insert own viva answers" on public.viva_answers;
 create policy "Students can view and insert own viva answers"
   on public.viva_answers for all
   using (student_id = auth.uid());
 
+drop policy if exists "Trainers and admins can view and update viva answers" on public.viva_answers;
 create policy "Trainers and admins can view and update viva answers"
   on public.viva_answers for all
   using (
@@ -130,6 +136,7 @@ create policy "Trainers and admins can view and update viva answers"
   );
 
 -- Policies for integrity_signals
+drop policy if exists "Trainers and admins can view integrity signals" on public.integrity_signals;
 create policy "Trainers and admins can view integrity signals"
   on public.integrity_signals for select
   using (
@@ -140,6 +147,7 @@ create policy "Trainers and admins can view integrity signals"
   );
 
 -- Policies for integrity_reviews
+drop policy if exists "Trainers and admins can view and manage integrity reviews" on public.integrity_reviews;
 create policy "Trainers and admins can view and manage integrity reviews"
   on public.integrity_reviews for all
   using (

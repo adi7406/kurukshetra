@@ -41,6 +41,7 @@ alter table public.reports enable row level security;
 alter table public.audit_logs enable row level security;
 
 -- Reports RLS: Users can only see their own requested exports; admins see all
+drop policy if exists "Users can view their own reports" on public.reports;
 create policy "Users can view their own reports"
   on public.reports for select
   using (
@@ -48,17 +49,20 @@ create policy "Users can view their own reports"
     or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
   );
 
+drop policy if exists "Users can insert their own reports" on public.reports;
 create policy "Users can insert their own reports"
   on public.reports for insert
   with check (auth.uid() = requester_id);
 
 -- Audit Logs RLS: Only admins and trainers can view audit logs
+drop policy if exists "Privileged users can view audit logs" on public.audit_logs;
 create policy "Privileged users can view audit logs"
   on public.audit_logs for select
   using (
     exists (select 1 from public.profiles where id = auth.uid() and role in ('trainer', 'admin'))
   );
 
+drop policy if exists "Authenticated users can append audit logs" on public.audit_logs;
 create policy "Authenticated users can append audit logs"
   on public.audit_logs for insert
   with check (auth.uid() is not null);

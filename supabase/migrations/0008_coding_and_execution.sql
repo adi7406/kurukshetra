@@ -85,10 +85,12 @@ alter table public.execution_jobs enable row level security;
 alter table public.test_results enable row level security;
 
 -- Policies for coding_sessions
+drop policy if exists "Students can view own coding sessions" on public.coding_sessions;
 create policy "Students can view own coding sessions"
   on public.coding_sessions for select
   using (student_id = auth.uid());
 
+drop policy if exists "Trainers and admins can view coding sessions" on public.coding_sessions;
 create policy "Trainers and admins can view coding sessions"
   on public.coding_sessions for select
   using (
@@ -99,6 +101,7 @@ create policy "Trainers and admins can view coding sessions"
   );
 
 -- Policies for session_events
+drop policy if exists "Students can view and insert own session events" on public.session_events;
 create policy "Students can view and insert own session events"
   on public.session_events for all
   using (
@@ -108,6 +111,7 @@ create policy "Students can view and insert own session events"
     )
   );
 
+drop policy if exists "Trainers and admins can view session events" on public.session_events;
 create policy "Trainers and admins can view session events"
   on public.session_events for select
   using (
@@ -118,10 +122,12 @@ create policy "Trainers and admins can view session events"
   );
 
 -- Policies for submissions
+drop policy if exists "Students can view own submissions" on public.submissions;
 create policy "Students can view own submissions"
   on public.submissions for select
   using (student_id = auth.uid());
 
+drop policy if exists "Trainers and admins can view submissions" on public.submissions;
 create policy "Trainers and admins can view submissions"
   on public.submissions for select
   using (
@@ -132,6 +138,7 @@ create policy "Trainers and admins can view submissions"
   );
 
 -- Policies for execution_jobs
+drop policy if exists "Users can view execution jobs for own submissions" on public.execution_jobs;
 create policy "Users can view execution jobs for own submissions"
   on public.execution_jobs for select
   using (
@@ -142,6 +149,7 @@ create policy "Users can view execution jobs for own submissions"
   );
 
 -- Policies for test_results
+drop policy if exists "Users can view test results for own submissions" on public.test_results;
 create policy "Users can view test results for own submissions"
   on public.test_results for select
   using (
