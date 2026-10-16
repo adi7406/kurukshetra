@@ -54,6 +54,7 @@ const createQuestionSchema = {
         })
       )
       .optional(),
+    reviewStatus: z.enum(['draft', 'in_review', 'approved', 'rejected', 'archived']).optional(),
   }),
 };
 
@@ -107,6 +108,18 @@ router.patch(
   requireRole('trainer', 'admin'),
   validateRequest(updateQuestionSchema),
   questionsController.updateQuestion
+);
+router.post(
+  '/questions/:questionId/publish',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  questionsController.publishQuestion
+);
+router.get(
+  '/questions/:questionId/preview',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  questionsController.previewQuestion
 );
 
 export default router;

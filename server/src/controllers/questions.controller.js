@@ -1,5 +1,5 @@
 import { getSupabase } from '../integrations/supabase.js';
-import { NotFoundError, ForbiddenError } from '../utils/errors.js';
+import { NotFoundError, ForbiddenError, ValidationError, ConflictError } from '../utils/errors.js';
 
 export const questionsController = {
   /**
@@ -77,6 +77,7 @@ export const questionsController = {
         options = [],
         answer = null,
         testCases = [],
+        reviewStatus = 'approved',
       } = req.body;
       const user = req.user;
       const supabase = getSupabase();
@@ -84,6 +85,37 @@ export const questionsController = {
       const { data: course } = await supabase.from('courses').select('*').eq('id', courseId).maybeSingle();
       if (!course) {
         throw new NotFoundError('Course not found.');
+      }
+
+      // Check for duplicate prompt within course (TASK-017)
+      const { data: existingCourseQuestions = [] } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('course_id', courseId);
+      const existingQIds = (existingCourseQuestions || []).map((q) => q.id);
+
+      if (existingQIds.length > 0) {
+        const { data: allVersions = [] } = await supabase.from('question_versions').select('*');
+        const courseVersions = (allVersions || []).filter((v) => existingQIds.includes(v.question_id));
+        const duplicate = courseVersions.find(
+          (v) => v.prompt && v.prompt.trim().toLowerCase() === prompt.trim().toLowerCase()
+        );
+        if (duplicate) {
+          throw new ConflictError('A question with an identical prompt already exists in this course.');
+        }
+      }
+
+      // Validate answer key integrity (TASK-017)
+      if (['mcq_single', 'mcq_multiple'].includes(questionType)) {
+        if (!Array.isArray(options) || options.length < 2) {
+          throw new ValidationError('Multiple choice questions must have at least 2 options.');
+        }
+        const hasCorrectOption = options.some((opt) => opt.isCorrect);
+        const hasAnswerPayload =
+          answer?.payload?.correctOptionKey || (Array.isArray(answer?.payload?.selectedOptionKeys) && answer.payload.selectedOptionKeys.length > 0);
+        if (!hasCorrectOption && !hasAnswerPayload) {
+          throw new ValidationError('Objective questions must specify a valid answer key or at least one correct option.');
+        }
       }
 
       // 1. Create stable question identity
@@ -113,7 +145,7 @@ export const questionsController = {
           marks,
           negative_marks: negativeMarks,
           explanation,
-          review_status: 'approved',
+          review_status: reviewStatus,
           created_by: user.id,
         })
         .select()
@@ -383,6 +415,132 @@ export const questionsController = {
           title: newVersion.title,
           prompt: newVersion.prompt,
           difficulty: newVersion.difficulty,
+        },
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Publish a draft question (Trainer/Admin)
+   */
+  async publishQuestion(req, res, next) {
+    try {
+      const { questionId } = req.params;
+      const user = req.user;
+      const supabase = getSupabase();
+
+      const { data: question } = await supabase.from('questions').select('*').eq('id', questionId).maybeSingle();
+      if (!question) {
+        throw new NotFoundError('Question not found.');
+      }
+
+      if (question.created_by !== user.id && user.role !== 'admin') {
+        throw new ForbiddenError('You do not have permission to publish this question.');
+      }
+
+      const { data: allVersions = [] } = await supabase
+        .from('question_versions')
+        .select('*')
+        .eq('question_id', questionId);
+
+      const sorted = [...(allVersions || [])].sort((a, b) => b.version_number - a.version_number);
+      const latest = sorted[0];
+
+      if (!latest) {
+        throw new NotFoundError('Question version not found.');
+      }
+
+      const { data: updated } = await supabase
+        .from('question_versions')
+        .update({
+          review_status: 'approved',
+        })
+        .eq('id', latest.id)
+        .select()
+        .single();
+
+      res.status(200).json({
+        data: {
+          id: question.id,
+          versionId: updated.id,
+          versionNumber: updated.version_number,
+          reviewStatus: updated.review_status,
+        },
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Preview a question with all answers, test cases, and explanation (Trainer/Admin only)
+   */
+  async previewQuestion(req, res, next) {
+    try {
+      const { questionId } = req.params;
+      const user = req.user;
+      const supabase = getSupabase();
+
+      if (user.role !== 'trainer' && user.role !== 'admin') {
+        throw new ForbiddenError('Only trainers and admins can access question previews.');
+      }
+
+      const { data: question } = await supabase.from('questions').select('*').eq('id', questionId).maybeSingle();
+      if (!question) {
+        throw new NotFoundError('Question not found.');
+      }
+
+      const { data: allVersions = [] } = await supabase
+        .from('question_versions')
+        .select('*')
+        .eq('question_id', questionId);
+
+      const sorted = [...(allVersions || [])].sort((a, b) => b.version_number - a.version_number);
+      const latest = sorted[0];
+
+      if (!latest) {
+        throw new NotFoundError('Question version not found.');
+      }
+
+      const { data: options = [] } = await supabase
+        .from('question_options')
+        .select('*')
+        .eq('question_version_id', latest.id);
+
+      const { data: answer } = await supabase
+        .from('question_answers')
+        .select('*')
+        .eq('question_version_id', latest.id)
+        .maybeSingle();
+
+      const { data: testCases = [] } = await supabase
+        .from('coding_test_cases')
+        .select('*')
+        .eq('question_version_id', latest.id);
+
+      res.status(200).json({
+        data: {
+          id: question.id,
+          versionId: latest.id,
+          versionNumber: latest.version_number,
+          questionType: latest.question_type,
+          prompt: latest.prompt,
+          difficulty: latest.difficulty,
+          marks: latest.marks,
+          reviewStatus: latest.review_status,
+          explanation: latest.explanation,
+          options,
+          answer: answer ? { payload: answer.answer_payload, type: answer.answer_type } : null,
+          testCases,
+          previewMode: true,
         },
         meta: {
           requestId: req.requestId,

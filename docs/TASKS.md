@@ -210,11 +210,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Invalid output is rejected; provider failure does not break unrelated features; generated content is not silently published.
 
 ### TASK-017 — Trainer authoring and review
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-015
-- [ ] Allow authorized trainers to create/edit/preview questions.
-- [ ] Validate answer keys and rubrics.
-- [ ] Implement review and publication workflow.
-- [ ] Add duplicate checks where feasible.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-015
+- [x] Allow authorized trainers to create/edit/preview questions.
+- [x] Validate answer keys and rubrics.
+- [x] Implement review and publication workflow.
+- [x] Add duplicate checks where feasible.
 
 **Acceptance:** Trainers can author and publish questions; learners cannot access editing or answer-key routes.
 
