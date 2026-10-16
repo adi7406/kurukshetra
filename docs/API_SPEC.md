@@ -11,7 +11,7 @@
 
 ## 1. Purpose and scope
 
-This document standardizes how the React/Vite frontend communicates with the Node.js/Express/TypeScript backend for the Adaptive Learning and Assessment Portal. The platform supports course and syllabus management, concept graphs, AI-assisted learning content, assessments, adaptive mastery, recommendations, coding practice, integrity review, and AI viva.
+This document standardizes how the React/Vite frontend communicates with the Node.js/Express (JavaScript) backend for the Adaptive Learning and Assessment Portal. The platform supports course and syllabus management, concept graphs, AI-assisted learning content, assessments, adaptive mastery, recommendations, coding practice, integrity review, and AI viva.
 
 The API uses JSON over HTTPS and REST-style resources. Supabase provides PostgreSQL, authentication, storage, and row-level security (RLS). Long-running work such as document processing, AI generation, and code execution should run asynchronously and be represented by job resources.
 
@@ -31,7 +31,7 @@ The `/api/v1` prefix is the proposed versioned API root. If the existing applica
 - Durations are in milliseconds unless explicitly documented otherwise.
 - Paginated collections use `data` and `pagination` fields.
 - Optional fields may be omitted; `null` means an explicitly empty value where allowed. Do not silently switch between omitted and `null` semantics.
-- API contracts must be validated at runtime on the server. TypeScript types alone are not runtime validation.
+- API contracts must be validated at runtime on the server using runtime schema validation (e.g., Zod, Joi). Frontend or client-side checks alone are not sufficient.
 
 ---
 
@@ -636,22 +636,22 @@ Suggested Express module layout; adapt to the existing repository rather than cr
 
 ```text
 src/
-  app.ts
-  server.ts
+  app.js
+  server.js
   config/
   middleware/
-    authenticate.ts
-    authorize.ts
-    validate.ts
-    error-handler.ts
-    request-id.ts
-    rate-limit.ts
+    authenticate.js
+    authorize.js
+    validate.js
+    error-handler.js
+    request-id.js
+    rate-limit.js
   modules/
     users/
-      users.routes.ts
-      users.controller.ts
-      users.service.ts
-      users.schemas.ts
+      users.routes.js
+      users.controller.js
+      users.service.js
+      users.schemas.js
     courses/
     syllabus/
     concepts/

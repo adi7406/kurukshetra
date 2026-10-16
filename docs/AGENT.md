@@ -43,8 +43,8 @@ If a referenced file does not exist, do not pretend it does. Inspect the reposit
 
 Use the existing repository configuration as the final authority; do not replace tools simply because another option is familiar.
 
-- **Frontend:** React, Vite, TypeScript where configured, Tailwind CSS, Monaco Editor for coding tasks, and Recharts for analytics.
-- **Backend:** Node.js, Express, TypeScript, and REST APIs.
+- **Frontend:** React, Vite, JavaScript, Tailwind CSS, Monaco Editor for coding tasks, and Recharts for analytics.
+- **Backend:** Node.js, Express, JavaScript, and REST APIs.
 - **Data and identity:** Supabase PostgreSQL, Supabase Auth, and Supabase Storage with Row Level Security (RLS).
 - **AI:** Provider-configurable LLM integration, structured outputs, validation, and retrieval-augmented generation (RAG) where required.
 - **Code execution:** Judge0 or an equivalently isolated execution service. Never execute learner code inside the main Express process.
@@ -74,7 +74,7 @@ Do not introduce a new framework, database, state-management library, ORM, AI pr
 - Keep business rules server-side; never rely on frontend checks for authorisation or assessment security.
 
 ### Step 4 — Verify
-- Run the most relevant available tests, type checks, linting, builds, migration checks, and security checks.
+- Run the most relevant available tests, linting, builds, migration checks, and security checks.
 - Add or update tests for changed behaviour and edge cases.
 - If a check cannot run, state why. Never claim a test, build, migration, or deployment succeeded unless it actually ran successfully.
 
@@ -88,8 +88,8 @@ Finish with a concise summary containing:
 
 ## 5. Code Quality Standards
 
-- Prefer clear, readable, strongly typed code over clever shortcuts.
-- Avoid `any` unless there is a documented reason; use validation and appropriate types for external data.
+- Prefer clear, readable, modular JavaScript code over clever shortcuts.
+- Use runtime schema validation and well-structured objects for external data.
 - Do not duplicate business rules across frontend and backend.
 - Keep controllers/route handlers thin; place reusable business logic in service modules.
 - Use parameterised SQL or safe query-builder methods. Never concatenate untrusted input into SQL.
@@ -211,7 +211,7 @@ A task is complete only when applicable items below are satisfied:
 - [ ] The implementation meets the requested acceptance criteria.
 - [ ] Code follows existing project conventions and includes appropriate validation/error handling.
 - [ ] Permissions, RLS, and sensitive-data exposure were considered and tested where relevant.
-- [ ] Tests/type checks/lint/build checks were run, with outcomes reported honestly.
+- [ ] Tests/lint/build checks were run, with outcomes reported honestly.
 - [ ] Database changes use safe versioned migrations and preserve required history.
 - [ ] Relevant documentation and `.env.example` were updated.
 - [ ] No secrets, real personal data, hidden answers, or unsafe execution paths were introduced.

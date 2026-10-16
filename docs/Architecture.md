@@ -28,8 +28,8 @@ The baseline architecture uses a **modular monolith for the application API**, w
 ```mermaid
 flowchart TB
     Browser[Web Browser]
-    UI[React + Vite + TypeScript UI]
-    API[Node.js + Express + TypeScript API]
+    UI[React + Vite (JavaScript) UI]
+    API[Node.js + Express (JavaScript) API]
     Auth[Supabase Auth]
     DB[(Supabase PostgreSQL)]
     Storage[Supabase Storage]
@@ -65,10 +65,10 @@ flowchart TB
 
 | Layer | Baseline | Responsibility |
 |---|---|---|
-| Web client | React, Vite, TypeScript, Tailwind CSS | Screens, forms, learning experience, dashboards, assessment UI |
+| Web client | React, Vite, JavaScript, Tailwind CSS | Screens, forms, learning experience, dashboards, assessment UI |
 | Code editor | Monaco Editor | Coding questions, editing, and supported replay/event capture |
 | Charts | Recharts or an equivalent approved charting library | Mastery, progress, and assessment visualizations |
-| Application API | Node.js, Express, TypeScript | Authentication enforcement, domain rules, validation, orchestration, REST endpoints |
+| Application API | Node.js, Express, JavaScript | Authentication enforcement, domain rules, validation, orchestration, REST endpoints |
 | Identity | Supabase Auth | Sign-in, sessions, token issuance, password/OAuth flows as configured |
 | Relational data | Supabase PostgreSQL | Durable product data, versioned content, attempts, mastery, recommendations, audit evidence |
 | File storage | Supabase Storage | Syllabus documents and approved learning assets; private by default where appropriate |
@@ -132,8 +132,8 @@ Suggested API module layout:
 
 ```text
 src/
-├── app.ts
-├── server.ts
+├── app.js
+├── server.js
 ├── config/
 ├── middleware/       # auth, validation, errors, rate limits, request IDs
 ├── modules/
@@ -457,7 +457,7 @@ Recommended logical environments:
 ```mermaid
 flowchart LR
     Dev[Developer / Pull Request]
-    CI[CI: lint, typecheck, tests, build]
+    CI[CI: lint, tests, build]
     Review[Code Review + Migration Review]
     Preview[Preview Deployment]
     Stage[Staging Validation]
@@ -503,7 +503,7 @@ Use deterministic fixtures and mocked external services for most automated tests
 
 ### Definition of ready for release
 
-- Type checking, linting, tests, and production build pass.
+- Linting, tests, and production build pass.
 - Authorization and RLS tests cover affected data paths.
 - Database migrations are reviewed and tested from a clean state.
 - Error, loading, retry, and empty states exist for the changed workflow.
