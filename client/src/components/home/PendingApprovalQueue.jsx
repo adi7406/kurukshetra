@@ -4,7 +4,9 @@ import { Check, Edit2, Layers, HelpCircle, Code2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import RailCard from '../common/RailCard';
 
-export function PendingApprovalQueue({ items = [], onApproveItem }) {
+const EMPTY_ITEMS = [];
+
+export function PendingApprovalQueue({ items = EMPTY_ITEMS, onApproveItem }) {
   const toast = useToast();
   const navigate = useNavigate();
   const [queue, setQueue] = useState(items);

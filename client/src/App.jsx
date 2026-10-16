@@ -92,15 +92,23 @@ function AppRoutes() {
         <Route path="/content/quizzes" element={<QuizPage />} />
         <Route path="/content/coding" element={<CodeAssessmentsPage />} />
 
-        {/* Backward Compatibility Aliases */}
+        {/* Backward Compatibility & Convenience Route Aliases */}
         <Route path="/quiz" element={<QuizPage />} />
+        <Route path="/quizzes" element={<Navigate to="/content/quizzes" replace />} />
         <Route path="/code-assessments" element={<CodeAssessmentsPage />} />
+        <Route path="/coding" element={<Navigate to="/content/coding" replace />} />
+        <Route path="/concepts" element={<Navigate to="/content/concepts" replace />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/profile" element={<ProfilePage />} />
 
-        {/* Teacher Specific Routes */}
+        {/* Teacher Specific Routes & Aliases */}
         <Route path="/teacher/content-upload" element={<TeacherContentUploadPage />} />
+        <Route path="/teacher/upload" element={<Navigate to="/teacher/content-upload" replace />} />
+        <Route path="/teacher/dashboard" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/teacher/cohort" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/teacher/roster" element={<Navigate to="/dashboard" replace />} />
         <Route path="/teacher/student-progress" element={<TeacherStudentProgressPage />} />
+        <Route path="/teacher/analytics" element={<Navigate to="/teacher/student-progress" replace />} />
         <Route path="/teacher/replay/:sessionId" element={<SessionReplayPage />} />
       </Route>
 

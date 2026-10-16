@@ -81,7 +81,7 @@ export function ConceptsPage() {
           Curriculum Concepts & Prerequisite Tree
         </h1>
         <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
-          {primaryCourse?.code}: {primaryCourse?.title} &bull; Instructor: {primaryCourse?.instructor}
+          {primaryCourse ? `${primaryCourse?.code}: ${primaryCourse?.title} • Instructor: ${primaryCourse?.instructor}` : 'Interactive Prerequisite Graph & Adaptive Concept Progression'}
         </p>
       </div>
 
@@ -143,7 +143,7 @@ export function ConceptsPage() {
             title="No Course Concepts Available"
             description="No course syllabus has been published yet. Once connected to the live backend API or when an instructor uploads a syllabus in the studio, curriculum concepts will appear here."
             actionLabel="Go to Syllabus Studio"
-            onAction={() => navigate('/teacher/upload')}
+            onAction={() => navigate('/teacher/content-upload')}
           />
         </div>
       ) : (
