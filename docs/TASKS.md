@@ -230,12 +230,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Only published/authorized assessments can be started; historical attempts reference the correct versions.
 
 ### TASK-019 — Asynchronous job framework
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-005, TASK-006
-- [ ] Select a job mechanism compatible with hosting and architecture.
-- [ ] Define job states, idempotency, retries, timeouts, and cancellation.
-- [ ] Add authorized job-status retrieval.
-- [ ] Define abandoned-job cleanup and retention.
-- [ ] Reuse for syllabus and AI generation.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-005, TASK-006
+- [x] Select a job mechanism compatible with hosting and architecture.
+- [x] Define job states, idempotency, retries, timeouts, and cancellation.
+- [x] Add authorized job-status retrieval.
+- [x] Define abandoned-job cleanup and retention.
+- [x] Reuse for syllabus and AI generation.
 
 **Acceptance:** Long jobs do not block ordinary API requests; retries do not duplicate results.
 
