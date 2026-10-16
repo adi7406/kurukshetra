@@ -641,7 +641,7 @@ If no remediation is needed, recommend the next ready concept, spaced revision, 
 | Frontend | React + Vite | Student and trainer web application |
 | UI styling | Tailwind CSS | Responsive layouts and UI components |
 | Code editor | Monaco Editor | Code authoring and editor event instrumentation |
-| Backend API | Node.js + Express + TypeScript | Authorization, business logic, orchestration |
+| Backend API | Node.js + Express (JavaScript) | Authorization, business logic, orchestration |
 | Database | Supabase PostgreSQL | Relational application data |
 | Authentication | Supabase Auth | User authentication |
 | File storage | Supabase Storage | Approved syllabus uploads and permitted attachments |
@@ -852,7 +852,7 @@ Initial targets for a pilot:
 - Provide clear empty, loading, error, and partial-data states.
 
 ### 13.5 Maintainability
-- Use TypeScript and shared request/response types where practical.
+- Use modular JavaScript with standardized request/response schemas where practical.
 - Separate domain logic from HTTP handlers.
 - Add automated tests for mastery updates, prerequisite validation, recommendation selection, permissions, and assessment scoring.
 - Keep AI provider and execution provider behind adapter interfaces.

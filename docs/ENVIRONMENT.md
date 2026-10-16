@@ -36,8 +36,8 @@ Never copy production student records into local development unless a formally a
 
 Confirm these versions against the actual repository and hosting provider before pinning them:
 
-- **Frontend:** React + Vite + TypeScript, running on a supported Node.js LTS release.
-- **Backend:** Node.js + Express + TypeScript.
+- **Frontend:** React + Vite (JavaScript), running on a supported Node.js LTS release.
+- **Backend:** Node.js + Express (JavaScript).
 - **Database and identity:** Supabase PostgreSQL and Supabase Auth, with Row Level Security (RLS) enabled on exposed tables.
 - **File storage:** Supabase Storage or another explicitly selected private object-storage provider.
 - **AI services:** Provider adapter(s) configured through server-side credentials.

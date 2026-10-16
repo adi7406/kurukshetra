@@ -79,34 +79,33 @@ AI orchestration layer
 Adapt to the actual repository rather than creating duplicate folders.
 
 ```text
-backend/src/
+server/src/
   modules/
     ai/
-      ai.types.ts
-      ai.provider.ts
-      ai.service.ts
-      ai.errors.ts
-      ai.schemas.ts
-      prompt-registry.ts
-      usage.service.ts
+      ai.provider.js
+      ai.service.js
+      ai.errors.js
+      ai.schemas.js
+      prompt-registry.js
+      usage.service.js
     syllabus/
-      syllabus.service.ts
-      syllabus.jobs.ts
+      syllabus.service.js
+      syllabus.jobs.js
     content/
-      content-generation.service.ts
+      content-generation.service.js
     questions/
-      question-generation.service.ts
+      question-generation.service.js
     mastery/
-      mastery.service.ts
-      mastery-model.ts
+      mastery.service.js
+      mastery-model.js
     recommendations/
-      recommendation.service.ts
+      recommendation.service.js
     viva/
-      viva.service.ts
+      viva.service.js
     integrity/
-      integrity-review.service.ts
+      integrity-review.service.js
   workers/
-    ai-generation.worker.ts
+    ai-generation.worker.js
 ```
 
 Names and structure are suggestions. Follow existing conventions in the repository.
@@ -115,36 +114,42 @@ Names and structure are suggestions. Follow existing conventions in the reposito
 
 Create an internal interface so provider changes do not require rewriting domain logic.
 
-```ts
-export interface StructuredGenerationRequest<TInput> {
-  task: string;
-  input: TInput;
-  systemPrompt: string;
-  userPrompt: string;
-  outputSchemaName: string;
-  temperature?: number;
-  maxOutputTokens?: number;
-  timeoutMs?: number;
-}
+```js
+/**
+ * @typedef {Object} StructuredGenerationRequest
+ * @property {string} task
+ * @property {any} input
+ * @property {string} systemPrompt
+ * @property {string} userPrompt
+ * @property {string} outputSchemaName
+ * @property {number} [temperature]
+ * @property {number} [maxOutputTokens]
+ * @property {number} [timeoutMs]
+ */
 
-export interface StructuredGenerationResult<TOutput> {
-  output: TOutput;
-  provider: string;
-  model: string;
-  requestId?: string;
-  inputTokens?: number;
-  outputTokens?: number;
-  latencyMs: number;
-}
+/**
+ * @typedef {Object} StructuredGenerationResult
+ * @property {any} output
+ * @property {string} provider
+ * @property {string} model
+ * @property {string} [requestId]
+ * @property {number} [inputTokens]
+ * @property {number} [outputTokens]
+ * @property {number} latencyMs
+ */
 
-export interface AIProvider {
-  generateStructured<TInput, TOutput>(
-    request: StructuredGenerationRequest<TInput>
-  ): Promise<StructuredGenerationResult<TOutput>>;
+export class AIProvider {
+  /**
+   * @param {StructuredGenerationRequest} request
+   * @returns {Promise<StructuredGenerationResult>}
+   */
+  async generateStructured(request) {
+    throw new Error('Not implemented');
+  }
 }
 ```
 
-Use the project's actual schema library if one exists. Otherwise, select a runtime validation library (for example, Zod) and use it consistently. TypeScript types alone do not validate untrusted runtime data.
+Use the project's actual schema library if one exists. Otherwise, select a runtime validation library (for example, Zod) and use it consistently. In JavaScript, runtime schema validation is mandatory to validate untrusted input and external payloads.
 
 ---
 
