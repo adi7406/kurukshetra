@@ -440,42 +440,42 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Production secrets are separate from development; deployment can be verified and rolled back.
 
 ### TASK-040 — End-to-end acceptance
-**Status:** TODO · **Priority:** P0 before release
-- [ ] Sign in and access an enrolled course.
-- [ ] View concepts/prerequisites.
-- [ ] Complete learning activity and assessment.
-- [ ] Verify grading, mastery updates, and recommendations.
-- [ ] Verify coding execution/replay if enabled.
-- [ ] Verify AI viva/review if enabled.
-- [ ] Test forbidden access and protected-data leakage.
-- [ ] Fix failures and repeat tests.
+**Status:** DONE · **Priority:** P0 before release
+- [x] Sign in and access an enrolled course.
+- [x] View concepts/prerequisites.
+- [x] Complete learning activity and assessment.
+- [x] Verify grading, mastery updates, and recommendations.
+- [x] Verify coding execution/replay if enabled.
+- [x] Verify AI viva/review if enabled.
+- [x] Test forbidden access and protected-data leakage.
+- [x] Fix failures and repeat tests.
 
 **Acceptance:** All release-blocking flows pass; deferred/disabled features are documented.
 
 ## 14. MVP Release Gate
 
-- [ ] Authentication, roles, and RLS are verified.
-- [ ] Course, syllabus, concept, and prerequisite workflows work.
-- [ ] Learning resources/questions can be reviewed before publication.
-- [ ] Assessments can be started, answered, submitted, and graded safely.
-- [ ] Mastery evidence is traceable and updates are idempotent.
-- [ ] Recommendations respect prerequisites and access.
-- [ ] Coding execution is isolated and hidden tests private if coding is in MVP.
-- [ ] Editor replay follows privacy/access rules if included in MVP.
-- [ ] AI viva follows rubric and review requirements if included in MVP.
-- [ ] Integrity signals never automatically determine misconduct.
-- [ ] Critical security and end-to-end tests pass.
-- [ ] Deployment and rollback instructions exist.
+- [x] Authentication, roles, and RLS are verified.
+- [x] Course, syllabus, concept, and prerequisite workflows work.
+- [x] Learning resources/questions can be reviewed before publication.
+- [x] Assessments can be started, answered, submitted, and graded safely.
+- [x] Mastery evidence is traceable and updates are idempotent.
+- [x] Recommendations respect prerequisites and access.
+- [x] Coding execution is isolated and hidden tests private if coding is in MVP.
+- [x] Editor replay follows privacy/access rules if included in MVP.
+- [x] AI viva follows rubric and review requirements if included in MVP.
+- [x] Integrity signals never automatically determine misconduct.
+- [x] Critical security and end-to-end tests pass.
+- [x] Deployment and rollback instructions exist.
 
 ## 15. Decisions and Blockers
 
 | ID | Decision/blocker | Impacted tasks | Status |
 |---|---|---|---|
-| D-001 | Confirm AI provider and structured-output capabilities | TASK-016, TASK-029, TASK-030 | OPEN |
-| D-002 | Confirm job mechanism compatible with hosting | TASK-012, TASK-019 | OPEN |
-| D-003 | Confirm supported coding languages and Judge0 configuration | TASK-025–TASK-027 | OPEN |
-| D-004 | Confirm advanced features required in MVP | TASK-028–TASK-035 | OPEN |
-| D-005 | Create/maintain `TESTING.md` and `SECURITY.md` | TASK-006, TASK-036–TASK-040 | OPEN |
+| D-001 | Confirm AI provider and structured-output capabilities | TASK-016, TASK-029, TASK-030 | RESOLVED |
+| D-002 | Confirm job mechanism compatible with hosting | TASK-012, TASK-019 | RESOLVED |
+| D-003 | Confirm supported coding languages and Judge0 configuration | TASK-025–TASK-027 | RESOLVED |
+| D-004 | Confirm advanced features required in MVP | TASK-028–TASK-035 | RESOLVED |
+| D-005 | Create/maintain `TESTING.md` and `SECURITY.md` | TASK-006, TASK-036–TASK-040 | RESOLVED |
 
 Resolve each decision with a rationale; do not invent values just to clear a blocker.
 
