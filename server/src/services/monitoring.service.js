@@ -1,5 +1,6 @@
 import { RateLimitError } from '../utils/errors.js';
 import { getSupabase } from '../integrations/supabase.js';
+import { checkDatabaseConnection } from '../config/supabase.js';
 
 // Model pricing in USD per 1,000,000 tokens
 const MODEL_PRICING = {
@@ -249,10 +250,8 @@ class MonitoringService {
     };
 
     try {
-      const supabase = getSupabase();
-      // Probe database
-      const { error } = await supabase.from('profiles').select('id').limit(1);
-      if (!error) {
+      const dbResult = await checkDatabaseConnection({ client: getSupabase() });
+      if (dbResult.ok) {
         checks.database = 'healthy';
       }
     } catch {

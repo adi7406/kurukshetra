@@ -1,5 +1,17 @@
 import app from './app.js';
 import { env } from './config/env.js';
+import { validateSupabaseConfig } from './config/supabase.js';
+
+// Validate required Supabase configuration on startup
+try {
+  validateSupabaseConfig();
+  console.info('Supabase client configuration validated.');
+} catch (configError) {
+  console.error(`[Startup Configuration Error] ${configError.message}`);
+  if (env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+}
 
 const server = app.listen(env.PORT, () => {
   console.info(`Server is listening on port ${env.PORT} in ${env.NODE_ENV} mode`);

@@ -121,8 +121,11 @@ Create `server/.env.example` (or the equivalent in the actual backend directory)
 | `CLIENT_ORIGIN` | Yes | Explicit allowed frontend origin(s) for CORS; do not use unrestricted wildcard origins with credentials |
 | `API_PREFIX` | Optional | API prefix, suggested `/api/v1` |
 | `SUPABASE_URL` | Yes | Supabase project URL used by server SDK/client |
-| `SUPABASE_ANON_KEY` | If server uses anon access | Public anon/publishable key; never grants administrative access by itself |
+| `SUPABASE_PUBLISHABLE_KEY` | If server uses anon/publishable access | Supabase publishable key (interchangeable with `SUPABASE_ANON_KEY`); never grants admin rights by itself |
+| `SUPABASE_ANON_KEY` | Legacy alias | Public anon key; backward-compatible alias for `SUPABASE_PUBLISHABLE_KEY` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Only for trusted server operations | Highly privileged secret; server-side only, minimal use, never return to clients |
+| `SUPABASE_SECRET_KEY` | Alias for service-role key | Modern Supabase secret key format for reviewed server-only operations |
+| `DIAGNOSTIC_KEY` | Optional | Shared secret header (`X-Diagnostic-Key`) to authorize `/api/health/database` diagnostic probes in production |
 | `DATABASE_URL` | If direct PostgreSQL connection is used | PostgreSQL connection string; protect and rotate credentials; use TLS where supported |
 | `AI_PROVIDER` | If AI features enabled | Provider identifier selected by the implementation |
 | `AI_PROVIDER_API_KEY` | If AI features enabled | Private key for the selected AI provider |
@@ -148,9 +151,11 @@ CLIENT_ORIGIN=http://localhost:5173
 API_PREFIX=/api/v1
 
 SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your-public-anon-or-publishable-key
 SUPABASE_ANON_KEY=your-public-anon-or-publishable-key
 # Only set this in a trusted backend environment when required.
 SUPABASE_SERVICE_ROLE_KEY=replace-with-server-only-secret
+SUPABASE_SECRET_KEY=replace-with-server-only-secret
 # Use only if the backend connects directly to PostgreSQL.
 DATABASE_URL=postgresql://user:password@localhost:5432/adaptive_learning
 

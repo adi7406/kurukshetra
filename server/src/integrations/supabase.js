@@ -13,8 +13,14 @@ export function getSupabase() {
     return supabaseClient;
   }
 
-  if (env.SUPABASE_URL && (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY)) {
-    const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+  // During automated unit testing (node --test) where isolated mock states are expected,
+  // return the in-memory store unless live Supabase is explicitly forced via USE_LIVE_SUPABASE=true
+  const isUnitTest =
+    (env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') &&
+    process.env.USE_LIVE_SUPABASE !== 'true';
+
+  if (!isUnitTest && env.SUPABASE_URL && (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY)) {
+    const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY;
     supabaseClient = createClient(env.SUPABASE_URL, key, {
       auth: {
         autoRefreshToken: false,
@@ -27,6 +33,14 @@ export function getSupabase() {
   // In-memory simulated client for local testing and offline execution
   supabaseClient = createMockSupabase();
   return supabaseClient;
+}
+
+export function setSupabase(client) {
+  supabaseClient = client;
+}
+
+export function resetSupabase() {
+  supabaseClient = null;
 }
 
 /**
