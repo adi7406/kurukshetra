@@ -271,12 +271,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Reprocessing does not double-count evidence; updates are traceable.
 
 ### TASK-023 — Mastery estimator
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-022
-- [ ] Implement the approved deterministic/rule-based baseline.
-- [ ] Version model parameters.
-- [ ] Add boundary and repeated-evidence tests.
-- [ ] Add BKT according to approved product/model decisions.
-- [ ] Explain estimates and limitations in the UI.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-022
+- [x] Implement the approved deterministic/rule-based baseline.
+- [x] Version model parameters.
+- [x] Add boundary and repeated-evidence tests.
+- [x] Add BKT according to approved product/model decisions.
+- [x] Explain estimates and limitations in the UI.
 
 **Acceptance:** Values remain in bounds and are reproducible for the same evidence/model version.
 
