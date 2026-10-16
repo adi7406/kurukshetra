@@ -63,9 +63,9 @@ export function Topbar({ onToggleMobileSidebar }) {
   const handleRoleToggle = async () => {
     try {
       if (role === 'teacher') {
-        await login('student@pathwise.edu', 'student123', 'student');
+        await login('demo', 'demo', 'student');
       } else {
-        await login('teacher@pathwise.edu', 'teacher123', 'teacher');
+        await login('demo', 'demo', 'teacher');
       }
       navigate('/home');
     } catch (err) {

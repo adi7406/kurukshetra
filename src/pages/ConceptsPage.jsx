@@ -18,6 +18,7 @@ import LoadingState from '../components/feedback/LoadingState';
 import MasteryChip from '../components/common/MasteryChip';
 import Chip from '../components/common/Chip';
 import { normalizeMastery } from '../utils/mastery';
+import { ConceptDiagram } from '../components/common/ConceptDiagram';
 
 export function ConceptsPage() {
   const navigate = useNavigate();
@@ -291,9 +292,10 @@ export function ConceptsPage() {
                 {selectedConcept.description}
               </p>
 
+              {/* Learning Objectives */}
               {selectedConcept.learningObjectives?.length > 0 && (
                 <div>
-                  <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.04em', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '8px' }}>
                     Learning Objectives:
                   </div>
                   <ul style={{ paddingLeft: '18px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
@@ -304,11 +306,37 @@ export function ConceptsPage() {
                 </div>
               )}
 
+              {/* 1. Deep Text Theory */}
               {selectedConcept.theory && (
-                <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '14px', border: '1px solid var(--border-hairline)', fontSize: '13px', lineHeight: '1.6' }}>
-                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text-main)' }}>
-                    {selectedConcept.theory}
-                  </pre>
+                <div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                    1. Invariant Theory & Mechanics
+                  </div>
+                  <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '14px', border: '1px solid var(--border-hairline)', fontSize: '13px', lineHeight: '1.6' }}>
+                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text-main)' }}>
+                      {selectedConcept.theory}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Visual Diagram */}
+              <div>
+                <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                  2. Memory Layout & Architectural Diagram
+                </div>
+                <ConceptDiagram conceptName={selectedConcept.name} />
+              </div>
+
+              {/* 3. Executable Code Example */}
+              {selectedConcept.example && (
+                <div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                    3. Executable Code Implementation
+                  </div>
+                  <div style={{ padding: '14px 16px', background: '#16161A', color: '#ECEAE8', borderRadius: '14px', fontFamily: 'var(--font-mono, monospace)', fontSize: '12px', lineHeight: '1.5', overflowX: 'auto', maxHeight: '250px', overflowY: 'auto' }}>
+                    <pre style={{ margin: 0, whiteSpace: 'pre' }}>{selectedConcept.example}</pre>
+                  </div>
                 </div>
               )}
             </div>

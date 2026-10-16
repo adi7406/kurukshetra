@@ -614,22 +614,19 @@ export const INITIAL_HOMEWORK_PROGRESS = [
 /**
  * Pre-populated syllabus text for testing AI extraction in teacher content upload
  */
-export const SAMPLE_SYLLABUS_TEXT = `Course Code: CS201
+export const SAMPLE_SYLLABUS_TEXT = `Course Code: CS201 - Data Structures & Algorithms (DSA)
 Course Title: Data Structures and Algorithmic Problem Solving
-Instructor: Dr. Priya Nair
+Instructor: Department of Computer Science
 
-Module 1: Linear Data Structures and Hash Tables
-- Topic 1: Dynamic Arrays, Amortized Doubling Analysis, O(1) bounds
-- Topic 2: Singly and Doubly Linked Lists, Pointer Reversals, Floyd's Tortoise-Hare Cycle Detection
-- Topic 3: Hash Tables, Division Method, Open Addressing (Linear & Quadratic Probing), Load Factor alpha
+Module 1: Linear Sequence Structures & Buffers
+- Topic 1: Arrays (Contiguous Memory Layout, O(1) Index Arithmetic, Geometric Doubling Amortization, Cache Locality)
+- Topic 2: Strings (Byte Buffers, UTF-8 Encoding, In-Place Pointer Manipulation, Sliding Window Paradigms)
+- Topic 3: Stack (Last-In-First-Out LIFO Discipline, Activation Call Frames, Monotonic Stacks, Expression Parsing)
 
-Module 2: Hierarchical Tree & Graph Structures
-- Topic 4: Binary Search Tree Property, AVL Rotations, Balance Factors
-- Topic 5: Graph Representations (Adjacency Matrix vs List), Breadth First Search (BFS), Depth First Search (DFS)
+Module 2: Key-Value Mapping & Associative Structures
+- Topic 4: Hash Tables & Open Addressing Collision Resolution
+- Topic 5: Binary Search Trees & Balanced Invariants`;
 
-Module 3: Advanced Algorithmic Paradigms
-- Topic 6: Divide and Conquer, Recurrence Relations, Master Theorem Bounds
-- Topic 7: Dynamic Programming, Optimal Substructure, Memoization vs Bottom-up Tabulation`;
 export const INITIAL_PROGRESS_DATA = {
   overallEstimatedMastery: 78,
   completedConceptsCount: 3,

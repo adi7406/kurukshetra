@@ -27,12 +27,12 @@ export function LoginPage() {
   const [role, setRole] = useState('student'); // 'teacher' | 'student'
 
   // Common fields
+  const [email, setEmail] = useState('demo');
+  const [password, setPassword] = useState('demo');
   const [name, setName] = useState('');
   const [className, setClassName] = useState('');
   const [rollNo, setRollNo] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Teacher specific
@@ -63,24 +63,6 @@ export function LoginPage() {
     }
     loadTeachers();
   }, []);
-
-  const handleQuickDemo = async (demoRole) => {
-    setErrorMessage('');
-    setSuccessMessage('');
-    try {
-      setLoading(true);
-      if (demoRole === 'teacher') {
-        await login('teacher@pathwise.edu', 'teacher123', 'teacher');
-      } else {
-        await login('student@pathwise.edu', 'student123', 'student');
-      }
-      navigate('/home');
-    } catch (err) {
-      setErrorMessage(err.message || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -342,57 +324,43 @@ export function LoginPage() {
             </button>
           </div>
 
-          {/* Quick Demo Access */}
-          <div
-            style={{
-              backgroundColor: 'var(--surface-muted)',
-              border: '1px solid var(--border-hairline)',
-              borderRadius: '16px',
-              padding: '12px',
-              marginBottom: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Instant Evaluator Access
-              </span>
+          {/* Universal Demo Credentials Pill */}
+          {mode === 'signin' && (
+            <div
+              style={{
+                backgroundColor: 'var(--coral-soft)',
+                border: '1px solid var(--coral-border)',
+                borderRadius: '14px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: 'var(--coral)', fontWeight: 600 }}>Login Credentials:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Pre-filled for testing</span>
+              </div>
               <span
                 style={{
-                  fontSize: '10px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
                   fontWeight: 600,
-                  backgroundColor: 'var(--coral-soft)',
-                  color: 'var(--coral)',
-                  border: '1px solid var(--coral-border)',
-                  padding: '2px 8px',
-                  borderRadius: 'var(--radius-pill)',
+                  color: 'var(--text-main)',
+                  backgroundColor: '#FFFFFF',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-hairline)',
                 }}
               >
-                1-Click Demo
+                ID: <strong>demo</strong> &bull; PASS: <strong>demo</strong>
               </span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <button
-                type="button"
-                className="btn-ghost-pill btn-compact"
-                style={{ justifyContent: 'center', backgroundColor: '#FFFFFF' }}
-                onClick={() => handleQuickDemo('student')}
-                disabled={loading}
-              >
-                <User size={13} strokeWidth={1.5} color="var(--coral)" />
-                <span>Demo <strong>Student</strong></span>
-              </button>
-              <button
-                type="button"
-                className="btn-ghost-pill btn-compact"
-                style={{ justifyContent: 'center', backgroundColor: '#FFFFFF' }}
-                onClick={() => handleQuickDemo('teacher')}
-                disabled={loading}
-              >
-                <Shield size={13} strokeWidth={1.5} color="var(--dark-pill)" />
-                <span>Demo <strong>Instructor</strong></span>
-              </button>
-            </div>
-          </div>
+          )}
 
           {/* Workspace Role Selector */}
           <div style={{ marginBottom: '16px' }}>
@@ -606,14 +574,14 @@ export function LoginPage() {
               </>
             )}
 
-            {/* Email Address */}
+            {/* User ID / Email Address */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-                Email Address
+                {mode === 'signin' ? 'User ID or Email' : 'Email Address'}
               </label>
               <input
-                type="email"
-                placeholder={role === 'teacher' ? 'faculty@college.edu' : 'student@college.edu'}
+                type={mode === 'signin' ? 'text' : 'email'}
+                placeholder={mode === 'signin' ? 'demo' : role === 'teacher' ? 'faculty@college.edu' : 'student@college.edu'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -629,7 +597,7 @@ export function LoginPage() {
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter secret password"
+                  placeholder={mode === 'signin' ? 'demo' : 'Enter secret password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

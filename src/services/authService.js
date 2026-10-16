@@ -147,16 +147,32 @@ export const authService = {
   },
 
   /**
-   * Log in user with email, password, and authoritative role check
+   * Log in user with email/ID, password, and authoritative role check
+   * Supports universal DEMO credentials (ID: demo, PASS: demo)
    */
-  async login(email, password, selectedRole = 'student') {
+  async login(identifier, password, selectedRole = 'student') {
     const users = getUsers();
-    const normalizedEmail = email.trim().toLowerCase();
+    const cleanId = (identifier || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim().toLowerCase();
 
-    const matchedUser = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+    // Universal Evaluator Demo credentials: ID: demo / PASS: demo for both student and teacher
+    if (cleanId === 'demo' && cleanPass === 'demo') {
+      const demoUser = users.find((u) => u.role === selectedRole) || (
+        selectedRole === 'teacher' ? INITIAL_TEACHERS[0] : INITIAL_STUDENTS[0]
+      );
+      localStorage.setItem(SESSION_KEY, JSON.stringify(demoUser));
+      return demoUser;
+    }
+
+    const matchedUser = users.find(
+      (u) =>
+        u.email.toLowerCase() === cleanId ||
+        (u.rollNo && u.rollNo.toLowerCase() === cleanId) ||
+        (u.id && u.id.toLowerCase() === cleanId)
+    );
 
     if (!matchedUser) {
-      throw new Error('Invalid email or password. Please verify your credentials or sign up.');
+      throw new Error('Invalid credentials. For quick access, use ID: demo and Password: demo.');
     }
 
     // Role check
@@ -167,7 +183,7 @@ export const authService = {
     }
 
     if (matchedUser.password && matchedUser.password !== password) {
-      throw new Error('Invalid password. Please try again.');
+      throw new Error('Invalid password. For demo access, use Password: demo.');
     }
 
     localStorage.setItem(SESSION_KEY, JSON.stringify(matchedUser));

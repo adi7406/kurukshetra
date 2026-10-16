@@ -243,4 +243,112 @@ export const learningService = {
     localStorage.setItem(TEACHER_KEY, JSON.stringify(data));
     return { success: true };
   },
+
+  /**
+   * Publish new curriculum from syllabus ingestion
+   * Persists concepts (with text, diagram, example), quizzes (5+ per topic), and coding assessments
+   */
+  async publishCurriculum(extractedData) {
+    if (!extractedData) return false;
+
+    // 1. Update Courses Store
+    const courses = await this.getCourses();
+    const targetCourse = courses[0] || {
+      id: 'course_dsa',
+      code: 'CS201',
+      title: extractedData.courseTitle || 'Data Structures & Algorithmic Problem Solving',
+      instructor: 'Dr. Priya Nair',
+      modules: [],
+    };
+
+    // Find or create module
+    let targetModule = targetCourse.modules?.find(
+      (m) => m.title.toLowerCase() === (extractedData.moduleName || '').toLowerCase()
+    );
+
+    if (!targetModule) {
+      targetModule = {
+        id: `mod_${Date.now()}`,
+        title: extractedData.moduleName || 'Module 1: Linear & Key-Value Structures',
+        concepts: [],
+      };
+      targetCourse.modules = [targetModule, ...(targetCourse.modules || [])];
+    }
+
+    // Merge concepts
+    extractedData.concepts.forEach((newConcept) => {
+      const existingIdx = targetModule.concepts.findIndex(
+        (c) => c.name.toLowerCase() === newConcept.name.toLowerCase()
+      );
+      if (existingIdx !== -1) {
+        targetModule.concepts[existingIdx] = { ...targetModule.concepts[existingIdx], ...newConcept };
+      } else {
+        targetModule.concepts.push(newConcept);
+      }
+    });
+
+    localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
+
+    // 2. Update Quizzes Store (Comprehensive 5-question quizzes for each topic)
+    if (extractedData.quizzes && extractedData.quizzes.length > 0) {
+      const existingQuizzes = await this.getQuizzes();
+
+      const groupedByConcept = {};
+      extractedData.quizzes.forEach((q) => {
+        if (!groupedByConcept[q.conceptId]) {
+          groupedByConcept[q.conceptId] = {
+            id: `quiz_full_${q.conceptId}`,
+            title: `${q.conceptName}: Diagnostic Mastery Quiz (5 Questions)`,
+            conceptId: q.conceptId,
+            conceptName: q.conceptName,
+            difficulty: 'Comprehensive',
+            timeLimit: '15 mins',
+            passingScore: 70,
+            status: 'pending',
+            questions: [],
+          };
+        }
+        groupedByConcept[q.conceptId].questions.push({
+          id: `q_${q.id}`,
+          prompt: q.prompt,
+          options: q.options,
+          correctIndex: q.correctIndex,
+          explanation: q.explanation,
+        });
+      });
+
+      const allMerged = [...Object.values(groupedByConcept), ...existingQuizzes];
+      const uniqueQuizzes = Array.from(new Map(allMerged.map((q) => [q.id, q])).values());
+      localStorage.setItem(QUIZZES_KEY, JSON.stringify(uniqueQuizzes));
+    }
+
+    // 3. Update Coding Assessments Store
+    if (extractedData.codingAssessments && extractedData.codingAssessments.length > 0) {
+      const existingAssessments = await this.getAssessments();
+      const newAssessments = extractedData.codingAssessments.map((ca) => ({
+        id: ca.id,
+        title: ca.title,
+        conceptId: ca.conceptId,
+        concept: ca.conceptName,
+        difficulty: ca.difficulty,
+        timeLimit: '45 mins',
+        status: 'pending',
+        description: ca.description,
+        constraints: ca.constraints,
+        starterCode: {
+          python: ca.starterCode,
+          javascript: `// Implement solution for ${ca.title}\nfunction solve(input) {\n  // TODO\n}`,
+        },
+        sampleTests: ca.sampleTests || [],
+        hiddenTestsCount: ca.hiddenTestsCount || 15,
+        vivaPrompt: ca.vivaQuestion,
+      }));
+
+      const mergedAssessments = [...newAssessments, ...existingAssessments];
+      const uniqueAssessments = Array.from(new Map(mergedAssessments.map((a) => [a.id, a])).values());
+      localStorage.setItem(ASSESSMENTS_KEY, JSON.stringify(uniqueAssessments));
+    }
+
+    return true;
+  },
 };
