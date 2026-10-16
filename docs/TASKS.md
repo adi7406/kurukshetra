@@ -337,11 +337,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 ## 11. M8 — AI Viva and Integrity Review
 
 ### TASK-029 — AI viva session lifecycle
-**Status:** TODO · **Priority:** P2 · **Depends on:** TASK-018, TASK-019
-- [ ] Implement start, question, answer, complete, and cancel states.
-- [ ] Restrict questions to approved objectives/topics/difficulty.
-- [ ] Track session events and prompt/model/rubric versions as needed.
-- [ ] Enforce ownership, duration, and usage limits.
+**Status:** DONE · **Priority:** P2 · **Depends on:** TASK-018, TASK-019
+- [x] Implement start, question, answer, complete, and cancel states.
+- [x] Restrict questions to approved objectives/topics/difficulty.
+- [x] Track session events and prompt/model/rubric versions as needed.
+- [x] Enforce ownership, duration, and usage limits.
 
 **Acceptance:** Sessions cannot access other learners' records or hidden assessment data; failures are recoverable.
 

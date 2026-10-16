@@ -18,8 +18,12 @@ import attemptsRoutes from './routes/attempts.routes.js';
 import masteryRoutes from './routes/mastery.routes.js';
 import recommendationsRoutes from './routes/recommendations.routes.js';
 import codingRoutes from './routes/coding.routes.js';
+import vivaRoutes from './routes/viva.routes.js';
 
 const app = express();
+
+
+
 
 // Security headers
 app.use(helmet());
@@ -57,6 +61,7 @@ app.use(env.API_PREFIX, attemptsRoutes);
 app.use(env.API_PREFIX, masteryRoutes);
 app.use(env.API_PREFIX, recommendationsRoutes);
 app.use(env.API_PREFIX, codingRoutes);
+app.use(env.API_PREFIX, vivaRoutes);
 
 if (env.API_PREFIX !== '/api') {
   app.use('/api', healthRoutes);
@@ -72,7 +77,9 @@ if (env.API_PREFIX !== '/api') {
   app.use('/api', masteryRoutes);
   app.use('/api', recommendationsRoutes);
   app.use('/api', codingRoutes);
+  app.use('/api', vivaRoutes);
 }
+
 
 // 404 Handler for unmatched endpoints
 app.use(notFoundHandler);
