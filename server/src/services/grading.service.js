@@ -1,5 +1,6 @@
 import { getSupabase } from '../integrations/supabase.js';
 import { NotFoundError } from '../utils/errors.js';
+import { masteryService } from './mastery.service.js';
 
 export const gradingService = {
   /**
@@ -164,6 +165,14 @@ export const gradingService = {
       .select()
       .single();
 
+    // 6. Ingest mastery evidence into the adaptive mastery pipeline
+    let masteryIngestion = null;
+    try {
+      masteryIngestion = await masteryService.processAttemptEvidence(attemptId);
+    } catch {
+      // Ingestion error should not invalidate grading results
+    }
+
     return {
       attemptId: updatedAttempt.id,
       assessmentId: assessment.id,
@@ -174,6 +183,7 @@ export const gradingService = {
       passed,
       completedAt,
       items: evaluatedItems,
+      masteryIngestion,
     };
   },
 };

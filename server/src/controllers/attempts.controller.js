@@ -1,6 +1,7 @@
 import { getSupabase } from '../integrations/supabase.js';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors.js';
 import { gradingService } from '../services/grading.service.js';
+import { masteryService } from '../services/mastery.service.js';
 
 export const attemptsController = {
   /**
@@ -410,6 +411,47 @@ export const attemptsController = {
         meta: {
           requestId: req.requestId,
           count: (attempts || []).length,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Process and ingest mastery evidence for an attempt (idempotent)
+   */
+  async processMasteryEvidence(req, res, next) {
+    try {
+      const { attemptId } = req.params;
+      const user = req.user;
+      const supabase = getSupabase();
+
+      const { data: attempt } = await supabase
+        .from('assessment_attempts')
+        .select('*')
+        .eq('id', attemptId)
+        .maybeSingle();
+
+      if (!attempt) {
+        throw new NotFoundError('Attempt not found.');
+      }
+
+      // Check ownership or trainer/admin role
+      if (attempt.student_id !== user.id && user.role !== 'trainer' && user.role !== 'admin') {
+        throw new ForbiddenError('You can only process mastery evidence for your own attempts.');
+      }
+
+      if (attempt.status === 'submitted') {
+        await gradingService.gradeAttempt(attemptId);
+      }
+
+      const result = await masteryService.processAttemptEvidence(attemptId);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
         },
       });
     } catch (error) {

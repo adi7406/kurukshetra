@@ -33,6 +33,7 @@ router.post('/attempts/:attemptId/submit', authenticate, attemptsController.subm
 
 // Student attempts listing & results
 router.get('/attempts/:attemptId/result', authenticate, attemptsController.getAttemptResult);
+router.post('/attempts/:attemptId/process-mastery', authenticate, attemptsController.processMasteryEvidence);
 router.get('/me/attempts', authenticate, attemptsController.listMyAttempts);
 
 export default router;

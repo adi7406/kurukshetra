@@ -119,6 +119,7 @@ export function createMockSupabase() {
       return {
         select(_cols) {
           let filters = [];
+          let sortFn = null;
 
           const queryBuilder = {
             eq(field, val) {
@@ -129,7 +130,13 @@ export function createMockSupabase() {
               filters.push((item) => arr.includes(item[field]));
               return queryBuilder;
             },
-            order(_field, _opts) {
+            order(field, opts = {}) {
+              sortFn = (a, b) => {
+                const ascending = opts.ascending !== false;
+                if (a[field] < b[field]) return ascending ? -1 : 1;
+                if (a[field] > b[field]) return ascending ? 1 : -1;
+                return 0;
+              };
               return queryBuilder;
             },
             async single() {
@@ -145,7 +152,10 @@ export function createMockSupabase() {
             },
             then(resolve, reject) {
               const all = Array.from(store.values());
-              const matches = filters.length > 0 ? all.filter((item) => filters.every((fn) => fn(item))) : all;
+              let matches = filters.length > 0 ? all.filter((item) => filters.every((fn) => fn(item))) : all;
+              if (sortFn) {
+                matches = [...matches].sort(sortFn);
+              }
               return Promise.resolve({ data: matches, error: null }).then(resolve, reject);
             },
           };

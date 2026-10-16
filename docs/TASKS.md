@@ -262,11 +262,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 ## 9. M6 — Adaptive Learning
 
 ### TASK-022 — Mastery evidence pipeline
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-021, TASK-013
-- [ ] Map finalized answers to concepts.
-- [ ] Validate ownership and evidence status.
-- [ ] Make evidence processing idempotent.
-- [ ] Preserve append-only mastery history.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-021, TASK-013
+- [x] Map finalized answers to concepts.
+- [x] Validate ownership and evidence status.
+- [x] Make evidence processing idempotent.
+- [x] Preserve append-only mastery history.
 
 **Acceptance:** Reprocessing does not double-count evidence; updates are traceable.
 
