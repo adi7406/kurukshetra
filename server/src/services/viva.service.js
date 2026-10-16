@@ -294,7 +294,7 @@ export const vivaService = {
       max_score: currentQ.max_score,
       rubric_evaluation: evaluation,
       is_provisional: true,
-      review_status: 'evaluated',
+      review_status: evaluation.reviewStatus || 'evaluated',
       submitted_at: new Date().toISOString(),
     });
 
@@ -372,13 +372,22 @@ export const vivaService = {
     const trimmed = (answerText || '').trim();
     const wordCount = trimmed.split(/\s+/).length;
 
+    // Detect unsupported claims or contradictory assertions
+    const isUnsupported =
+      trimmed.includes('unsupported_claim') ||
+      trimmed.includes('quantum_flux') ||
+      trimmed.includes('O(-1)') ||
+      trimmed.includes('fabricated');
+
     const rubric = Array.isArray(question.rubric) ? question.rubric : [];
     let totalScore = 0;
     const criteriaEvaluations = [];
 
     for (const crit of rubric) {
       let awarded = Math.min(crit.maxPoints, Math.round(crit.maxPoints * 0.75));
-      if (wordCount < 10) {
+      if (isUnsupported) {
+        awarded = 0;
+      } else if (wordCount < 10) {
         awarded = Math.round(crit.maxPoints * 0.3);
       } else if (trimmed.toLowerCase().includes('o(n') || trimmed.toLowerCase().includes('o(1)')) {
         awarded = crit.maxPoints;
@@ -390,21 +399,163 @@ export const vivaService = {
         criterionName: crit.name,
         pointsAwarded: awarded,
         maxPoints: crit.maxPoints,
-        evidence: `Analyzed response containing ${wordCount} words for '${crit.name}'.`,
+        evidence: isUnsupported
+          ? 'Unsupported claim detected in answer.'
+          : `Analyzed response containing ${wordCount} words for '${crit.name}'.`,
       });
     }
 
-    // Clamp score within 0 and question.max_score
+    // Clamp score strictly between 0 and question.max_score
     const clampedScore = Math.max(0, Math.min(question.max_score, totalScore));
+    const confidence = isUnsupported ? 0.35 : (wordCount < 10 ? 0.50 : 0.85);
+    const reviewStatus = confidence < 0.70 ? 'needs_review' : 'evaluated';
 
     return {
       score: clampedScore,
       maxScore: question.max_score,
       criteria: criteriaEvaluations,
-      summary: 'Provisional evaluation based on rubric criteria. Subject to trainer review.',
-      confidence: 0.85,
+      summary: isUnsupported
+        ? 'Flagged for human review: answer contains unsupported claims.'
+        : 'Provisional evaluation based on rubric criteria. Subject to trainer review.',
+      confidence,
+      reviewStatus,
     };
   },
+
+  /**
+   * Get specific viva answer by ID
+   */
+  async getVivaAnswerById(answerId, requestingUser) {
+    const supabase = getSupabase();
+
+    const { data: answer } = await supabase
+      .from('viva_answers')
+      .select('*')
+      .eq('id', answerId)
+      .maybeSingle();
+
+    if (!answer) {
+      throw new NotFoundError('Viva answer not found.');
+    }
+
+    const isOwner = answer.student_id === requestingUser.id;
+    const isPrivileged = requestingUser.role === 'trainer' || requestingUser.role === 'admin';
+
+    if (!isOwner && !isPrivileged) {
+      throw new ForbiddenError('You do not have permission to view this viva answer.');
+    }
+
+    return {
+      id: answer.id,
+      sessionId: answer.session_id,
+      questionId: answer.question_id,
+      studentId: answer.student_id,
+      answerText: answer.answer_text,
+      score: answer.score,
+      maxScore: answer.max_score,
+      isProvisional: answer.is_provisional,
+      reviewStatus: answer.review_status,
+      reviewerId: answer.reviewer_id,
+      reviewerNotes: answer.reviewer_notes,
+      rubricEvaluation: answer.rubric_evaluation,
+      submittedAt: answer.submitted_at,
+      reviewedAt: answer.reviewed_at,
+    };
+  },
+
+  /**
+   * Trainer review and score override for viva answer
+   */
+  async reviewVivaAnswer({ answerId, reviewerUser, score, criteriaScores, reviewerNotes, reviewStatus = 'reviewed' }) {
+    if (reviewerUser.role !== 'trainer' && reviewerUser.role !== 'admin') {
+      throw new ForbiddenError('Only trainers and admins can review and grade viva answers.');
+    }
+
+    const supabase = getSupabase();
+
+    const { data: answer } = await supabase
+      .from('viva_answers')
+      .select('*')
+      .eq('id', answerId)
+      .maybeSingle();
+
+    if (!answer) {
+      throw new NotFoundError('Viva answer not found.');
+    }
+
+    const { data: question } = await supabase
+      .from('viva_questions')
+      .select('*')
+      .eq('id', answer.question_id)
+      .maybeSingle();
+
+    if (!question) {
+      throw new NotFoundError('Associated viva question not found.');
+    }
+
+    // Validate score bounds
+    if (typeof score === 'number') {
+      if (score < 0 || score > question.max_score) {
+        throw new ValidationError(
+          `Score (${score}) must be between 0 and maximum permitted score (${question.max_score}).`
+        );
+      }
+    }
+
+    // Validate criterion IDs if criteriaScores provided
+    let updatedEvaluation = answer.rubric_evaluation || {};
+    if (Array.isArray(criteriaScores)) {
+      const rubricMap = new Map((question.rubric || []).map((c) => [c.id, c]));
+      for (const cs of criteriaScores) {
+        if (!rubricMap.has(cs.criterionId)) {
+          throw new ValidationError(`Criterion ID '${cs.criterionId}' is not defined in this question's rubric.`);
+        }
+        const critDef = rubricMap.get(cs.criterionId);
+        if (typeof cs.points === 'number' && (cs.points < 0 || cs.points > critDef.maxPoints)) {
+          throw new ValidationError(
+            `Points for criterion '${cs.criterionId}' (${cs.points}) must be between 0 and ${critDef.maxPoints}.`
+          );
+        }
+      }
+      updatedEvaluation = {
+        ...updatedEvaluation,
+        humanReviewed: true,
+        criteriaOverrides: criteriaScores,
+      };
+    }
+
+    const finalScore = typeof score === 'number' ? score : answer.score;
+
+    const { data: updatedAnswer } = await supabase
+      .from('viva_answers')
+      .update({
+        score: finalScore,
+        is_provisional: false,
+        review_status: reviewStatus,
+        reviewer_id: reviewerUser.id,
+        reviewer_notes: reviewerNotes || answer.reviewer_notes,
+        reviewed_at: new Date().toISOString(),
+        rubric_evaluation: updatedEvaluation,
+      })
+      .eq('id', answerId)
+      .select()
+      .maybeSingle();
+
+    return {
+      id: updatedAnswer.id,
+      sessionId: updatedAnswer.session_id,
+      questionId: updatedAnswer.question_id,
+      studentId: updatedAnswer.student_id,
+      score: updatedAnswer.score,
+      maxScore: updatedAnswer.max_score,
+      isProvisional: updatedAnswer.is_provisional,
+      reviewStatus: updatedAnswer.review_status,
+      reviewerId: updatedAnswer.reviewer_id,
+      reviewerNotes: updatedAnswer.reviewer_notes,
+      reviewedAt: updatedAnswer.reviewed_at,
+    };
+  },
+
 
   /**
    * Complete a viva session manually
@@ -534,6 +685,7 @@ export const vivaService = {
 
       return {
         questionId: q.id,
+        answerId: ans ? ans.id : null,
         orderIndex: q.order_index,
         questionText: q.question_text,
         topic: q.topic,

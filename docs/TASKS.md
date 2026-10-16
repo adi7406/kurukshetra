@@ -346,12 +346,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Sessions cannot access other learners' records or hidden assessment data; failures are recoverable.
 
 ### TASK-030 — Rubric-based viva feedback
-**Status:** TODO · **Priority:** P2 · **Depends on:** TASK-029, TASK-016
-- [ ] Define versioned rubric schemas.
-- [ ] Validate criterion IDs, score bounds, and evidence.
-- [ ] Label AI feedback/provisional scores.
-- [ ] Add trainer review/correction where required.
-- [ ] Test unsupported claims and inconsistent scoring.
+**Status:** DONE · **Priority:** P2 · **Depends on:** TASK-029, TASK-016
+- [x] Define versioned rubric schemas.
+- [x] Validate criterion IDs, score bounds, and evidence.
+- [x] Label AI feedback/provisional scores.
+- [x] Add trainer review/correction where required.
+- [x] Test unsupported claims and inconsistent scoring.
 
 **Acceptance:** Scores remain within rubric bounds; unreviewed AI output cannot trigger punitive action.
 

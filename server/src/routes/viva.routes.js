@@ -19,6 +19,23 @@ const submitAnswerSchema = {
   }),
 };
 
+const reviewAnswerSchema = {
+  body: z.object({
+    score: z.number().min(0).optional(),
+    criteriaScores: z
+      .array(
+        z.object({
+          criterionId: z.string().min(1),
+          points: z.number().min(0).optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .optional(),
+    reviewerNotes: z.string().optional(),
+    reviewStatus: z.enum(['evaluated', 'needs_review', 'reviewed']).optional(),
+  }),
+};
+
 // AI Viva endpoints (API_SPEC Section 5.11 & TASK-029)
 router.post(
   '/attempts/:attemptId/viva-sessions',
@@ -42,4 +59,15 @@ router.post('/viva-sessions/:sessionId/cancel', authenticate, vivaController.can
 
 router.get('/viva-sessions/:sessionId/report', authenticate, vivaController.getReport);
 
+// Viva Answers & Rubric Review (TASK-030)
+router.get('/viva-answers/:answerId', authenticate, vivaController.getAnswer);
+
+router.patch(
+  '/viva-answers/:answerId/review',
+  authenticate,
+  validateRequest(reviewAnswerSchema),
+  vivaController.reviewAnswer
+);
+
 export default router;
+
