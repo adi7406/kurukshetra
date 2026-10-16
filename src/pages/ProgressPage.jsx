@@ -12,8 +12,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
-import MasteryBadge from '../components/common/MasteryBadge';
-import { normalizeMastery, getMasteryLevel } from '../utils/mastery';
 
 export function ProgressPage() {
   const [loading, setLoading] = useState(true);
@@ -42,18 +40,14 @@ export function ProgressPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span className="badge-clean blue" style={{ fontSize: '10.5px' }}>
-            Learning Analytics
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-            Prerequisite readiness & mastery verification
-          </span>
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>LEARNING ANALYTICS & EVIDENCE</span>
         </div>
-        <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
           Student Learning Progress & Mastery Evidence
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Detailed prerequisite readiness tracked across verified quizzes, coding assessments, and viva explanations.
         </p>
       </div>
@@ -62,7 +56,7 @@ export function ProgressPage() {
       <div
         className="saas-card"
         style={{
-          background: 'var(--surface-muted)',
+          background: '#F8FAFC',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
@@ -102,7 +96,7 @@ export function ProgressPage() {
             <span className="stat-huge-number">{progressData?.completedConceptsCount}</span>
             <span className="stat-unit-text">concepts</span>
           </div>
-          <span className="stat-footer-text">Solid mastery (&gt;70%)</span>
+          <span className="stat-footer-text">High evidence (&gt;75%)</span>
         </div>
 
         <div className="stat-widget-card">
@@ -116,7 +110,7 @@ export function ProgressPage() {
             <span className="stat-huge-number">{progressData?.developingConceptsCount}</span>
             <span className="stat-unit-text">in progress</span>
           </div>
-          <span className="stat-footer-text">40% - 70% mastery range</span>
+          <span className="stat-footer-text">50% - 74% mastery range</span>
         </div>
 
         <div className="stat-widget-card">
@@ -135,17 +129,24 @@ export function ProgressPage() {
       </div>
 
       {/* Concept Breakdown Table */}
-      <div className="saas-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 0 }}>
-        <div style={{ padding: '12px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-            Concept-Level Mastery Evidence Breakdown
-          </span>
+      <div className="studio-window-card" style={{ marginBottom: 0 }}>
+        <div className="studio-titlebar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="window-traffic-dots">
+              <span className="traffic-dot red" />
+              <span className="traffic-dot yellow" />
+              <span className="traffic-dot green" />
+            </div>
+            <span className="studio-breadcrumb">
+              Pathwise Studio / <strong>Concept-Level Mastery Evidence Breakdown</strong>
+            </span>
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)' }}>
+              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
                 <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Concept</th>
                 <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Module</th>
                 <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>Estimated Mastery</th>
@@ -167,10 +168,16 @@ export function ProgressPage() {
                         <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>Insufficient evidence</span>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <MasteryBadge score={item.mastery} size="sm" />
-                          <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-main)' }}>
-                            {normalizeMastery(item.mastery)}%
-                          </span>
+                          <div style={{ width: '70px', height: '5px', background: 'var(--surface-muted)', borderRadius: '9999px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                width: `${item.mastery}%`,
+                                height: '100%',
+                                background: item.mastery >= 75 ? 'var(--success)' : item.mastery >= 50 ? 'var(--primary)' : 'var(--warning)',
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontSize: '12.5px', fontWeight: '700' }}>{item.mastery}%</span>
                         </div>
                       )}
                     </td>

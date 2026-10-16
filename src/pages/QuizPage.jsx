@@ -114,26 +114,32 @@ export function QuizPage() {
     if (attemptResult) {
       return (
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-          <div className="saas-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-                Diagnostic Evaluation Summary &bull; {activeQuiz.title}
+          <div className="studio-window-card">
+            <div className="studio-titlebar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="window-traffic-dots">
+                  <span className="traffic-dot red" />
+                  <span className="traffic-dot yellow" />
+                  <span className="traffic-dot green" />
+                </div>
+                <span className="studio-breadcrumb">
+                  Pathwise Studio / <strong>Diagnostic Evaluation Complete</strong> / {activeQuiz.title}
+                </span>
+              </div>
+              <span className="studio-status-pill">
+                <span className="status-dot" />
+                <span>Scored & Verified</span>
               </span>
-              <span className="badge-clean green">Scored & Verified</span>
             </div>
 
             <div style={{ padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span className="badge-clean green" style={{ fontSize: '10px' }}>
-                      Diagnostic Complete
-                    </span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-                      Evaluated & calibrated
-                    </span>
+                  <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+                    <span className="dot" />
+                    <span>DIAGNOSTIC COMPLETE</span>
                   </div>
-                  <h1 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>{activeQuiz.title}</h1>
+                  <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)' }}>{activeQuiz.title}</h1>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
@@ -153,8 +159,8 @@ export function QuizPage() {
                     style={{
                       padding: '16px 20px',
                       borderRadius: '8px',
-                      border: item.isCorrect ? '1px solid var(--border)' : '1px solid var(--danger-border)',
-                      background: item.isCorrect ? 'var(--surface-muted)' : 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid var(--border)',
+                      background: item.isCorrect ? '#F8FAFC' : '#FEF2F2',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
@@ -201,15 +207,11 @@ export function QuizPage() {
         {/* Active Quiz Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span className="badge-clean blue" style={{ fontSize: '10px' }}>
-                Diagnostic Check
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-                Adaptive prerequisite check
-              </span>
+            <div className="hero-pill-badge" style={{ marginBottom: '6px' }}>
+              <span className="dot" />
+              <span>CONCEPT DIAGNOSTIC CHECK</span>
             </div>
-            <h1 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>{activeQuiz.title}</h1>
+            <h1 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>{activeQuiz.title}</h1>
           </div>
           <button
             type="button"
@@ -280,12 +282,19 @@ export function QuizPage() {
           </div>
         )}
 
-        {/* Question Card */}
-        <div className="saas-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 0 }}>
-          <div style={{ padding: '12px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-              Question {currentQuestionIndex + 1} of {totalQuestions}
-            </span>
+        {/* Question Card inside Studio Window Frame */}
+        <div className="studio-window-card" style={{ marginBottom: 0 }}>
+          <div className="studio-titlebar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="window-traffic-dots">
+                <span className="traffic-dot red" />
+                <span className="traffic-dot yellow" />
+                <span className="traffic-dot green" />
+              </div>
+              <span className="studio-breadcrumb">
+                Pathwise Studio / <strong>Question {currentQuestionIndex + 1} of {totalQuestions}</strong>
+              </span>
+            </div>
             <span className="badge-clean blue">
               {activeQuiz.conceptName}
             </span>
@@ -375,15 +384,11 @@ export function QuizPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span className="badge-clean blue" style={{ fontSize: '10.5px' }}>
-            Curriculum Evaluations
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-            Concept quizzes & prerequisite checks
-          </span>
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>CURRICULUM EVALUATIONS</span>
         </div>
-        <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
           Concept Quizzes & Diagnostics
         </h1>
         <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>

@@ -42,27 +42,30 @@ export function ProfilePage() {
   return (
     <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span className="badge-clean blue" style={{ fontSize: '10.5px' }}>
-            Account Settings
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-            Identity & academic credentials
-          </span>
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>ACCOUNT SETTINGS & PROFILE</span>
         </div>
-        <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
           My Account Profile
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Manage your personal identity, contact details, and academic enrollment information.
         </p>
       </div>
 
-      <div className="saas-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 0 }}>
-        <div style={{ padding: '12px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-            Identity & Academic Credentials &bull; {user?.email}
-          </span>
+      <div className="studio-window-card" style={{ marginBottom: 0 }}>
+        <div className="studio-titlebar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="window-traffic-dots">
+              <span className="traffic-dot red" />
+              <span className="traffic-dot yellow" />
+              <span className="traffic-dot green" />
+            </div>
+            <span className="studio-breadcrumb">
+              Pathwise Studio / <strong>Identity & Credentials</strong> / {user?.email}
+            </span>
+          </div>
           <span className={`badge-clean ${role === 'teacher' ? 'blue' : 'green'}`}>
             {role === 'teacher' ? 'Faculty Instructor' : 'Enrolled Student'}
           </span>
@@ -105,7 +108,7 @@ export function ProfilePage() {
                   type="text"
                   value={user?.email || ''}
                   disabled
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface-muted)', color: 'var(--text-muted)', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: '#F8FAFC', color: 'var(--text-muted)', fontSize: '13px' }}
                 />
               </div>
               <div>

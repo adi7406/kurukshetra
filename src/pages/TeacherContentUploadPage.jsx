@@ -13,17 +13,14 @@ import {
   Lock,
   X,
   FileCode,
-  Sparkles,
-  AlertCircle,
 } from 'lucide-react';
 import { SAMPLE_SYLLABUS_TEXT } from '../services/mockData';
 import { learningService } from '../services/learningService';
 
 export function TeacherContentUploadPage() {
   const [activeUploadTab, setActiveUploadTab] = useState('pdf'); // 'pdf' | 'text'
-  const [syllabusText, setSyllabusText] = useState('');
-  const [fileName, setFileName] = useState('');
-  const [fileSize, setFileSize] = useState(null);
+  const [syllabusText, setSyllabusText] = useState(SAMPLE_SYLLABUS_TEXT);
+  const [fileName, setFileName] = useState('cs201_data_structures_syllabus.pdf');
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [currentStepText, setCurrentStepText] = useState('');
@@ -32,7 +29,7 @@ export function TeacherContentUploadPage() {
   const [activeTab, setActiveTab] = useState('concepts'); // 'concepts' | 'quizzes' | 'coding'
   const [published, setPublished] = useState(false);
 
-  // Form options
+  // Form options matching Screenshot 2
   const [targetCourse, setTargetCourse] = useState('CS201 Data Structures & Algorithmic Problem Solving');
   const [detailLevel, setDetailLevel] = useState('Comprehensive (Concepts, Quizzes & Code)');
   const [validationRule, setValidationRule] = useState('Strict DAG (Cycle Validation)');
@@ -44,7 +41,6 @@ export function TeacherContentUploadPage() {
     const file = e.target.files?.[0];
     if (file) {
       setFileName(file.name);
-      setFileSize((file.size / 1024).toFixed(1) + ' KB');
       setSyllabusText(
         `Course Syllabus: ${file.name.replace(/\.[^/.]+$/, '')}\n\n` +
           `Module 1: Advanced Computing Foundations\n- Concept 1: Memory Layout & Pointers\n- Concept 2: Cache Hierarchies\n\nModule 2: Algorithmic Paradigms\n- Concept 3: Divide and Conquer Bounds\n- Concept 4: Dynamic Programming Invariants`
@@ -52,24 +48,7 @@ export function TeacherContentUploadPage() {
     }
   };
 
-  const handleLoadSampleTemplate = () => {
-    setFileName('cs201_sample_syllabus.pdf');
-    setFileSize('142.8 KB');
-    setSyllabusText(SAMPLE_SYLLABUS_TEXT);
-  };
-
-  const handleClearFile = (e) => {
-    e.stopPropagation();
-    setFileName('');
-    setFileSize(null);
-    setSyllabusText('');
-  };
-
-  const hasContentToExtract = Boolean(fileName || syllabusText.trim());
-
   const handleRunLLMExtraction = async () => {
-    if (!hasContentToExtract) return;
-
     setIsExtracting(true);
     setExtractionProgress(10);
     setCurrentStepText('Document stream ingested. Parsing modules and candidate concepts...');
@@ -90,7 +69,7 @@ export function TeacherContentUploadPage() {
 
     setTimeout(() => {
       setExtractionProgress(65);
-      setCurrentStepText('Synthesizing diagnostic Quizzes with Bloom-aligned distractors...');
+      setCurrentStepText('Synthesizing diagnostic Quizzes with distractors & pedagogical explanations...');
       setPipelineLogs((prev) => [
         ...prev,
         '[03/04] Formulated 2 diagnostic MCQs with Bloom-aligned distractor rationales.',
@@ -210,7 +189,7 @@ export function TeacherContentUploadPage() {
   };
 
   return (
-    <div style={{ padding: '0 24px 32px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ padding: '0 24px 32px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -221,83 +200,69 @@ export function TeacherContentUploadPage() {
         </div>
 
         <div className="badge-clean blue">
-          <Sparkles size={13} />
-          <span>In-Memory Extraction Engine</span>
+          Multer In-Memory Processing Active
         </div>
       </div>
 
-      {/* Main Ingestion Panel */}
-      <div className="saas-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-            Syllabus Ingestion & AI Synthesis Workspace
-          </span>
-          <span className="badge-clean blue">In-Memory Stream Active</span>
-        </div>
-
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Upload Method Tabs */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setActiveUploadTab('pdf')}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '12.5px',
-                  background: activeUploadTab === 'pdf' ? 'var(--primary-subtle)' : 'var(--surface)',
-                  borderColor: activeUploadTab === 'pdf' ? 'var(--primary-border)' : 'var(--border)',
-                  color: activeUploadTab === 'pdf' ? '#60A5FA' : 'var(--text-muted)',
-                  fontWeight: activeUploadTab === 'pdf' ? '700' : '500',
-                }}
-              >
-                <UploadCloud size={14} />
-                <span>Upload PDF / DOCX</span>
-              </button>
-
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setActiveUploadTab('text')}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '12.5px',
-                  background: activeUploadTab === 'text' ? 'var(--primary-subtle)' : 'var(--surface)',
-                  borderColor: activeUploadTab === 'text' ? 'var(--primary-border)' : 'var(--border)',
-                  color: activeUploadTab === 'text' ? '#60A5FA' : 'var(--text-muted)',
-                  fontWeight: activeUploadTab === 'text' ? '700' : '500',
-                }}
-              >
-                <FileText size={14} />
-                <span>Paste Text</span>
-              </button>
-            </div>
-
-            {!hasContentToExtract && (
-              <button
-                type="button"
-                onClick={handleLoadSampleTemplate}
-                style={{
-                  background: 'transparent',
-                  border: '1px dashed var(--border)',
-                  borderRadius: '6px',
-                  color: '#60A5FA',
-                  fontSize: '11.5px',
-                  padding: '5px 10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}
-              >
-                <Sparkles size={12} />
-                <span>Load Sample Syllabus Template</span>
-              </button>
-            )}
+      {/* Main Studio Ingestion Window (Matching Reference Images 1 & 2) */}
+      <div className="studio-window-card">
+        {/* Titlebar with Mac Traffic Dots */}
+        <div className="studio-titlebar">
+          <div className="window-traffic-dots">
+            <span className="traffic-dot red" />
+            <span className="traffic-dot yellow" />
+            <span className="traffic-dot green" />
           </div>
 
-          {/* Upload Dropzone */}
+          <div className="studio-breadcrumb">
+            <strong>Pathwise Studio</strong> / Syllabus Ingestion & Extraction Workspace
+          </div>
+
+          <div className="studio-status-pill">
+            <span className="status-dot" />
+            <span>Ready &bull; In-Memory Stream & AI Engine</span>
+          </div>
+        </div>
+
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {/* Upload Method Tabs matching Image 2 */}
+          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setActiveUploadTab('pdf')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12.5px',
+                background: activeUploadTab === 'pdf' ? 'var(--primary-subtle)' : '#FFF',
+                borderColor: activeUploadTab === 'pdf' ? 'var(--primary-border)' : 'var(--border)',
+                color: activeUploadTab === 'pdf' ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: activeUploadTab === 'pdf' ? '700' : '500',
+              }}
+            >
+              <UploadCloud size={14} />
+              <span>Upload PDF / DOCX</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setActiveUploadTab('text')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12.5px',
+                background: activeUploadTab === 'text' ? 'var(--primary-subtle)' : '#FFF',
+                borderColor: activeUploadTab === 'text' ? 'var(--primary-border)' : 'var(--border)',
+                color: activeUploadTab === 'text' ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: activeUploadTab === 'text' ? '700' : '500',
+              }}
+            >
+              <FileText size={14} />
+              <span>Paste Text</span>
+            </button>
+          </div>
+
+          {/* Upload Dropzone (Directly matching Image 2 dropzone) */}
           {activeUploadTab === 'pdf' ? (
             <label className="studio-dropzone">
               <input type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
@@ -305,43 +270,22 @@ export function TeacherContentUploadPage() {
                 <UploadCloud size={20} />
               </div>
 
-              {fileName ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--primary-border)' }}>
-                    <FileCode size={16} color="#60A5FA" />
-                    <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)' }}>
-                      {fileName}
-                    </span>
-                    {fileSize && (
-                      <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>({fileSize})</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleClearFile}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-light)', marginLeft: '4px' }}
-                      title="Remove file"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '4px' }}>
-                    Click or drop another file to replace
-                  </span>
+              <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>
+                Drag and drop your syllabus here, or click to browse
+              </div>
+
+              <div style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '14px' }}>
+                PDF or DOCX documents up to 10 MB (Official syllabi, course guidelines, university curriculum)
+              </div>
+
+              <div className="btn-secondary" style={{ padding: '6px 16px', fontSize: '12.5px', pointerEvents: 'none' }}>
+                Browse Document
+              </div>
+
+              {fileName && (
+                <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--primary)', fontWeight: '600' }}>
+                  Selected: {fileName}
                 </div>
-              ) : (
-                <>
-                  <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>
-                    Drag and drop your syllabus here, or click to browse
-                  </div>
-
-                  <div style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '16px' }}>
-                    PDF or DOCX documents up to 10 MB (Official syllabi, course guidelines, university curriculum)
-                  </div>
-
-                  <div className="btn-secondary" style={{ padding: '6px 16px', fontSize: '12.5px', pointerEvents: 'none' }}>
-                    Browse Document
-                  </div>
-                </>
               )}
             </label>
           ) : (
@@ -349,14 +293,12 @@ export function TeacherContentUploadPage() {
               rows={6}
               value={syllabusText}
               onChange={(e) => setSyllabusText(e.target.value)}
-              placeholder="Paste syllabus text here (e.g. course outline, weekly modules, required topics)..."
+              placeholder="Paste syllabus text here..."
               style={{
                 width: '100%',
                 padding: '12px',
                 borderRadius: '8px',
                 border: '1px solid var(--border)',
-                background: 'var(--surface-muted)',
-                color: 'var(--text-main)',
                 fontSize: '13px',
                 fontFamily: 'var(--font-mono)',
                 outline: 'none',
@@ -364,7 +306,7 @@ export function TeacherContentUploadPage() {
             />
           )}
 
-          {/* Form Controls */}
+          {/* Form Controls matching Image 2 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
@@ -379,15 +321,13 @@ export function TeacherContentUploadPage() {
                   padding: '8px 12px',
                   borderRadius: '6px',
                   border: '1px solid var(--border)',
-                  background: 'var(--surface-muted)',
-                  color: 'var(--text-main)',
                   fontSize: '13px',
                   outline: 'none',
                 }}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
                   Extraction Detail Level
@@ -401,8 +341,7 @@ export function TeacherContentUploadPage() {
                     borderRadius: '6px',
                     border: '1px solid var(--border)',
                     fontSize: '12.5px',
-                    background: 'var(--surface-muted)',
-                    color: 'var(--text-main)',
+                    background: '#FFF',
                   }}
                 >
                   <option value="Comprehensive (Concepts, Quizzes & Code)">Comprehensive (Concepts, Quizzes & Code)</option>
@@ -424,8 +363,7 @@ export function TeacherContentUploadPage() {
                     borderRadius: '6px',
                     border: '1px solid var(--border)',
                     fontSize: '12.5px',
-                    background: 'var(--surface-muted)',
-                    color: 'var(--text-main)',
+                    background: '#FFF',
                   }}
                 >
                   <option value="Strict DAG (Cycle Validation)">Strict DAG (Cycle Validation)</option>
@@ -434,31 +372,20 @@ export function TeacherContentUploadPage() {
               </div>
             </div>
 
-            {/* Action Button */}
+            {/* Action Button matching Image 2 */}
             <button
               type="button"
               className="btn-primary"
               onClick={handleRunLLMExtraction}
-              disabled={isExtracting || !hasContentToExtract}
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                marginTop: '4px',
-                opacity: hasContentToExtract && !isExtracting ? 1 : 0.6,
-                cursor: hasContentToExtract && !isExtracting ? 'pointer' : 'not-allowed',
-              }}
+              disabled={isExtracting}
+              style={{ width: '100%', padding: '10px', fontSize: '14px', marginTop: '4px' }}
             >
-              {isExtracting
-                ? 'Extracting Curriculum via AI Pipeline...'
-                : hasContentToExtract
-                ? 'Extract This Document'
-                : 'Select Document or Paste Text to Extract'}
+              {isExtracting ? 'Extracting Curriculum via AI Pipeline...' : 'Extract This Document'}
             </button>
 
-            {/* Privacy Guarantee line */}
+            {/* Privacy Guarantee line matching Image 2 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-light)', marginTop: '2px' }}>
-              <Lock size={13} color="#34D399" />
+              <Lock size={13} color="var(--success)" />
               <span><strong>Privacy Guarantee:</strong> Documents are processed in-memory and verified for acyclic prerequisite soundness.</span>
             </div>
           </div>
@@ -490,10 +417,9 @@ export function TeacherContentUploadPage() {
 
           <div
             style={{
-              background: '#0B1120',
+              background: '#0F172A',
               color: '#F8FAFC',
               borderRadius: '8px',
-              border: '1px solid var(--border)',
               padding: '12px 14px',
               fontFamily: 'var(--font-mono)',
               fontSize: '11.5px',
@@ -515,7 +441,7 @@ export function TeacherContentUploadPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 size={16} color="#34D399" />
+                <CheckCircle2 size={16} color="var(--success)" />
                 <h2 style={{ fontSize: '16px', fontWeight: '700' }}>Synthesized Curriculum Review</h2>
               </div>
               <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -526,10 +452,7 @@ export function TeacherContentUploadPage() {
             <button
               type="button"
               className="btn-primary"
-              style={{
-                background: published ? 'var(--success)' : undefined,
-                borderColor: published ? 'var(--success)' : undefined,
-              }}
+              style={{ background: published ? 'var(--success)' : undefined, borderColor: published ? 'var(--success)' : undefined }}
               onClick={handlePublishCurriculum}
               disabled={published}
             >
@@ -548,16 +471,16 @@ export function TeacherContentUploadPage() {
           </div>
 
           {/* 3 Review Tabs */}
-          <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--border)', paddingBottom: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--border)', paddingBottom: '10px', marginBottom: '16px' }}>
             <button
               type="button"
               className="btn-secondary"
               style={{
                 padding: '6px 12px',
                 fontSize: '12.5px',
-                background: activeTab === 'concepts' ? 'var(--primary-subtle)' : 'var(--surface)',
+                background: activeTab === 'concepts' ? 'var(--primary-subtle)' : '#FFF',
                 borderColor: activeTab === 'concepts' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeTab === 'concepts' ? '#60A5FA' : 'var(--text-muted)',
+                color: activeTab === 'concepts' ? 'var(--primary)' : 'var(--text-muted)',
                 fontWeight: activeTab === 'concepts' ? '700' : '500',
               }}
               onClick={() => setActiveTab('concepts')}
@@ -571,9 +494,9 @@ export function TeacherContentUploadPage() {
               style={{
                 padding: '6px 12px',
                 fontSize: '12.5px',
-                background: activeTab === 'quizzes' ? 'var(--primary-subtle)' : 'var(--surface)',
+                background: activeTab === 'quizzes' ? 'var(--primary-subtle)' : '#FFF',
                 borderColor: activeTab === 'quizzes' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeTab === 'quizzes' ? '#60A5FA' : 'var(--text-muted)',
+                color: activeTab === 'quizzes' ? 'var(--primary)' : 'var(--text-muted)',
                 fontWeight: activeTab === 'quizzes' ? '700' : '500',
               }}
               onClick={() => setActiveTab('quizzes')}
@@ -587,9 +510,9 @@ export function TeacherContentUploadPage() {
               style={{
                 padding: '6px 12px',
                 fontSize: '12.5px',
-                background: activeTab === 'coding' ? 'var(--primary-subtle)' : 'var(--surface)',
+                background: activeTab === 'coding' ? 'var(--primary-subtle)' : '#FFF',
                 borderColor: activeTab === 'coding' ? 'var(--primary-border)' : 'var(--border)',
-                color: activeTab === 'coding' ? '#60A5FA' : 'var(--text-muted)',
+                color: activeTab === 'coding' ? 'var(--primary)' : 'var(--text-muted)',
                 fontWeight: activeTab === 'coding' ? '700' : '500',
               }}
               onClick={() => setActiveTab('coding')}
@@ -608,7 +531,7 @@ export function TeacherContentUploadPage() {
                     padding: '14px 16px',
                     borderRadius: '8px',
                     border: '1px solid var(--border)',
-                    background: 'var(--surface-muted)',
+                    background: 'var(--surface-subtle)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -662,7 +585,7 @@ export function TeacherContentUploadPage() {
                     padding: '16px',
                     borderRadius: '8px',
                     border: '1px solid var(--border)',
-                    background: 'var(--surface-muted)',
+                    background: 'var(--surface-subtle)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -681,11 +604,11 @@ export function TeacherContentUploadPage() {
                         style={{
                           padding: '7px 10px',
                           borderRadius: '6px',
-                          background: i === q.correct ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface)',
-                          border: i === q.correct ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid var(--border)',
+                          background: i === q.correct ? 'var(--success-subtle)' : 'var(--surface)',
+                          border: i === q.correct ? '1px solid var(--success-border)' : '1px solid var(--border)',
                           fontSize: '12.5px',
                           fontWeight: i === q.correct ? '600' : '400',
-                          color: i === q.correct ? '#34D399' : 'var(--text-main)',
+                          color: i === q.correct ? '#065F46' : 'var(--text-main)',
                         }}
                       >
                         {i === q.correct ? '✓ Correct: ' : '• '} {opt}
@@ -693,7 +616,7 @@ export function TeacherContentUploadPage() {
                     ))}
                   </div>
 
-                  <div style={{ marginTop: '8px', padding: '8px 10px', background: 'var(--surface)', borderRadius: '6px', fontSize: '11.5px', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                  <div style={{ marginTop: '8px', padding: '8px 10px', background: 'var(--surface-muted)', borderRadius: '6px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
                     <strong>Pedagogical Rationale:</strong> {q.explanation}
                   </div>
                 </div>
@@ -711,7 +634,7 @@ export function TeacherContentUploadPage() {
                     padding: '16px',
                     borderRadius: '8px',
                     border: '1px solid var(--border)',
-                    background: 'var(--surface-muted)',
+                    background: 'var(--surface-subtle)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -724,7 +647,7 @@ export function TeacherContentUploadPage() {
                   <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '8px' }}>
                     <strong>Constraints:</strong> {ca.constraints}
                   </div>
-                  <div style={{ padding: '8px 12px', background: '#0B1120', color: '#F8FAFC', borderRadius: '6px', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '11.5px' }}>
+                  <div style={{ padding: '8px 12px', background: '#0F172A', color: '#F8FAFC', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '11.5px' }}>
                     {ca.sampleTest}
                   </div>
                 </div>
@@ -740,27 +663,27 @@ export function TeacherContentUploadPage() {
           <div className="modal-dialog-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
             <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '15px', fontWeight: '700' }}>Edit Concept Definition</h2>
-              <button type="button" onClick={() => setEditingItem(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}>
+              <button type="button" onClick={() => setEditingItem(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
                 <X size={16} />
               </button>
             </div>
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: 'var(--text-main)' }}>Concept Name</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Concept Name</label>
                 <input
                   type="text"
                   value={editingItem.name}
                   onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface-muted)', color: 'var(--text-main)', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px', color: 'var(--text-main)' }}>Description</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Description</label>
                 <textarea
                   rows={3}
                   value={editingItem.description}
                   onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface-muted)', color: 'var(--text-main)', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px' }}
                 />
               </div>
             </div>

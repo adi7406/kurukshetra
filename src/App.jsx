@@ -1,11 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
-import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './context/ToastContext';
 import AppShell from './components/layout/AppShell';
 import LoadingState from './components/feedback/LoadingState';
-import ErrorBoundary from './components/feedback/ErrorBoundary';
 
 // Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -18,7 +15,6 @@ import ProgressPage from './pages/ProgressPage';
 import ProfilePage from './pages/ProfilePage';
 import TeacherContentUploadPage from './pages/TeacherContentUploadPage';
 import TeacherStudentProgressPage from './pages/TeacherStudentProgressPage';
-import SessionReplayPage from './pages/SessionReplayPage';
 
 import './App.css';
 
@@ -101,8 +97,6 @@ function AppRoutes() {
         {/* Teacher Specific Routes */}
         <Route path="/teacher/content-upload" element={<TeacherContentUploadPage />} />
         <Route path="/teacher/student-progress" element={<TeacherStudentProgressPage />} />
-        <Route path="/teacher/replay/:sessionId" element={<SessionReplayPage />} />
-        <Route path="/teacher/replay" element={<SessionReplayPage />} />
       </Route>
 
       {/* Fallback & Root Redirects */}
@@ -114,17 +108,11 @@ function AppRoutes() {
 
 export function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </AuthProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

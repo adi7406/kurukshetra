@@ -44,8 +44,8 @@ export function TeacherStudentProgressPage() {
     return <LoadingState message="Analyzing student cohort progress..." />;
   }
 
-  const atRiskCount = students.filter((s) => (s.overallMastery || 0) < 40).length;
-  const highMasteryCount = students.filter((s) => (s.overallMastery || 0) >= 70).length;
+  const atRiskCount = students.filter((s) => (s.overallMastery || 0) < 50).length;
+  const highMasteryCount = students.filter((s) => (s.overallMastery || 0) >= 75).length;
 
   const handleSendFeedback = () => {
     setFeedbackSent(true);
@@ -59,18 +59,14 @@ export function TeacherStudentProgressPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Title */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span className="badge-clean blue" style={{ fontSize: '10.5px' }}>
-            Cohort Dossier
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-            Individual student diagnostics & intervention tracking
-          </span>
+        <div className="hero-pill-badge" style={{ marginBottom: '8px' }}>
+          <span className="dot" />
+          <span>COHORT PROGRESS & INTERVENTION DOSSIER</span>
         </div>
-        <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
           Progress of the Students & Cohort Diagnostics
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Detailed learning analytics, concept-level mastery evidence, and personalized intervention management.
         </p>
       </div>
@@ -93,7 +89,7 @@ export function TeacherStudentProgressPage() {
 
         <div className="stat-widget-card">
           <div className="stat-widget-header">
-            <span className="stat-widget-title">Mastery &gt; 70% (Solid)</span>
+            <span className="stat-widget-title">Mastery &gt; 75%</span>
             <div className="stat-circle-icon green">
               <Award size={16} />
             </div>
@@ -107,7 +103,7 @@ export function TeacherStudentProgressPage() {
 
         <div className="stat-widget-card">
           <div className="stat-widget-header">
-            <span className="stat-widget-title">Mastery &lt; 40% (Weak)</span>
+            <span className="stat-widget-title">Requires Support</span>
             <div className="stat-circle-icon amber">
               <AlertTriangle size={16} />
             </div>
@@ -116,7 +112,7 @@ export function TeacherStudentProgressPage() {
             <span className="stat-huge-number">{atRiskCount}</span>
             <span className="stat-unit-text">learners flagged</span>
           </div>
-          <span className="stat-footer-text">Requires prerequisite intervention</span>
+          <span className="stat-footer-text">Struggling in Hash Tables & DP</span>
         </div>
       </div>
 
@@ -174,11 +170,18 @@ export function TeacherStudentProgressPage() {
 
         {/* Right Detail Panel for Selected Student */}
         {selectedStudent && (
-          <div className="saas-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 0 }}>
-            <div style={{ padding: '12px 18px', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-                Student Progress Dossier &bull; {selectedStudent.name} ({selectedStudent.rollNo})
-              </span>
+          <div className="studio-window-card" style={{ marginBottom: 0 }}>
+            <div className="studio-titlebar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="window-traffic-dots">
+                  <span className="traffic-dot red" />
+                  <span className="traffic-dot yellow" />
+                  <span className="traffic-dot green" />
+                </div>
+                <span className="studio-breadcrumb">
+                  Pathwise Studio / <strong>Student Progress Dossier</strong> / {selectedStudent.rollNo}
+                </span>
+              </div>
               <span className={`badge-clean ${selectedStudent.overallMastery >= 75 ? 'green' : selectedStudent.overallMastery >= 50 ? 'blue' : 'red'}`}>
                 {selectedStudent.overallMastery >= 75 ? 'Excelling' : selectedStudent.overallMastery >= 50 ? 'Developing' : 'Needs Support'}
               </span>
@@ -220,17 +223,17 @@ export function TeacherStudentProgressPage() {
                   { name: 'Dynamic Programming', score: selectedStudent.conceptMastery?.c_dp || 0 },
                   { name: 'Binary Search Trees', score: selectedStudent.conceptMastery?.c_bst || 0 },
                 ].map((c, i) => (
-                  <div key={i} style={{ padding: '12px', background: 'var(--surface-muted)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <div key={i} style={{ padding: '12px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
                       <span style={{ color: 'var(--text-main)' }}>{c.name}</span>
-                      <span style={{ fontWeight: '700', color: c.score >= 70 ? 'var(--success)' : c.score >= 40 ? 'var(--primary)' : 'var(--danger)' }}>{c.score}%</span>
+                      <span style={{ fontWeight: '700', color: c.score >= 75 ? 'var(--success)' : c.score >= 50 ? 'var(--primary)' : 'var(--warning)' }}>{c.score}%</span>
                     </div>
-                    <div style={{ width: '100%', height: '5px', background: 'var(--surface)', borderRadius: '9999px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '5px', background: 'var(--surface-muted)', borderRadius: '9999px', overflow: 'hidden' }}>
                       <div
                         style={{
                           width: `${c.score}%`,
                           height: '100%',
-                          background: c.score >= 70 ? 'var(--success)' : c.score >= 40 ? 'var(--primary)' : 'var(--danger)',
+                          background: c.score >= 75 ? 'var(--success)' : c.score >= 50 ? 'var(--primary)' : 'var(--warning)',
                         }}
                       />
                     </div>
@@ -239,7 +242,7 @@ export function TeacherStudentProgressPage() {
               </div>
 
               {/* Teacher Intervention Note */}
-              <div style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+              <div style={{ background: '#F8FAFC', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
                 <h4 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <MessageSquare size={14} color="var(--primary)" />
                   <span>Assign Targeted Feedback or Adaptive Practice</span>
