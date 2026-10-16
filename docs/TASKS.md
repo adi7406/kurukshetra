@@ -403,12 +403,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 ## 13. M10 — Hardening and Release
 
 ### TASK-036 — Security verification
-**Status:** TODO · **Priority:** P0 before production
-- [ ] Test auth bypass and privilege escalation.
-- [ ] Test cross-user/course access and RLS.
-- [ ] Test answer-key and hidden-test leakage.
-- [ ] Test uploads/private files and prompt injection.
-- [ ] Test rate limits, abuse cases, and code isolation.
+**Status:** DONE · **Priority:** P0 before production
+- [x] Test auth bypass and privilege escalation.
+- [x] Test cross-user/course access and RLS.
+- [x] Test answer-key and hidden-test leakage.
+- [x] Test uploads/private files and prompt injection.
+- [x] Test rate limits, abuse cases, and code isolation.
 
 **Acceptance:** High-severity findings are fixed; accepted risks have documented owners.
 
