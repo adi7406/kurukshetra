@@ -365,11 +365,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Signals are review leads, not proof; access is limited to authorized reviewers.
 
 ### TASK-032 — Human review workflow
-**Status:** TODO · **Priority:** P2 · **Depends on:** TASK-031
-- [ ] Provide authorized reviewers with relevant evidence.
-- [ ] Store outcomes, notes, and audit history.
-- [ ] Add correction/appeal path where required.
-- [ ] Restrict access to sensitive evidence.
+**Status:** DONE · **Priority:** P2 · **Depends on:** TASK-031
+- [x] Provide authorized reviewers with relevant evidence.
+- [x] Store outcomes, notes, and audit history.
+- [x] Add correction/appeal path where required.
+- [x] Restrict access to sensitive evidence.
 
 **Acceptance:** Review decisions are audited and cannot be changed by unauthorized users.
 

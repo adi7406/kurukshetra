@@ -47,4 +47,43 @@ router.get(
   integrityController.getSessionSignals
 );
 
+// 7. Initiate a human integrity review for an attempt (authorized reviewers only)
+router.post(
+  '/attempts/:attemptId/integrity-reviews',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  integrityController.createReview
+);
+
+// 8. Retrieve all integrity reviews for an attempt (authorized reviewers only)
+router.get(
+  '/attempts/:attemptId/integrity-reviews',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  integrityController.getAttemptReviews
+);
+
+// 9. Retrieve specific integrity review with evidence & audit history (authorized reviewers only)
+router.get(
+  '/integrity-reviews/:reviewId',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  integrityController.getReview
+);
+
+// 10. Update or resolve an integrity review (authorized reviewers only)
+router.patch(
+  '/integrity-reviews/:reviewId',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  integrityController.updateReview
+);
+
+// 11. Candidate appeal or context submission (candidate or reviewer)
+router.post(
+  '/integrity-reviews/:reviewId/appeal',
+  authenticate,
+  integrityController.submitAppeal
+);
+
 export default router;

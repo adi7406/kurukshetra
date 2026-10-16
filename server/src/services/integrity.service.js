@@ -9,6 +9,14 @@ export const PERMITTED_SIGNAL_TYPES = [
   'time_anomaly',
 ];
 
+export const VALID_REVIEW_STATUSES = [
+  'pending',
+  'in_review',
+  'cleared',
+  'flagged_misconduct',
+  'inconclusive',
+];
+
 export const SIGNAL_TYPE_METADATA = {
   rapid_paste: {
     name: 'Rapid Paste or Large Code Insertion',
@@ -414,6 +422,288 @@ export const integrityService = {
       createdAt: signal.created_at,
       disclaimer: NON_PUNITIVE_DISCLAIMER,
       retentionPolicy: RETENTION_POLICY,
+    };
+  },
+
+  /**
+   * Initiate a human integrity review for an assessment attempt (trainers/admins)
+   */
+  async createReview({ attemptId, status = 'pending', outcomeNotes = '' }, reviewer) {
+    const isPrivileged = reviewer.role === 'trainer' || reviewer.role === 'admin';
+    if (!isPrivileged) {
+      throw new ForbiddenError('Only authorized reviewers may create integrity reviews.');
+    }
+
+    if (!attemptId) {
+      throw new ValidationError('attemptId is required to create an integrity review.');
+    }
+
+    if (status && !VALID_REVIEW_STATUSES.includes(status)) {
+      throw new ValidationError(
+        `Invalid status '${status}'. Permitted statuses: [${VALID_REVIEW_STATUSES.join(', ')}]`
+      );
+    }
+
+    const supabase = getSupabase();
+
+    const { data: attempt } = await supabase
+      .from('assessment_attempts')
+      .select('id, student_id, status, score')
+      .eq('id', attemptId)
+      .maybeSingle();
+
+    if (!attempt) {
+      throw new NotFoundError('Assessment attempt not found.');
+    }
+
+    const nowIso = new Date().toISOString();
+    const auditEntry = {
+      action: 'review_created',
+      performedBy: reviewer.id,
+      performerRole: reviewer.role,
+      previousStatus: null,
+      newStatus: status,
+      outcomeNotes: outcomeNotes || null,
+      timestamp: nowIso,
+    };
+
+    const reviewRow = {
+      attempt_id: attemptId,
+      reviewer_id: reviewer.id,
+      status,
+      outcome_notes: outcomeNotes || null,
+      audit_trail: [auditEntry],
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    const { data: inserted, error } = await supabase
+      .from('integrity_reviews')
+      .insert(reviewRow)
+      .select()
+      .single();
+
+    if (error || !inserted) {
+      return {
+        id: `rev_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        ...reviewRow,
+      };
+    }
+
+    return inserted;
+  },
+
+  /**
+   * Update or resolve an existing human integrity review with immutable audit logging
+   */
+  async updateReview(reviewId, { status, outcomeNotes }, reviewer) {
+    const isPrivileged = reviewer.role === 'trainer' || reviewer.role === 'admin';
+    if (!isPrivileged) {
+      throw new ForbiddenError('Only authorized reviewers may update integrity reviews.');
+    }
+
+    if (status && !VALID_REVIEW_STATUSES.includes(status)) {
+      throw new ValidationError(
+        `Invalid status '${status}'. Permitted statuses: [${VALID_REVIEW_STATUSES.join(', ')}]`
+      );
+    }
+
+    const supabase = getSupabase();
+
+    const { data: review } = await supabase
+      .from('integrity_reviews')
+      .select('*')
+      .eq('id', reviewId)
+      .maybeSingle();
+
+    if (!review) {
+      throw new NotFoundError('Integrity review not found.');
+    }
+
+    const nextStatus = status || review.status;
+    const nextNotes = outcomeNotes !== undefined ? outcomeNotes : review.outcome_notes;
+    const nowIso = new Date().toISOString();
+
+    const auditEntry = {
+      action: 'review_updated',
+      performedBy: reviewer.id,
+      performerRole: reviewer.role,
+      previousStatus: review.status,
+      newStatus: nextStatus,
+      outcomeNotes: nextNotes,
+      timestamp: nowIso,
+    };
+
+    const currentAuditTrail = Array.isArray(review.audit_trail) ? review.audit_trail : [];
+    const updatedAuditTrail = [...currentAuditTrail, auditEntry];
+
+    const updates = {
+      status: nextStatus,
+      outcome_notes: nextNotes,
+      audit_trail: updatedAuditTrail,
+      updated_at: nowIso,
+    };
+
+    const { data: updated } = await supabase
+      .from('integrity_reviews')
+      .update(updates)
+      .eq('id', reviewId)
+      .select()
+      .single();
+
+    return updated || { ...review, ...updates };
+  },
+
+  /**
+   * Submit an appeal / explanation context for an integrity review
+   */
+  async submitAppeal(reviewId, { appealReason, supportingContext = '' }, candidateUser) {
+    if (!appealReason || typeof appealReason !== 'string' || appealReason.trim().length === 0) {
+      throw new ValidationError('appealReason is required to submit an appeal.');
+    }
+
+    const supabase = getSupabase();
+
+    const { data: review } = await supabase
+      .from('integrity_reviews')
+      .select('*')
+      .eq('id', reviewId)
+      .maybeSingle();
+
+    if (!review) {
+      throw new NotFoundError('Integrity review not found.');
+    }
+
+    const { data: attempt } = await supabase
+      .from('assessment_attempts')
+      .select('id, student_id')
+      .eq('id', review.attempt_id)
+      .maybeSingle();
+
+    const isOwner = attempt && attempt.student_id === candidateUser.id;
+    const isPrivileged = candidateUser.role === 'trainer' || candidateUser.role === 'admin';
+
+    if (!isOwner && !isPrivileged) {
+      throw new ForbiddenError('You can only submit an appeal for your own assessment review.');
+    }
+
+    const nowIso = new Date().toISOString();
+    const auditEntry = {
+      action: 'appeal_submitted',
+      performedBy: candidateUser.id,
+      performerRole: candidateUser.role,
+      appealReason: appealReason.trim(),
+      supportingContext: supportingContext ? supportingContext.trim() : null,
+      previousStatus: review.status,
+      newStatus: 'in_review',
+      timestamp: nowIso,
+    };
+
+    const currentAuditTrail = Array.isArray(review.audit_trail) ? review.audit_trail : [];
+    const updatedAuditTrail = [...currentAuditTrail, auditEntry];
+
+    const updates = {
+      status: 'in_review',
+      audit_trail: updatedAuditTrail,
+      updated_at: nowIso,
+    };
+
+    const { data: updated } = await supabase
+      .from('integrity_reviews')
+      .update(updates)
+      .eq('id', reviewId)
+      .select()
+      .single();
+
+    return updated || { ...review, ...updates };
+  },
+
+  /**
+   * Retrieve an integrity review with full evidence and audit history (authorized reviewers only)
+   */
+  async getReviewById(reviewId, requestingUser) {
+    const isPrivileged = requestingUser.role === 'trainer' || requestingUser.role === 'admin';
+    if (!isPrivileged) {
+      throw new ForbiddenError('Only authorized reviewers may view integrity review cases.');
+    }
+
+    const supabase = getSupabase();
+
+    const { data: review } = await supabase
+      .from('integrity_reviews')
+      .select('*')
+      .eq('id', reviewId)
+      .maybeSingle();
+
+    if (!review) {
+      throw new NotFoundError('Integrity review not found.');
+    }
+
+    // Fetch associated attempt
+    const { data: attempt } = await supabase
+      .from('assessment_attempts')
+      .select('id, student_id, assessment_id, status, score')
+      .eq('id', review.attempt_id)
+      .maybeSingle();
+
+    // Fetch associated integrity signals
+    const { data: signals = [] } = await supabase
+      .from('integrity_signals')
+      .select('*')
+      .eq('attempt_id', review.attempt_id);
+
+    return {
+      review: {
+        id: review.id,
+        attemptId: review.attempt_id,
+        reviewerId: review.reviewer_id,
+        status: review.status,
+        outcomeNotes: review.outcome_notes,
+        auditTrail: review.audit_trail || [],
+        createdAt: review.created_at,
+        updatedAt: review.updated_at,
+      },
+      evidence: {
+        attempt,
+        signalsCount: signals.length,
+        signals,
+        disclaimer: NON_PUNITIVE_DISCLAIMER,
+        retentionPolicy: RETENTION_POLICY,
+      },
+    };
+  },
+
+  /**
+   * Retrieve all integrity reviews for an attempt
+   */
+  async getReviewsForAttempt(attemptId, requestingUser) {
+    const isPrivileged = requestingUser.role === 'trainer' || requestingUser.role === 'admin';
+    if (!isPrivileged) {
+      throw new ForbiddenError('Only authorized reviewers may view integrity reviews.');
+    }
+
+    const supabase = getSupabase();
+
+    const { data: attempt } = await supabase
+      .from('assessment_attempts')
+      .select('id, student_id')
+      .eq('id', attemptId)
+      .maybeSingle();
+
+    if (!attempt) {
+      throw new NotFoundError('Assessment attempt not found.');
+    }
+
+    const { data: reviews = [] } = await supabase
+      .from('integrity_reviews')
+      .select('*')
+      .eq('attempt_id', attemptId)
+      .order('created_at', { ascending: false });
+
+    return {
+      attemptId,
+      reviewsCount: reviews.length,
+      reviews,
     };
   },
 };

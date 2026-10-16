@@ -124,4 +124,126 @@ export const integrityController = {
       next(error);
     }
   },
+
+  /**
+   * Initiate a human integrity review case for an assessment attempt (trainers/admins)
+   */
+  async createReview(req, res, next) {
+    try {
+      const { attemptId } = req.params;
+      const { status, outcomeNotes } = req.body || {};
+
+      const result = await integrityService.createReview(
+        {
+          attemptId,
+          status,
+          outcomeNotes,
+        },
+        req.user
+      );
+
+      res.status(201).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Update or resolve an existing human integrity review (trainers/admins)
+   */
+  async updateReview(req, res, next) {
+    try {
+      const { reviewId } = req.params;
+      const { status, outcomeNotes } = req.body || {};
+
+      const result = await integrityService.updateReview(
+        reviewId,
+        {
+          status,
+          outcomeNotes,
+        },
+        req.user
+      );
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Submit an appeal / explanation context for an integrity review (candidate or reviewer)
+   */
+  async submitAppeal(req, res, next) {
+    try {
+      const { reviewId } = req.params;
+      const { appealReason, supportingContext } = req.body || {};
+
+      const result = await integrityService.submitAppeal(
+        reviewId,
+        {
+          appealReason,
+          supportingContext,
+        },
+        req.user
+      );
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Retrieve an integrity review with full evidence and audit history (trainers/admins)
+   */
+  async getReview(req, res, next) {
+    try {
+      const { reviewId } = req.params;
+      const result = await integrityService.getReviewById(reviewId, req.user);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Retrieve all integrity reviews for an assessment attempt (trainers/admins)
+   */
+  async getAttemptReviews(req, res, next) {
+    try {
+      const { attemptId } = req.params;
+      const result = await integrityService.getReviewsForAttempt(attemptId, req.user);
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
