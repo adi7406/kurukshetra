@@ -46,8 +46,8 @@ export const learningService = {
     const courses = await this.getCourses();
     const concepts = [];
     courses.forEach((c) => {
-      c.modules.forEach((m) => {
-        m.concepts.forEach((concept) => {
+      c.modules?.forEach((m) => {
+        m.concepts?.forEach((concept) => {
           concepts.push({
             ...concept,
             courseId: c.id,
@@ -64,8 +64,8 @@ export const learningService = {
     const courses = await this.getCourses();
     let updated = null;
     courses.forEach((c) => {
-      c.modules.forEach((m) => {
-        m.concepts.forEach((concept) => {
+      c.modules?.forEach((m) => {
+        m.concepts?.forEach((concept) => {
           if (concept.id === conceptId) {
             Object.assign(concept, updates);
             updated = concept;

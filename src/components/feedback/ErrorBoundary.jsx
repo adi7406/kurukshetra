@@ -34,8 +34,8 @@ export class ErrorBoundary extends React.Component {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '24px',
-            backgroundColor: 'var(--canvas-bg, #080C14)',
-            color: 'var(--text-main, #F8FAFC)',
+            backgroundColor: 'var(--page-bg, #F4F2F0)',
+            color: 'var(--text-main, #141312)',
             fontFamily: 'var(--font-sans, sans-serif)',
           }}
         >
@@ -44,10 +44,10 @@ export class ErrorBoundary extends React.Component {
               maxWidth: '520px',
               width: '100%',
               padding: '28px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--surface, #0F172A)',
-              border: '1px solid var(--danger-border, rgba(239, 68, 68, 0.35))',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+              borderRadius: 'var(--radius-card, 20px)',
+              backgroundColor: 'var(--surface, #FFFFFF)',
+              border: '1px solid var(--border, #ECEAE8)',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.08)',
               textAlign: 'center',
             }}
           >

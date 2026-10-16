@@ -137,91 +137,190 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F4F2F0] p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-[960px] grid grid-cols-1 md:grid-cols-[1fr_1.2fr] bg-white rounded-[28px] border border-[#ECEAE8] shadow-[0_20px_50px_rgba(20,19,18,0.06)] overflow-hidden">
+    <div className="auth-page-wrapper">
+      <div className="auth-card-container">
         {/* Left Hero & Feature Showcase Column */}
-        <div className="bg-[#1C1C21] text-white p-8 md:p-10 flex flex-col justify-between relative overflow-hidden">
+        <div className="auth-hero-column">
           {/* Subtle background glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF5B37]/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-          
-          <div className="relative z-10">
+          <div
+            style={{
+              position: 'absolute',
+              top: '-60px',
+              right: '-60px',
+              width: '240px',
+              height: '240px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255, 91, 55, 0.18) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div style={{ position: 'relative', zIndex: 1 }}>
             {/* Brand Logo */}
-            <div className="flex items-center gap-2.5 mb-8">
-              <div className="w-9 h-9 rounded-xl bg-[#2A2A32] border border-white/10 flex items-center justify-center text-[#FF5B37]">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#2A2A32',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--coral)',
+                }}
+              >
                 <GraduationCap size={20} strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-xl tracking-tight text-white font-['Outfit',sans-serif]">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
                   Pathwise
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/80 border border-white/10 tracking-wide uppercase">
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                  }}
+                >
                   Beta
                 </span>
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-white leading-snug mb-3 font-['Outfit',sans-serif]">
+            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: '12px' }}>
               Structured curriculum.<br />Measurable mastery.
             </h2>
-            <p className="text-xs text-white/70 leading-relaxed mb-8">
+            <p style={{ fontSize: '12.5px', color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.6, marginBottom: '28px' }}>
               Adaptive concept progression driven by probabilistic knowledge tracing, real-time isolated code sandboxes, and automated syllabus extraction.
             </p>
 
             {/* Feature Cards */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 bg-[#26262D] border border-white/5 p-3 rounded-[12px]">
-                <div className="w-7 h-7 rounded-lg bg-[#17A673]/15 text-[#17A673] flex items-center justify-center shrink-0 mt-0.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="auth-feature-card">
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(23, 166, 115, 0.15)',
+                    color: '#17A673',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: '2px',
+                  }}
+                >
                   <TrendingUp size={15} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white">Bayesian Mastery Model (BKT)</div>
-                  <div className="text-[11px] text-white/60">Probabilistic skill estimation with DAG prerequisite validation</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#FFFFFF' }}>
+                    Bayesian Mastery Model (BKT)
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                    Probabilistic skill estimation with DAG prerequisite validation
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 bg-[#26262D] border border-white/5 p-3 rounded-[12px]">
-                <div className="w-7 h-7 rounded-lg bg-[#F5A524]/15 text-[#F5A524] flex items-center justify-center shrink-0 mt-0.5">
+              <div className="auth-feature-card">
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(245, 165, 36, 0.15)',
+                    color: '#F5A524',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: '2px',
+                  }}
+                >
                   <Layers size={15} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white">Syllabus Ingestion Pipeline</div>
-                  <div className="text-[11px] text-white/60">Automated document parsing & diagnostic quiz generation</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#FFFFFF' }}>
+                    Syllabus Ingestion Pipeline
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                    Automated document parsing & diagnostic quiz generation
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 bg-[#26262D] border border-white/5 p-3 rounded-[12px]">
-                <div className="w-7 h-7 rounded-lg bg-[#FF5B37]/15 text-[#FF5B37] flex items-center justify-center shrink-0 mt-0.5">
+              <div className="auth-feature-card">
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(255, 91, 55, 0.15)',
+                    color: 'var(--coral)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: '2px',
+                  }}
+                >
                   <Code2 size={15} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white">Judge0 Sandbox & AI Viva</div>
-                  <div className="text-[11px] text-white/60">Isolated execution with conceptual comprehension assessment</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#FFFFFF' }}>
+                    Judge0 Sandbox & AI Viva
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                    Isolated execution with conceptual comprehension assessment
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-            {/* Institutional Trust Badge */}
-          <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-white/60 relative z-10">
-            <span className="flex items-center gap-1.5">
+          {/* Institutional Trust Badge */}
+          <div
+            style={{
+              marginTop: '32px',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '11px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Building2 size={13} strokeWidth={1.5} />
               <span>Kurukshetra Institute of Technology</span>
             </span>
-            <span className="flex items-center gap-1">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Lock size={12} strokeWidth={1.5} /> Enterprise Grade
             </span>
           </div>
         </div>
 
         {/* Right Form Column */}
-        <div className="p-8 md:p-10 flex flex-col justify-center bg-white">
+        <div className="auth-form-column">
           {/* Header Switcher: Sign In vs Sign Up */}
-          <div className="flex items-start justify-between gap-4 mb-5">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
             <div>
-              <h1 className="text-xl font-bold text-[#141312] mb-1 font-['Outfit',sans-serif]">
+              <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
                 {mode === 'signin' ? 'Sign In to Portal' : 'Create an Account'}
               </h1>
-              <p className="text-xs text-[#6E6B68]">
+              <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: 0 }}>
                 {mode === 'signin'
                   ? 'Access your personalized learning and assessment workspace'
                   : 'Register your academic profile and join your cohort'}
@@ -236,100 +335,179 @@ export function LoginPage() {
                 setErrorMessage('');
                 setSuccessMessage('');
               }}
-              className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium text-[#141312] bg-[#F8F7F6] hover:bg-[#F0EEEA] border border-[#ECEAE8] transition-colors"
+              className="btn-ghost-pill btn-compact"
+              style={{ whiteSpace: 'nowrap' }}
             >
               {mode === 'signin' ? 'Create Account' : 'Back to Sign In'}
             </button>
           </div>
 
           {/* Quick Demo Access */}
-          <div className="bg-[#F8F7F6] border border-[#ECEAE8] rounded-[16px] p-3 mb-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-semibold text-[#9B9793] uppercase tracking-wider">
+          <div
+            style={{
+              backgroundColor: 'var(--surface-muted)',
+              border: '1px solid var(--border-hairline)',
+              borderRadius: '16px',
+              padding: '12px',
+              marginBottom: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Instant Evaluator Access
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFEDE8] text-[#FF5B37] border border-[#FF5B37]/20">
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  backgroundColor: 'var(--coral-soft)',
+                  color: 'var(--coral)',
+                  border: '1px solid var(--coral-border)',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-pill)',
+                }}
+              >
                 1-Click Demo
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
-                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-medium bg-white hover:bg-neutral-50 text-[#141312] border border-[#ECEAE8] shadow-sm transition-all"
+                className="btn-ghost-pill btn-compact"
+                style={{ justifyContent: 'center', backgroundColor: '#FFFFFF' }}
                 onClick={() => handleQuickDemo('student')}
                 disabled={loading}
               >
-                <User size={13} strokeWidth={1.5} className="text-[#FF5B37]" />
+                <User size={13} strokeWidth={1.5} color="var(--coral)" />
                 <span>Demo <strong>Student</strong></span>
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-medium bg-white hover:bg-neutral-50 text-[#141312] border border-[#ECEAE8] shadow-sm transition-all"
+                className="btn-ghost-pill btn-compact"
+                style={{ justifyContent: 'center', backgroundColor: '#FFFFFF' }}
                 onClick={() => handleQuickDemo('teacher')}
                 disabled={loading}
               >
-                <Shield size={13} strokeWidth={1.5} className="text-[#1C1C21]" />
+                <Shield size={13} strokeWidth={1.5} color="var(--dark-pill)" />
                 <span>Demo <strong>Instructor</strong></span>
               </button>
             </div>
           </div>
 
           {/* Workspace Role Selector */}
-          <div className="mb-4">
-            <label className="block text-[10px] font-bold uppercase text-[#9B9793] mb-1.5 tracking-wider">
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', letterSpacing: '0.04em' }}>
               Active Workspace Role
             </label>
-            <div className="grid grid-cols-2 gap-2 p-1 bg-[#F8F7F6] rounded-[14px] border border-[#ECEAE8]">
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '6px',
+                padding: '4px',
+                backgroundColor: 'var(--surface-muted)',
+                borderRadius: '14px',
+                border: '1px solid var(--border-hairline)',
+              }}
+            >
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[10px] text-xs font-medium transition-all ${
-                  role === 'student'
-                    ? 'bg-white text-[#141312] shadow-sm font-semibold'
-                    : 'text-[#6E6B68] hover:text-[#141312]'
-                }`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '7px 12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: role === 'student' ? 600 : 500,
+                  backgroundColor: role === 'student' ? '#FFFFFF' : 'transparent',
+                  color: role === 'student' ? 'var(--text-main)' : 'var(--text-secondary)',
+                  boxShadow: role === 'student' ? 'var(--shadow-sm)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                }}
                 onClick={() => setRole('student')}
               >
-                <GraduationCap size={14} strokeWidth={1.5} className={role === 'student' ? 'text-[#FF5B37]' : ''} />
-                Student Portal
+                <GraduationCap size={14} strokeWidth={1.5} color={role === 'student' ? 'var(--coral)' : 'currentColor'} />
+                <span>Student Portal</span>
               </button>
 
               <button
                 type="button"
-                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[10px] text-xs font-medium transition-all ${
-                  role === 'teacher'
-                    ? 'bg-white text-[#141312] shadow-sm font-semibold'
-                    : 'text-[#6E6B68] hover:text-[#141312]'
-                }`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '7px 12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: role === 'teacher' ? 600 : 500,
+                  backgroundColor: role === 'teacher' ? '#FFFFFF' : 'transparent',
+                  color: role === 'teacher' ? 'var(--text-main)' : 'var(--text-secondary)',
+                  boxShadow: role === 'teacher' ? 'var(--shadow-sm)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                }}
                 onClick={() => setRole('teacher')}
               >
-                <Shield size={14} strokeWidth={1.5} className={role === 'teacher' ? 'text-[#FF5B37]' : ''} />
-                Instructor Workspace
+                <Shield size={14} strokeWidth={1.5} color={role === 'teacher' ? 'var(--coral)' : 'currentColor'} />
+                <span>Instructor Workspace</span>
               </button>
             </div>
           </div>
 
           {/* Alerts */}
           {errorMessage && (
-            <div className="p-3 rounded-[12px] bg-[#FDE8E8] border border-[#E5484D]/30 text-[#E5484D] text-xs flex items-center gap-2 mb-4">
-              <AlertCircle size={15} strokeWidth={1.5} className="shrink-0" />
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: '12px',
+                backgroundColor: 'var(--danger-subtle)',
+                border: '1px solid var(--danger-border)',
+                color: 'var(--danger)',
+                fontSize: '12.5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '14px',
+              }}
+            >
+              <AlertCircle size={15} strokeWidth={1.5} style={{ flexShrink: 0 }} />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3 rounded-[12px] bg-[#E8F7F0] border border-[#17A673]/30 text-[#17A673] text-xs flex items-center gap-2 mb-4">
-              <CheckCircle2 size={15} strokeWidth={1.5} className="shrink-0" />
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: '12px',
+                backgroundColor: 'var(--success-subtle)',
+                border: '1px solid var(--success-border)',
+                color: 'var(--success)',
+                fontSize: '12.5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '14px',
+              }}
+            >
+              <CheckCircle2 size={15} strokeWidth={1.5} style={{ flexShrink: 0 }} />
               <span>{successMessage}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {mode === 'signup' && (
               <>
                 {/* Full Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#141312] mb-1">
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                     Full Name
                   </label>
                   <input
@@ -338,14 +516,14 @@ export function LoginPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                    className="auth-input"
                   />
                 </div>
 
                 {/* Class & Roll Number */}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label className="block text-xs font-semibold text-[#141312] mb-1">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                       Class / Cohort
                     </label>
                     <input
@@ -354,11 +532,11 @@ export function LoginPage() {
                       value={className}
                       onChange={(e) => setClassName(e.target.value)}
                       required
-                      className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                      className="auth-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#141312] mb-1">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                       {role === 'teacher' ? 'Faculty ID' : 'Roll Number'}
                     </label>
                     <input
@@ -367,14 +545,14 @@ export function LoginPage() {
                       value={rollNo}
                       onChange={(e) => setRollNo(e.target.value)}
                       required
-                      className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                      className="auth-input"
                     />
                   </div>
                 </div>
 
                 {/* Phone Number */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#141312] mb-1">
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                     Phone Number
                   </label>
                   <input
@@ -383,14 +561,14 @@ export function LoginPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
-                    className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                    className="auth-input"
                   />
                 </div>
 
                 {/* Teacher Specific: Course Taught */}
                 {role === 'teacher' && (
                   <div>
-                    <label className="block text-xs font-semibold text-[#141312] mb-1">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                       Course You Teach
                     </label>
                     <input
@@ -399,7 +577,7 @@ export function LoginPage() {
                       value={courseTaught}
                       onChange={(e) => setCourseTaught(e.target.value)}
                       required
-                      className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                      className="auth-input"
                     />
                   </div>
                 )}
@@ -407,14 +585,15 @@ export function LoginPage() {
                 {/* Student Specific: Dynamic Teacher Selection */}
                 {role === 'student' && (
                   <div>
-                    <label className="block text-xs font-semibold text-[#141312] mb-1">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                       Select Instructor & Course
                     </label>
                     <select
                       value={selectedTeacherId}
                       onChange={(e) => setSelectedTeacherId(e.target.value)}
                       required
-                      className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                      className="auth-input"
+                      style={{ backgroundColor: '#FFFFFF' }}
                     >
                       {availableTeachers.map((t) => (
                         <option key={t.id} value={t.id}>
@@ -429,7 +608,7 @@ export function LoginPage() {
 
             {/* Email Address */}
             <div>
-              <label className="block text-xs font-semibold text-[#141312] mb-1">
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                 Email Address
               </label>
               <input
@@ -438,28 +617,42 @@ export function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3.5 py-2 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                className="auth-input"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-[#141312] mb-1">
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
                 Password
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter secret password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2 pr-10 rounded-[12px] border border-[#ECEAE8] bg-[#F8F7F6]/50 focus:bg-white text-xs outline-none focus:border-[#FF5B37] focus:ring-2 focus:ring-[#FF5B37]/15 transition-all text-[#141312]"
+                  className="auth-input"
+                  style={{ paddingRight: '36px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9793] hover:text-[#141312] transition-colors"
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0,
+                  }}
+                  aria-label="Toggle password visibility"
                 >
                   {showPassword ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
                 </button>
@@ -470,7 +663,15 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2.5 px-4 rounded-full bg-[#FF5B37] hover:bg-[#EE4A26] text-white font-semibold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn-coral-pill"
+              style={{
+                width: '100%',
+                justifyContent: 'center',
+                padding: '10px 16px',
+                fontSize: '13px',
+                marginTop: '6px',
+                opacity: loading ? 0.6 : 1,
+              }}
             >
               {loading ? (
                 <span>Authenticating with server...</span>
@@ -489,7 +690,7 @@ export function LoginPage() {
           </form>
 
           {/* Footer Note */}
-          <div className="mt-5 text-center text-[11px] text-[#9B9793] flex items-center justify-center gap-1.5">
+          <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <Lock size={12} strokeWidth={1.5} />
             <span>Authoritative server-validated authentication with Supabase & JWT.</span>
           </div>
