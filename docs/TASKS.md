@@ -421,12 +421,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Core learning flows do not rely solely on color or pointer input.
 
 ### TASK-038 — Monitoring and cost controls
-**Status:** TODO · **Priority:** P1 before production
-- [ ] Add health/readiness checks.
-- [ ] Track request IDs, error categories, latency, and job failures.
-- [ ] Track AI usage/cost and enforce limits.
-- [ ] Alert on sustained failures and abnormal resource use.
-- [ ] Document retention, backup, and incident responsibilities.
+**Status:** DONE · **Priority:** P1 before production
+- [x] Add health/readiness checks.
+- [x] Track request IDs, error categories, latency, and job failures.
+- [x] Track AI usage/cost and enforce limits.
+- [x] Alert on sustained failures and abnormal resource use.
+- [x] Document retention, backup, and incident responsibilities.
 
 **Acceptance:** Failures can be diagnosed without logging secrets or full sensitive learner content.
 

@@ -139,6 +139,18 @@ export function createMockSupabase() {
               };
               return queryBuilder;
             },
+            limit(count) {
+              const origThen = queryBuilder.then;
+              queryBuilder.then = function (resolve, reject) {
+                return origThen((res) => {
+                  if (res && Array.isArray(res.data)) {
+                    return resolve({ ...res, data: res.data.slice(0, count) });
+                  }
+                  return resolve(res);
+                }, reject);
+              };
+              return queryBuilder;
+            },
             async single() {
               const all = Array.from(store.values());
               const match = all.find((item) => filters.every((fn) => fn(item)));

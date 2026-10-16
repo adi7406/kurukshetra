@@ -27,6 +27,9 @@ export function errorHandler(err, req, res, _next) {
     message = 'Request payload exceeds maximum allowed size.';
   }
 
+  res.locals = res.locals || {};
+  res.locals.errorCode = code;
+
   // In production or test, never leak internal error traces
   if (statusCode >= 500 && process.env.NODE_ENV !== 'test') {
     console.error(`[Error] [${requestId}] Unhandled exception:`, err);
