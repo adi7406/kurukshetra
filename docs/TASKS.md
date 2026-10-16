@@ -413,10 +413,10 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** High-severity findings are fixed; accepted risks have documented owners.
 
 ### TASK-037 — Accessibility and usability
-**Status:** TODO · **Priority:** P1 before release
-- [ ] Check keyboard navigation, focus, labels, errors, and contrast.
-- [ ] Check responsive layouts and assessment/editor status messaging.
-- [ ] Verify recoverable errors and empty states.
+**Status:** DONE · **Priority:** P1 before release
+- [x] Check keyboard navigation, focus, labels, errors, and contrast.
+- [x] Check responsive layouts and assessment/editor status messaging.
+- [x] Verify recoverable errors and empty states.
 
 **Acceptance:** Core learning flows do not rely solely on color or pointer input.
 
