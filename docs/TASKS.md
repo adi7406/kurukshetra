@@ -356,11 +356,11 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Scores remain within rubric bounds; unreviewed AI output cannot trigger punitive action.
 
 ### TASK-031 — Integrity signals
-**Status:** TODO · **Priority:** P2 · **Depends on:** TASK-028
-- [ ] Define permitted signal types and meanings.
-- [ ] Store evidence, timestamps, detector/version, and uncertainty.
-- [ ] Restrict access and define retention.
-- [ ] Never infer guilt from one signal or automatically penalize a learner.
+**Status:** DONE · **Priority:** P2 · **Depends on:** TASK-028
+- [x] Define permitted signal types and meanings.
+- [x] Store evidence, timestamps, detector/version, and uncertainty.
+- [x] Restrict access and define retention.
+- [x] Never infer guilt from one signal or automatically penalize a learner.
 
 **Acceptance:** Signals are review leads, not proof; access is limited to authorized reviewers.
 

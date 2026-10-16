@@ -19,6 +19,7 @@ import masteryRoutes from './routes/mastery.routes.js';
 import recommendationsRoutes from './routes/recommendations.routes.js';
 import codingRoutes from './routes/coding.routes.js';
 import vivaRoutes from './routes/viva.routes.js';
+import integrityRoutes from './routes/integrity.routes.js';
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use(env.API_PREFIX, masteryRoutes);
 app.use(env.API_PREFIX, recommendationsRoutes);
 app.use(env.API_PREFIX, codingRoutes);
 app.use(env.API_PREFIX, vivaRoutes);
+app.use(env.API_PREFIX, integrityRoutes);
 
 if (env.API_PREFIX !== '/api') {
   app.use('/api', healthRoutes);
@@ -78,6 +80,7 @@ if (env.API_PREFIX !== '/api') {
   app.use('/api', recommendationsRoutes);
   app.use('/api', codingRoutes);
   app.use('/api', vivaRoutes);
+  app.use('/api', integrityRoutes);
 }
 
 
