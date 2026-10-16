@@ -1,818 +1,575 @@
-# System Architecture
+# Adaptive Learning and Assessment Portal — System Architecture
 
-1. Purpose
-This document describes the proposed technical architecture for Pathwise, including application boundaries, core services, data flow, persistence, integrations, security controls, and delivery strategy.
-It complements the project's PRD and frontend_design.md:
-- PRD: defines product scope, functional requirements, priorities, and acceptance criteria.
-- Frontend design: defines the user interface, interaction patterns, and visual system.
-- Architecture: defines how the system is organized and how its components communicate.
-The initial implementation should be a modular monolith, not a collection of microservices. This keeps local development and deployment manageable while preserving clear service boundaries for future scaling.
-2. Architecture principles
-1. Backend is authoritative. Scores, hidden tests, permissions, mastery updates, prerequisite checks, publication, and integrity-review records are enforced by the server.
-2. One deployable application first. Keep the main API in a modular Express application. Isolate code execution through a dedicated execution provider/service.
-3. AI creates drafts, not truth. Model output is untrusted, schema-validated, tested where applicable, and trainer-approved before publication.
-4. Providers are replaceable. Hide LLM and code-execution providers behind small adapters.
-5. Keep the core deterministic. Use ordinary application logic for scoring, prerequisite validation, test execution orchestration, mastery updates, and recommendations. Use LLMs only where language generation or interpretation is useful.
-6. Preserve evidence and versions. Link attempts to the exact content and assessment versions used.
-7. Privacy by design. Record only disclosed, assessment-relevant session events. Integrity signals support human review and do not automatically penalize students.
-8. Build the end-to-end learning loop first. Deliver a small reliable flow before advanced analytics, voice viva, RAG, or repository evaluation.
-3. Selected technology baseline
-The following is the recommended implementation baseline for this project, taking account of the project's JavaScript-only preference and MySQL setup.
-Layer	Technology	Responsibility
-Web client	React + Vite, JavaScript	Student, trainer, and admin interfaces
-Styling and components	Tailwind CSS, shadcn/ui, Lucide	Responsive, consistent UI
-Routing	React Router	Client-side navigation
-Charts	Recharts	Mastery and assessment trends
-Code editor	Monaco Editor	Browser-based coding assessments
-API server	Node.js + Express, JavaScript	Business logic, authorization, orchestration
-Validation	Zod	Validate request bodies and structured model output
-Database	MySQL using mysql2	Relational application data and audit history
-Authentication	Server-side sessions + bcrypt	Login, session lifecycle, password hashing
-LLM integration	Provider adapter	Syllabus extraction/generation, content drafts, viva generation/evaluation
-Code execution	Judge0 or equivalent isolated service	Compile and execute untrusted code
-File storage	Private object storage or protected server storage	Syllabus files and permitted attachments
-Background work	Database-backed jobs initially; add a queue if needed	Long-running AI, extraction, and execution workflows
-Source control	Git + GitHub	Version control and collaboration
-Deployment	Static frontend host + Node-compatible API host + managed MySQL	Production hosting
+> **Document status:** Proposed baseline architecture  
+> **Purpose:** Define the system boundaries, components, data flow, security model, deployment topology, and engineering conventions for implementation.  
+> **Authority:** `PRD.md` defines product requirements; `DATABASE.md` defines the authoritative data model and database rules; `AGENT.md` defines coding-agent workflow and implementation constraints. This document defines how the components fit together. If documents conflict, stop and resolve the conflict rather than silently choosing one.
 
+---
 
-Important: The PRD lists Supabase/PostgreSQL and TypeScript as one possible stack. This architecture chooses MySQL and JavaScript to match the project's current implementation preferences. Do not mix Supabase Auth/RLS assumptions into this design unless the stack decision is explicitly changed.
-Avoid adding Redis, Kafka, Kubernetes, a Python service, or separate microservices at MVP stage unless measured requirements justify them.
-4. System context
+## 1. Architecture Overview
+
+The Adaptive Learning and Assessment Portal is a web-based learning and assessment system. It organizes learning material into a prerequisite-aware concept graph, estimates each learner's mastery, recommends the next best learning activity, supports quizzes and coding assessments, and gives students and trainers explainable progress information.
+
+The baseline architecture uses a **modular monolith for the application API**, with external managed services for identity/data storage, AI inference, and code execution. This keeps early development straightforward while preserving clear domain boundaries that can be separated later if scale requires it.
+
+### Architectural goals
+
+- Deliver a responsive experience for students, trainers, and administrators.
+- Keep product rules and authorization in the backend, not in the browser.
+- Make learning recommendations explainable and reproducible.
+- Keep generated content reviewable and versioned before publication where required.
+- Protect assessment answers, hidden test cases, private evaluation data, and learner records.
+- Isolate untrusted code execution from the application server.
+- Preserve useful evidence for debugging, assessment review, and integrity decisions.
+- Support incremental delivery without introducing premature microservices.
+
+### High-level component diagram
+
 ```mermaid
 flowchart TB
-    Student[Student browser]
-    Trainer[Trainer browser]
-    Admin[Admin browser]
+    Browser[Web Browser]
+    UI[React + Vite + TypeScript UI]
+    API[Node.js + Express + TypeScript API]
+    Auth[Supabase Auth]
+    DB[(Supabase PostgreSQL)]
+    Storage[Supabase Storage]
+    AI[AI Provider / LLM]
+    Retrieve[Retrieval and Context Builder]
+    Queue[Background Job Runner]
+    Judge[Judge0 or Isolated Code Runner]
+    Monitor[Logs, Metrics and Error Reporting]
 
-    Web[React + Vite client]
-    API[Express API<br/>Modular monolith]
-    DB[(MySQL)]
-    Files[(Private file storage)]
-    LLM[LLM provider adapter]
-    Exec[Isolated code execution<br/>Judge0 or equivalent]
-    Worker[Background job runner]
-
-    Student --> Web
-    Trainer --> Web
-    Admin --> Web
-    Web -->|HTTPS / JSON| API
-    API --> DB
-    API --> Files
-    API --> LLM
-    API --> Exec
-    API --> Worker
-    Worker --> DB
-    Worker --> LLM
-    Worker --> Exec
+    Browser --> UI
+    UI -->|HTTPS REST + access token| API
+    UI -->|Auth flow| Auth
+    API -->|Validate identity / JWT claims| Auth
+    API -->|Authorized queries| DB
+    API -->|Signed upload/download URLs| Storage
+    API --> Retrieve
+    Retrieve --> DB
+    Retrieve --> Storage
+    API -->|Enqueue long-running work| Queue
+    Queue --> AI
+    Queue --> DB
+    API -->|Submit code job| Judge
+    Judge -->|Execution result| API
+    API --> Monitor
+    Queue --> Monitor
 ```
-Trust boundaries
-- The browser is untrusted. It must never decide final scores, role permissions, mastery values, or publication status.
-- The Express API is the application trust boundary. It validates identity, permissions, request schemas, and business rules.
-- The database is private and is never accessed directly by the browser.
-- The LLM provider receives only the minimum context needed for the task. Its output is untrusted.
-- The execution service handles untrusted source code and must enforce resource and isolation limits.
-- Private files, answer keys, reference solutions, and hidden test cases must not be publicly accessible.
-5. Container and repository layout
-Keep the repository to the project's three top-level folders: client, server, and docs.
-pathwise/
-├── client/
-│   ├── public/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── App.jsx
-│   │   │   ├── router.jsx
-│   │   │   └── providers.jsx
-│   │   ├── components/
-│   │   │   ├── layout/
-│   │   │   ├── ui/
-│   │   │   ├── feedback/
-│   │   │   ├── courses/
-│   │   │   ├── assessments/
-│   │   │   ├── editor/
-│   │   │   ├── mastery/
-│   │   │   └── replay/
-│   │   ├── pages/
-│   │   │   ├── auth/
-│   │   │   ├── student/
-│   │   │   ├── trainer/
-│   │   │   └── admin/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   │   └── apiClient.js
-│   │   ├── utils/
-│   │   └── styles/
-│   └── package.json
-├── server/
-│   ├── src/
-│   │   ├── app.js
-│   │   ├── server.js
-│   │   ├── config/
-│   │   ├── middleware/
-│   │   ├── routes/
-│   │   ├── modules/
-│   │   │   ├── auth/
-│   │   │   ├── users/
-│   │   │   ├── courses/
-│   │   │   ├── syllabus/
-│   │   │   ├── concepts/
-│   │   │   ├── content/
-│   │   │   ├── questions/
-│   │   │   ├── assessments/
-│   │   │   ├── mastery/
-│   │   │   ├── recommendations/
-│   │   │   ├── coding/
-│   │   │   ├── sessions/
-│   │   │   ├── integrity/
-│   │   │   ├── viva/
-│   │   │   ├── analytics/
-│   │   │   └── audit/
-│   │   ├── integrations/
-│   │   │   ├── llm/
-│   │   │   ├── codeExecution/
-│   │   │   └── fileStorage/
-│   │   ├── jobs/
-│   │   ├── db/
-│   │   │   ├── pool.js
-│   │   │   ├── migrations/
-│   │   │   └── seeds/
-│   │   ├── utils/
-│   │   └── appErrors/
-│   ├── tests/
-│   └── package.json
-└── docs/
-    ├── PRD.md
-    ├── frontend_design.md
-    ├── architecture.md
-    └── api-contracts.md
-Adapt this layout to the current repository instead of deleting or rewriting working code without need.
-Backend module structure
-A module should generally separate:
-- *.routes.js: route definitions and middleware.
-- *.controller.js: HTTP input/output handling.
-- *.service.js: business rules and orchestration.
-- *.repository.js: database queries.
-- *.schema.js: request/response validation.
-- *.test.js: module tests where practical.
-Keep controllers thin. Do not place SQL, LLM prompts, scoring rules, or mastery logic directly inside route handlers.
-6. Backend module responsibilities
-Module	Responsibilities	Must not do
-Auth and users	Login/logout, session management, profiles, roles	Trust client-supplied roles
-Courses	Course lifecycle, enrollment, course versioning	Publish unreviewed generated content
-Syllabus	Upload processing, text extraction, structure validation	Treat model output as approved curriculum
-Concepts	Modules, learning objectives, prerequisite edges, cycle checks	Allow cyclic prerequisite graphs
-Content	Learning resources, drafts, content versions, review states	Return trainer-only drafts to students
-Questions	Question bank, concept mapping, answer/rubric protection	Expose answer keys or hidden cases
-Assessments	Blueprints, attempts, timers, submission rules, scoring	Trust client-calculated marks
-Mastery	Per-student/per-concept estimates and history	Use integrity signals as direct negative mastery evidence
-Recommendations	Eligible concepts, prerequisite readiness, next activity and reason	Recommend content the student cannot access
-Coding	Sessions, source versions, run/submit orchestration	Execute arbitrary code inside the API process
-Session events	Ordered event ingestion, snapshots/checkpoints, completeness	Claim complete replay when events are missing
-Integrity	Versioned signal rules and evidence references	Declare misconduct or punish automatically
-Viva	Code-specific question generation, rubric evaluation, uncertainty	Score language fluency instead of technical understanding
-Analytics	Authorized summaries and trends	Leak cross-course or cross-student data
-Audit	Record sensitive actions and review history	Store passwords, secrets, or unnecessary payloads
 
+**Trust boundaries:** the browser is untrusted; the API is the application policy boundary; Supabase RLS is a second data-access boundary; AI providers and code execution services are external processing boundaries. Never treat client-side state, submitted role names, generated AI output, or student code as trusted.
 
-7. Main request and processing flows
-7.1 Trainer syllabus to published course
+---
+
+## 2. Technology Baseline
+
+| Layer | Baseline | Responsibility |
+|---|---|---|
+| Web client | React, Vite, TypeScript, Tailwind CSS | Screens, forms, learning experience, dashboards, assessment UI |
+| Code editor | Monaco Editor | Coding questions, editing, and supported replay/event capture |
+| Charts | Recharts or an equivalent approved charting library | Mastery, progress, and assessment visualizations |
+| Application API | Node.js, Express, TypeScript | Authentication enforcement, domain rules, validation, orchestration, REST endpoints |
+| Identity | Supabase Auth | Sign-in, sessions, token issuance, password/OAuth flows as configured |
+| Relational data | Supabase PostgreSQL | Durable product data, versioned content, attempts, mastery, recommendations, audit evidence |
+| File storage | Supabase Storage | Syllabus documents and approved learning assets; private by default where appropriate |
+| AI | Configurable LLM provider | Content drafting, explanations, question generation, and AI viva support |
+| Retrieval | PostgreSQL queries and/or approved retrieval index | Ground AI responses in authorized course material and source evidence |
+| Code evaluation | Judge0 or a separately isolated executor | Compile/run student code under resource and network limits |
+| Hosting | Vercel or another approved static frontend host; API host selected for Node workloads | Frontend delivery and API runtime |
+| Background processing | Separate worker process or durable job runner | Long-running AI, document processing, and asynchronous evaluation tasks |
+
+The exact AI provider, queue technology, hosting provider, and retrieval implementation are configuration/implementation decisions. Do not hard-code a vendor into domain logic.
+
+---
+
+## 3. Application Structure
+
+### 3.1 Frontend responsibilities
+
+The frontend should:
+
+- Render role-aware routes and user interfaces.
+- Collect input and perform immediate usability validation.
+- Call the API through a shared typed API client.
+- Display loading, empty, success, and error states consistently.
+- Present learning recommendations with their rationale when supplied by the backend.
+- Display generated content only according to its publication/review status.
+- Send code and permitted editor-session events to the backend; never evaluate code locally as the authoritative grade.
+- Avoid embedding service-role keys, AI provider keys, database credentials, hidden answers, or hidden tests.
+
+The frontend may hide controls based on role for usability, but this is **not authorization**. Every protected API operation must independently verify identity, role, ownership, and resource state.
+
+### 3.2 Backend modular monolith
+
+Organize the API into domain modules with explicit boundaries. Suggested structure:
+
+```text
+project-root/
+├── apps/
+│   ├── web/                         # React + Vite client
+│   ├── api/                         # Express API
+│   └── worker/                      # Optional background worker
+├── packages/
+│   ├── shared-types/                # Shared request/response contracts only
+│   └── validation/                  # Shared schema definitions where appropriate
+├── supabase/
+│   ├── migrations/                 # Ordered, reviewed SQL migrations
+│   ├── seed.sql                    # Development/test seed data only
+│   └── config.toml                 # Supabase local configuration if used
+├── docs/
+│   ├── PRD.md
+│   ├── ARCHITECTURE.md
+│   ├── DATABASE.md
+│   ├── AGENT.md
+│   └── API_SPEC.md                 # Add when API contracts are defined
+├── .env.example
+└── README.md
+```
+
+This is a recommended layout, not a requirement to reorganize an existing repository immediately. If the repository already uses another structure, preserve it unless a deliberate migration is approved.
+
+Suggested API module layout:
+
+```text
+src/
+├── app.ts
+├── server.ts
+├── config/
+├── middleware/       # auth, validation, errors, rate limits, request IDs
+├── modules/
+│   ├── identity/
+│   ├── courses/
+│   ├── syllabus/
+│   ├── concepts/
+│   ├── resources/
+│   ├── generation/
+│   ├── questions/
+│   ├── assessments/
+│   ├── attempts/
+│   ├── mastery/
+│   ├── recommendations/
+│   ├── coding/
+│   ├── integrity/
+│   ├── viva/
+│   └── analytics/
+├── integrations/    # Supabase, AI provider, storage, code runner
+├── jobs/             # Job handlers and retry-safe workers
+├── shared/           # errors, logger, IDs, utilities
+└── tests/
+```
+
+Each module should contain its route/controller, input schema, service/domain logic, and data-access code. Keep controllers thin. Domain services enforce business rules; integration adapters isolate vendor-specific APIs; repositories/data-access functions keep queries and persistence concerns organized.
+
+### 3.3 Request lifecycle
+
 ```mermaid
 sequenceDiagram
-    actor Trainer
-    participant UI as React client
-    participant API as Express API
-    participant Store as MySQL / file storage
-    participant LLM as LLM adapter
-    participant Worker as Job runner
+    participant C as Client
+    participant M as API Middleware
+    participant R as Route/Controller
+    participant S as Domain Service
+    participant D as Data Access / Supabase
+    C->>M: HTTPS request + access token
+    M->>M: Request ID, token validation, rate limit
+    M->>R: Authenticated request context
+    R->>R: Validate body, params, query
+    R->>S: Typed command/query
+    S->>S: Authorization + domain invariants
+    S->>D: Authorized data operation
+    D-->>S: Result
+    S-->>R: Domain result
+    R-->>C: Consistent JSON response
+```
 
-    Trainer->>UI: Upload syllabus or request generation
-    UI->>API: Create import/generation job
-    API->>API: Authenticate, authorize, validate
-    API->>Store: Store private file metadata and job
-    API-->>UI: Return job ID and queued status
-    Worker->>Store: Load job and source reference
-    Worker->>LLM: Extract/propose structured syllabus
-    LLM-->>Worker: Draft JSON
-    Worker->>Worker: Validate schema, references, duplicates, cycles
-    Worker->>Store: Save draft, warnings, provenance and status
-    UI->>API: Poll job status / load draft
-    API-->>UI: Return draft and warnings
-    Trainer->>UI: Edit and approve
-    UI->>API: Save changes and request publication
-    API->>API: Revalidate and enforce trainer permission
-    API->>Store: Create published version and audit event
-    API-->>UI: Published version confirmed
-```
-Rules:
-- File upload and generation return a job identifier for long-running work.
-- A failed extraction or LLM call must leave a visible failed/retryable state.
-- Generated concepts, prerequisites, theory, and questions remain drafts until reviewed.
-- Publication creates a version so historical attempts retain their original context.
-7.2 Student activity to mastery and next recommendation
-```mermaid
-flowchart TD
-    A[Student opens lesson or assessment] --> B[API checks enrollment and prerequisites]
-    B --> C[Student completes activity]
-    C --> D[API validates and records attempt]
-    D --> E[Scoring service determines result]
-    E --> F[Mastery service updates mapped concepts]
-    F --> G[Mastery history records model version and evidence]
-    G --> H[Recommendation service checks weak/uncertain concepts]
-    H --> I[Check prerequisite readiness and available activities]
-    I --> J[Return next activity with reason]
-    J --> K[Student sees feedback and next step]
-```
-Rules:
-- Scoring and mastery updates occur on the backend.
-- Each attempt is linked to the content and assessment version used.
-- The recommendation response includes a reason and target concept.
-- If evidence is insufficient, return that state rather than implying certainty.
-- A failed execution provider call is not a wrong answer and must not update mastery as a normal incorrect response.
-7.3 Coding assessment submission
+Use centralized error handling and a consistent response envelope. Never return stack traces, SQL details, provider secrets, hidden answers, or private evaluation payloads to the client.
+
+---
+
+## 4. Core Domain Components
+
+### 4.1 Identity, roles, and course access
+
+- Supabase Auth handles authentication.
+- The API validates the caller's access token and derives the authenticated user ID from verified claims.
+- The application stores profile and role-related data according to `DATABASE.md`.
+- Course enrollment, trainer assignment, and administrative permissions determine resource access.
+- Never trust a `userId`, `role`, `courseId`, or `ownerId` supplied by the browser without checking it against the authenticated principal and database state.
+- Prevent self-service role escalation. Privileged role changes require a protected administrative workflow.
+
+### 4.2 Syllabus ingestion and concept graph
+
+1. A trainer uploads a syllabus or enters syllabus content.
+2. The API checks file type, size, ownership, and upload authorization; private files remain private.
+3. A background job extracts and normalizes text from supported formats.
+4. The generation pipeline proposes modules, concepts, objectives, and prerequisite edges.
+5. The backend validates structure, duplicate concepts, and prerequisite cycles.
+6. A trainer reviews and edits the proposal before it becomes an approved/published course version.
+7. The published syllabus version becomes the stable reference for resources, questions, and learner progress.
+
+AI output is a draft, not an authoritative database update. Store generation status, source references, errors, and version linkage. Reject cyclic prerequisite graphs or require explicit correction before publication.
+
+### 4.3 Learning resources and AI generation
+
+- The API builds prompts from authorized course material, learning objectives, learner level, and relevant concept context.
+- Retrieval must enforce course/user permissions before material is added to a prompt.
+- Generated explanations, examples, and questions must be schema-validated and checked for completeness and policy constraints.
+- Record provenance/source references where supported so users can inspect the evidence behind an explanation or generated item.
+- Use asynchronous jobs for long-running generation, with visible states such as `queued`, `processing`, `needs_review`, `published`, `failed`, and `cancelled` where appropriate.
+- Use idempotency keys or deduplication rules to prevent accidental duplicate jobs from retries.
+- Keep provider-specific request/response formats inside integration adapters.
+
+### 4.4 Question bank and assessment delivery
+
+- Question identities and question versions are separate; published versions should be immutable.
+- Assessments reference explicit question versions and preserve the intended assessment configuration.
+- The backend controls attempt creation, timing, submission windows, scoring, and finalization.
+- The browser receives only the question data required for the active attempt.
+- Answer keys, rubrics used for private grading, hidden coding tests, and private evaluation metadata must remain server-side.
+- Enforce attempt-state transitions on the server; repeated submissions must be handled idempotently where appropriate.
+- For objective questions, grade using trusted backend logic. For AI-assisted grading, apply schema validation, evidence requirements, confidence/review thresholds, and human review where required by the PRD.
+
+### 4.5 Adaptive mastery and recommendation engine
+
+Treat mastery estimation and recommendation selection as a domain service, separate from UI components and LLM output.
+
+Inputs may include:
+- Current mastery estimate and its model/version.
+- Concept prerequisites and course version.
+- Recent answers, correctness, difficulty, attempts, and time/evidence features permitted by the product rules.
+- Learning objectives and available approved resources/questions.
+
+Processing:
+1. Record assessment evidence as an append-only event where the schema requires it.
+2. Update the learner's current mastery state using the selected model (for example, BKT if specified by the product configuration).
+3. Preserve a history of changes, model/configuration version, and relevant evidence references.
+4. Generate recommendations only from approved resources and eligible questions.
+5. Return a concise reason, such as a prerequisite gap, low estimated mastery, recent error pattern, or recommended review interval.
+
+Do not let an LLM independently invent or overwrite mastery scores. Recommendations should be reproducible from stored state and configuration where possible. Avoid implying that mastery estimates are perfectly certain; expose appropriate uncertainty and evidence.
+
+### 4.6 Coding assessment and execution
+
 ```mermaid
 sequenceDiagram
-    actor Student
-    participant UI as React + Monaco
-    participant API as Express API
-    participant DB as MySQL
-    participant Exec as Isolated execution service
-    participant Mastery as Mastery service
-    participant Viva as Viva service
-
-    Student->>UI: Write code and run sample
-    UI->>API: Run request
-    API->>API: Validate session, language, limits and ownership
-    API->>DB: Create execution job
-    API->>Exec: Submit source and authorized test configuration
-    Exec-->>API: Job/result status
-    API->>DB: Persist execution status and safe result
-    API-->>UI: Return output or terminal status
-    Student->>UI: Submit final solution
-    UI->>API: Submit request with idempotency key
-    API->>API: Validate attempt state and submission limits
-    API->>Exec: Execute against sample and hidden cases
-    Exec-->>API: Per-test outcomes and aggregate result
-    API->>DB: Store submission and result summary
-    API->>Mastery: Record eligible assessment evidence
-    API->>Viva: Queue code-specific questions if configured
-    API-->>UI: Return submission status / result
+    participant UI as Student UI
+    participant API as Application API
+    participant DB as PostgreSQL
+    participant RUN as Isolated Code Runner
+    UI->>API: Submit code + question/attempt reference
+    API->>API: Authenticate, authorize, validate limits
+    API->>DB: Persist submission and create execution job
+    API->>RUN: Send bounded execution payload
+    RUN->>RUN: Compile/run in isolated sandbox
+    RUN-->>API: Status, resource usage, test outcomes
+    API->>DB: Persist results and update attempt state
+    API-->>UI: Sanitized result and permitted feedback
 ```
-Rules:
-- Hidden test cases and expected outputs remain server-side.
-- The execution adapter normalizes provider-specific statuses.
-- Duplicate submission requests must not create duplicate final submissions.
-- Execution runs asynchronously when provider latency warrants it.
-- The student UI distinguishes compile/runtime errors, wrong answers, timeouts, and infrastructure failures.
-7.4 Session recording, replay, and integrity review
-```mermaid
-flowchart TD
-    A[Monaco/editor and browser lifecycle events] --> B[Client event queue]
-    B --> C[Batch upload with sequence numbers]
-    C --> D[API validates session and event schema]
-    D --> E[(session_events)]
-    A --> F[Periodic and milestone code checkpoints]
-    F --> G[(code_snapshots)]
-    E --> H[Replay reconstruction]
-    G --> H
-    E --> I[Versioned signal rules]
-    I --> J[(integrity_signals)]
-    J --> K[Trainer review workspace]
-    H --> K
-    K --> L[Human review outcome and audit event]
-```
-Recording requirements:
-- Disclose captured events before the assessment and show recording status during it.
-- Capture only relevant events, such as editor changes, in-editor paste, run, submit, and permitted page visibility/focus changes.
-- Do not record unrelated browsing content, passwords, or system-wide activity.
-- Use event sequence numbers, timestamps, batches, retries, and snapshots/checkpoints to make replay more robust.
-- Mark missing event ranges and reconstruction failures clearly.
-- Every signal links to the supporting event IDs or time range.
-- A focus/visibility event does not reveal which external application or website was opened.
-- Signals are contextual indicators for human review, not proof and not an automatic punitive mechanism.
-8. Data architecture
-Use MySQL with migrations in version control. Prefer normalized relational data for core entities and JSON columns only for flexible event metadata or provider payloads that are not queried as primary domain fields.
-8.1 Domain groups and key tables
-Domain	Core tables	Purpose
-Identity	users, sessions	Accounts, roles, server-side sessions
-Course	courses, course_versions, enrollments	Course lifecycle and access
-Curriculum	modules, concepts, concept_prerequisites, concept_objectives	Syllabus structure and graph
-Files and content	source_documents, learning_resources, content_versions, generation_jobs	Private source files, extracted text, content provenance and generation status
-Question bank	questions, question_versions, question_concepts, question_options, question_answers, question_rubrics	Reusable questions and protected answer data
-Coding question data	coding_test_cases, starter_code, reference_solutions	Server-protected execution assets
-Assessments	assessments, assessment_versions, assessment_questions, assessment_attempts, student_answers	Test definitions and historical attempts
-Execution	coding_sessions, submissions, execution_jobs, execution_results	Code runs and final submissions
-Replay	session_events, code_snapshots	Ordered timeline and replay checkpoints
-Integrity	integrity_signals, integrity_reviews	Evidence-linked signals and human review
-Viva	viva_questions, viva_answers, viva_evaluations	Code explanation workflow
-Learning model	learning_attempts, student_mastery, mastery_history, recommendations	Evidence, estimates and next steps
-Operations	audit_events, job_attempts	Security-sensitive activity and job diagnostics
 
+Security requirements:
+- **Never execute student code inside the Express API process or a trusted worker without a dedicated sandbox.**
+- Use Judge0 or an equivalent isolated execution service with CPU, memory, wall-clock, process, output, and source-size limits.
+- Disable outbound network access unless a reviewed requirement explicitly needs it.
+- Keep hidden tests and expected outputs private; only send them to the execution service through a trusted server-side path.
+- Do not expose infrastructure details or raw evaluator internals in student-facing responses.
+- Apply concurrency limits, per-user quotas, queue backpressure, and timeouts.
+- Treat execution output and compiler messages as untrusted input; sanitize before rendering.
+- Store execution jobs and results with status, timestamps, and resource usage for troubleshooting and auditability.
 
-This is a logical schema, not a final migration. Final column definitions, foreign keys, indexes, deletion rules, and unique constraints should be designed alongside the API contracts.
-8.2 Key relationship overview
-```mermaid
-erDiagram
-    USERS ||--o{ COURSES : creates
-    USERS ||--o{ ENROLLMENTS : has
-    COURSES ||--o{ COURSE_VERSIONS : contains
-    COURSE_VERSIONS ||--o{ MODULES : contains
-    MODULES ||--o{ CONCEPTS : contains
-    CONCEPTS ||--o{ CONCEPT_PREREQUISITES : requires
-    CONCEPTS ||--o{ LEARNING_RESOURCES : has
-    QUESTIONS ||--o{ QUESTION_CONCEPTS : maps
-    CONCEPTS ||--o{ QUESTION_CONCEPTS : covers
-    ASSESSMENTS ||--o{ ASSESSMENT_VERSIONS : versions
-    ASSESSMENT_VERSIONS ||--o{ ASSESSMENT_QUESTIONS : includes
-    USERS ||--o{ ASSESSMENT_ATTEMPTS : makes
-    ASSESSMENT_VERSIONS ||--o{ ASSESSMENT_ATTEMPTS : attempted
-    ASSESSMENT_ATTEMPTS ||--o{ STUDENT_ANSWERS : contains
-    USERS ||--o{ STUDENT_MASTERY : owns
-    CONCEPTS ||--o{ STUDENT_MASTERY : estimates
-    USERS ||--o{ CODING_SESSIONS : starts
-    CODING_SESSIONS ||--o{ SESSION_EVENTS : records
-    CODING_SESSIONS ||--o{ CODE_SNAPSHOTS : checkpoints
-    CODING_SESSIONS ||--o{ INTEGRITY_SIGNALS : produces
-    INTEGRITY_SIGNALS ||--o{ INTEGRITY_REVIEWS : reviewed
-```
-8.3 Data integrity rules
-- Use UUIDs or non-guessable identifiers for externally referenced records.
-- Enforce foreign keys and unique constraints in MySQL.
-- Store timestamps in UTC and render them in the user's local timezone.
-- Make each student/concept/course-version mastery record unique for its intended scope.
-- Use transactions for operations that must succeed together, such as recording an attempt and its initial result.
-- Keep answer keys, reference solutions, and hidden test cases in server-only access paths.
-- Version course content, questions, and assessment blueprints so historic attempts remain interpretable.
-- Use soft deletion or archival where records are needed for audit/history.
-- Define retention and deletion policies for uploaded files, source code, replay events, and AI-provider data.
-- Index high-volume lookups such as course ownership, student attempts, concept mastery, event session/sequence, and job status.
-- Avoid returning raw database rows as public API responses.
-8.4 Event storage and replay
-A session event should include, at minimum:
-- id
-- session_id
-- sequence_number
-- occurred_at
-- event_type
-- payload_version
-- payload
-- received_at
-Use a unique constraint on (session_id, sequence_number) to support deduplication. The client may retry a batch; the server must not apply duplicate events twice.
-A code snapshot should include the session, sequence number or event offset, timestamp, language, code content or protected reference, and a checksum. Reconstruct from the closest prior snapshot plus ordered events. Validate reconstructed code against later checkpoints where available.
-9. API design
-Use a versionable JSON REST API under /api. Keep route naming consistent and return normalized errors.
-9.1 Initial endpoint groups
-Area	Example endpoints
-Identity	GET /api/me, POST /api/auth/login, POST /api/auth/logout
-Courses	GET /api/courses, POST /api/courses, GET /api/courses/:courseId
-Syllabus	POST /api/courses/:courseId/syllabus/import, POST /api/courses/:courseId/syllabus/generate, GET /api/jobs/:jobId
-Concepts	GET /api/courses/:courseId/concepts, POST /api/concepts, PUT /api/concepts/:conceptId
-Content	GET /api/concepts/:conceptId/resources, POST /api/concepts/:conceptId/resources/generate
-Questions	GET /api/questions, POST /api/questions, POST /api/questions/generate
-Assessments	POST /api/assessments, POST /api/assessments/:assessmentId/publish, POST /api/assessments/:assessmentId/attempts
-Attempts	POST /api/attempts/:attemptId/answers, POST /api/attempts/:attemptId/submit, GET /api/attempts/:attemptId/results
-Mastery	GET /api/me/mastery, GET /api/courses/:courseId/mastery, GET /api/me/recommendations
-Coding	POST /api/coding-sessions, POST /api/coding-sessions/:sessionId/events, POST /api/submissions, GET /api/submissions/:submissionId
-Replay	GET /api/coding-sessions/:sessionId/replay, GET /api/coding-sessions/:sessionId/integrity-signals
-Viva	POST /api/submissions/:submissionId/viva, POST /api/viva-questions/:questionId/answers
-Review	POST /api/integrity-signals/:signalId/reviews
-Audit/admin	Restricted endpoints for authorized administrators only
+### 4.7 Editor replay and integrity evidence
 
+- Capture only events required by the product and communicate the collection purpose to users.
+- Store event data in a structured, timestamped form with session/attempt references.
+- Limit payload size and redact credentials, unrelated browser data, and other unnecessary personal information.
+- Provide replay through a deterministic event sequence where possible; document gaps when events are unavailable.
+- Integrity signals are indicators for review, not proof of misconduct.
+- Do not automatically punish or invalidate a learner solely from a heuristic signal. Preserve the evidence, record reviewer decisions, and support an appeal/correction workflow if required.
+- Restrict access to integrity evidence to authorized roles and log access to sensitive review data.
 
-The endpoint list is an initial contract. Final paths and schemas should be documented in docs/api-contracts.md before implementing dependent pages.
-9.2 Standard response conventions
-Successful response:
-{
-  "data": {},
-  "meta": {
-    "requestId": "server-generated-id"
-  }
-}
-Error response:
+### 4.8 AI viva
+
+- Generate or select viva questions based on approved course concepts, assessment context, and allowed learner evidence.
+- Store questions, answers, evaluation outputs, and evidence references according to the data model and retention rules.
+- Validate AI evaluation output against a strict schema; do not trust free-form output as a score without validation.
+- Separate model-generated feedback from trainer-confirmed results.
+- Apply rate limits, timeout handling, and fallback messaging when the AI provider is unavailable.
+
+### 4.9 Dashboards and analytics
+
+- Student dashboards show progress, mastery trends, completed work, and recommended next steps for the authenticated student.
+- Trainer dashboards aggregate data only for assigned courses and authorized learners.
+- Admin dashboards use explicit privileged authorization and minimize unnecessary personal data.
+- Prefer indexed queries and pre-aggregated views for expensive analytics; do not fetch an entire course's raw event history into the browser.
+- Ensure aggregate queries respect the same access boundaries as row-level queries.
+
+---
+
+## 5. Data Architecture and Persistence
+
+`DATABASE.md` is the source of truth for tables, fields, relationships, constraints, and RLS requirements. This section describes persistence principles only.
+
+- Use Supabase PostgreSQL for relational application data.
+- Use UUID primary keys and consistent timestamps as defined by the database specification.
+- Use foreign keys, check constraints, uniqueness constraints, and indexes to enforce integrity at the database level where appropriate.
+- Use reviewed, ordered SQL migrations; never rely on manually editing production schema without a migration record.
+- Version course/syllabus content, questions, and assessments so historical attempts retain their original context.
+- Keep append-only histories for mastery changes, audit events, and other evidence where the data model requires them.
+- Store large source files in Supabase Storage and persist metadata/ownership in PostgreSQL; do not store arbitrary large files directly in relational rows without a deliberate reason.
+- Use transactions for operations that must succeed or fail together, such as finalizing an attempt and recording its result.
+- Add indexes based on query patterns and verify them with query plans as data volume grows.
+- Do not rename or reinterpret database fields independently of `DATABASE.md`; update the schema documentation and migration together.
+
+### Data access modes
+
+1. **User-scoped operations:** use a verified user identity and RLS policies where applicable.
+2. **Trusted server operations:** use narrowly scoped server-side access for privileged workflows only; keep secrets in server environment variables and enforce authorization in application code.
+3. **Background jobs:** use explicit job identity/context and re-check resource ownership and current state before writing results.
+4. **Public content:** expose only explicitly published content intended to be public; default to private.
+
+RLS is a defense-in-depth boundary, not a replacement for application authorization. Any use of a Supabase service-role key bypasses RLS and therefore requires especially strict server-side controls. Never expose this key in the frontend.
+
+---
+
+## 6. API and Integration Conventions
+
+The API is a versioned REST interface over HTTPS. The detailed endpoint catalog belongs in `API_SPEC.md`.
+
+### Endpoint conventions
+
+- Use resource-oriented routes, plural nouns, and predictable HTTP methods.
+- Validate path parameters, query parameters, and request bodies at the boundary using typed schemas.
+- Use a consistent error shape, for example:
+
+```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Review the highlighted fields.",
-    "details": []
-  },
-  "meta": {
-    "requestId": "server-generated-id"
+    "message": "The request could not be processed.",
+    "requestId": "req_example"
   }
 }
-Do not expose stack traces, SQL errors, provider secrets, hidden tests, or internal prompt content in error responses.
-9.3 Long-running jobs
-Syllabus extraction, AI generation, code execution, and viva evaluation may take longer than a normal request. Use a job resource:
-- API validates and creates the job.
-- API returns 202 Accepted with a job ID and current status.
-- Client polls a status endpoint or uses a later-supported notification mechanism.
-- Job reaches an explicit terminal state: completed, failed, cancelled, or timed_out.
-- Retry only when safe; use idempotency keys for operations that could create duplicate submissions or charges.
-10. Authentication and authorization
-Authentication
-- Hash passwords with bcrypt using a suitable work factor.
-- Use server-side sessions stored in a persistent session store for production.
-- Set cookies HttpOnly, Secure in production, and an appropriate SameSite policy.
-- Rotate session IDs after login and privilege changes.
-- Implement logout and session expiration.
-- Add CSRF protection appropriate to the chosen cookie/session configuration.
-- Rate-limit login and account-sensitive endpoints.
-- Do not store session tokens or secrets in browser local storage.
-Authorization
-Enforce authorization in Express middleware and the relevant service/repository methods. Hiding a button in React is not access control.
-Check:
-- Authenticated user identity.
-- Role permission.
-- Course ownership or trainer assignment.
-- Student enrollment and attempt ownership.
-- Resource lifecycle state.
-- Whether the action is permitted in the current assessment/session state.
-Examples:
-- A student can read their own results, not another student's.
-- A trainer can manage only assigned courses and learners.
-- A student API response must never include hidden tests, answer keys, reference solutions, or trainer-only notes.
-- An integrity reviewer must have the appropriate course-level permission.
-- Admin actions require explicit authorization and audit records.
-11. LLM integration architecture
-Use a single provider-independent service interface for all LLM-backed tasks. Different tasks use different prompts, schemas, and validators; they do not require separate API providers by default.
-```mermaid
-flowchart TD
-    Syllabus[Syllabus service] --> LLMService[LLM service interface]
-    Content[Learning content service] --> LLMService
-    Questions[Question generation service] --> LLMService
-    Viva[Viva service] --> LLMService
-    LLMService --> ProviderAdapter[Configured provider adapter]
-    ProviderAdapter --> Model[Cloud API or local Ollama]
-    Model --> Parser[Parse structured response]
-    Parser --> Validator[Schema and domain validation]
-    Validator --> Review[Draft/review workflow]
-    Review --> Publish[Trainer-approved publication]
 ```
-Interface responsibilities
-Expose task-oriented methods such as:
-- generateSyllabusDraft(input)
-- generateConceptResources(input)
-- generateQuestionDrafts(input)
-- generateCodingTaskDraft(input)
-- generateCodeVivaQuestions(input)
-- evaluateCodeExplanation(input)
-The interface must not expose provider-specific response objects to domain modules.
-LLM safety and quality
-- Keep API keys in server environment variables or a secret manager.
-- Never expose keys through VITE_* variables.
-- Validate all generated JSON against Zod schemas and domain rules.
-- Treat uploaded syllabus text, code, and retrieved material as untrusted data.
-- Separate system policy from user-provided document text to reduce prompt-injection risk.
-- Limit input size, output tokens, concurrency, and per-user generation rates.
-- Record model/provider, prompt-template version, job status, and relevant provenance.
-- Send only the minimum necessary student data.
-- Store generated content as draft until review requirements are satisfied.
-- Test coding reference solutions and proposed test cases in the isolated execution service.
-- If the provider fails or returns invalid output, preserve the source input and show a retryable state.
-- Use retrieval over trainer-provided materials when the answer must be grounded in course content; do not add a vector database until a demonstrated retrieval need exists.
-Cloud versus local
-The adapter should support a cloud LLM API first, with local Ollama as an optional provider if offline use, data locality, or predictable local inference becomes necessary. Provider selection is configuration, not a frontend concern. Measure quality, latency, cost, and hardware capacity before changing the default.
-12. Code execution architecture
-Execution boundary
-Student code must never execute inside the Express API process. The backend creates an execution job and sends it to Judge0 or another appropriately isolated execution service.
-Execution adapter
-The codeExecution adapter should normalize provider-specific details into application statuses such as:
-- queued
-- running
-- accepted
-- wrong_answer
-- compile_error
-- runtime_error
-- time_limit_exceeded
-- memory_limit_exceeded
-- output_limit_exceeded
-- infrastructure_error
-- cancelled
-The adapter is responsible for:
-- Configured language/runtime IDs.
-- Provider authentication from server-side secrets.
-- Time, memory, process, and output limits.
-- Polling or receiving completion notifications.
-- Mapping provider statuses to application statuses.
-- Sanitizing output and error payloads.
-- Recording provider job references without exposing privileged details to students.
-Security requirements
-- Use a service with a documented isolation model and appropriate operational controls.
-- Apply least privilege and strict CPU, memory, wall-clock, process, filesystem, network, and output limits.
-- Do not mount application secrets or sensitive host directories into execution environments.
-- Do not expose Docker sockets or privileged host capabilities.
-- Restrict outbound network access unless a task explicitly requires it.
-- Rate-limit runs and submissions.
-- Test infinite loops, large output, memory exhaustion, malformed source, and provider outages.
-- Treat Docker alone as insufficient evidence of a safe production sandbox. Review the chosen provider's isolation guarantees before production use.
-Result handling
-- Sample runs may return permitted stdout/stderr and sample-test results.
-- Final submissions are evaluated against server-side hidden tests.
-- Return aggregate results and allowed feedback, not hidden inputs or expected outputs.
-- Infrastructure failure must be recorded separately from an academic wrong answer.
-- Mastery changes only from valid, policy-eligible assessment evidence.
-13. Mastery and recommendation architecture
-Service separation
-The mastery service and recommendation service are separate modules.
-Mastery service
-- Accepts validated assessment evidence.
-- Maps evidence to explicitly linked concepts.
-- Applies the active model implementation.
-- Stores current estimates and immutable history records.
-- Records model version and evidence references.
-Recommendation service
-- Reads mastery and evidence sufficiency.
-- Checks prerequisite readiness.
-- Finds eligible activities and available resources.
-- Selects a next activity and produces a clear reason.
-- Records recommendation exposure and completion where useful.
-MVP model
-Use the documented baseline from the PRD, behind a replaceable interface:
-newMastery = oldMastery + alpha * (observedResult - oldMastery)
-This is a simple update rule, not Bayesian Knowledge Tracing. Keep the rate configurable, constrain estimates to the supported range, and record the model version. Introduce BKT as a separate implementation only after the basic evidence pipeline is reliable.
-Recommendation policy
-1. Identify concepts with low estimates or insufficient evidence.
-2. Check prerequisite readiness and prioritize actionable prerequisite gaps.
-3. Select an available lesson, example, quiz, coding task, or revision activity.
-4. Select a suitable difficulty using backend-defined rules.
-5. Return the target concept and a human-readable reason.
-6. Update after new valid evidence.
-7. If no remediation is needed, offer revision, advanced practice, or the next ready concept.
-Integrity signals do not directly lower mastery. Human review and academic scoring remain distinct workflows.
-14. Session capture and replay architecture
-Client event recorder
-The recorder should be a small isolated client module integrated with Monaco and browser lifecycle events. It should produce structured, versioned events, not raw browser dumps.
-Possible event types:
-- editor_change
-- paste
-- run_requested
-- run_completed
-- submission_started
-- submission_completed
-- editor_focus
-- editor_blur
-- page_visibility_changed
-- checkpoint_created
-Each event should have a session ID, monotonically increasing sequence number, client timestamp, event type, and validated payload. Avoid storing full source code in every change event; use deltas and periodic full checkpoints.
-Delivery and completeness
-- Batch events to reduce request overhead.
-- Retry temporary failures with bounded backoff.
-- Deduplicate by session and sequence number.
-- Keep a local pending queue only for the active assessment and within an explicitly defined privacy policy.
-- Flush on important milestones and page lifecycle changes where possible.
-- Record gaps and failed uploads; do not claim a complete replay if data is missing.
-- Store periodic snapshots and compare reconstructed state to checkpoints.
-Replay
-The backend returns an authorized event timeline and snapshot references. The client reconstructs the code from the nearest snapshot and ordered events. The replay editor is read-only. Controls support play/pause, seek, playback speed, event navigation, and jumping from an integrity signal to its evidence range.
-Integrity analysis
-Signals are generated by versioned rules with explainable evidence references. Examples include a large insertion, unusually fast code appearance, limited observed run/fix cycles, uniform cadence, or frequent focus/visibility changes. These signals are not proof of misconduct; there may be benign explanations or missing data.
-The trainer review record stores reviewer identity, outcome, notes, and timestamp. No signal automatically fails an assessment, changes mastery, or triggers punishment.
-15. Background jobs and reliability
-Use a simple job abstraction for long-running work. At MVP scale, a MySQL-backed job table and a worker process may be sufficient. If throughput or operational needs later justify it, introduce a dedicated queue.
-Suitable job types
-- Syllabus document extraction/OCR.
-- Syllabus and learning content generation.
-- Question/coding task generation and validation.
-- Code execution and hidden-test evaluation.
-- Code-viva question generation and evaluation.
-- Replay integrity-signal calculation.
-- Analytics aggregation when queries become expensive.
-Job lifecycle
-queued → running → completed | failed | cancelled | timed_out
-Store:
-- Job ID and type.
-- Resource/owner references.
-- Status and progress where measurable.
-- Attempt count and retry policy.
-- Created, started, and completed timestamps.
-- Safe error code/message.
-- Provider reference where relevant.
-Requirements:
-- Use idempotency for jobs that can create duplicate side effects.
-- Retry transient errors only, with bounded attempts.
-- Do not retry permanent validation failures indefinitely.
-- Ensure a worker crash leaves jobs recoverable.
-- Log job IDs and request IDs for tracing.
-- Do not store secrets or full sensitive provider payloads in ordinary logs.
-16. Security, privacy, and audit
-Application security
-- Validate request bodies, query parameters, route parameters, and model output.
-- Use parameterized SQL queries through mysql2.
-- Configure CORS narrowly for the deployed frontend origin.
-- Use secure session cookies and CSRF defenses appropriate to the session strategy.
-- Apply rate limits to login, file upload, generation, event ingestion, code execution, and submission endpoints.
-- Set request body and file-size limits.
-- Validate upload MIME type and file signature where practical; do not trust filename extensions.
-- Store uploads outside a public web root and serve them only through authorized access.
-- Avoid exposing stack traces and internal provider details to clients.
-- Keep secrets in server-side environment variables or a secret manager.
-- Redact tokens, passwords, hidden tests, and unnecessary source code from logs.
-Privacy and fairness
-- Explain session recording before an assessment.
-- Record only assessment-relevant editor and permitted page lifecycle events.
-- Define access controls and retention periods for code, replay data, and uploaded files.
-- Do not attempt to capture system-wide keystrokes or unrelated applications.
-- Treat integrity signals as uncertain indicators.
-- Provide human review before consequential decisions.
-- Do not use integrity signals as automatic negative mastery evidence.
-- Minimize student information sent to external LLM providers and document applicable provider retention settings.
-Audit events
-Record security-sensitive actions such as:
-- Login/logout and role changes.
-- Course publication and archival.
-- Assessment publication and version changes.
-- Access to session review where required by policy.
-- Integrity review outcomes and note changes.
-- Administrative configuration changes.
-- Data export or deletion operations.
-Audit records should include actor, action, target, timestamp, and safe metadata. Do not log passwords or credentials.
-17. Observability and operations
-At MVP stage, use structured server logs and basic health endpoints before adopting a complex monitoring stack.
-Recommended:
-- GET /health/live: process is running.
-- GET /health/ready: required dependencies are reachable enough to serve requests.
-- Structured logs with request ID, job ID where applicable, route, status, duration, and safe error code.
-- Track API error rate and latency.
-- Track LLM job latency, failures, rate limits, and token/cost usage where available.
-- Track code execution queue time, terminal status distribution, timeouts, and infrastructure errors.
-- Track event-ingestion failures and replay completeness.
-- Alert on persistent worker failures, database connection exhaustion, and execution-provider outages.
-Do not include student source code, hidden tests, session tokens, or private notes in metric labels or ordinary logs.
-18. Testing strategy
-Unit tests
-- Prerequisite graph cycle detection.
-- Course/content lifecycle transitions.
-- Assessment scoring and attempt rules.
-- Mastery update boundaries and history.
-- Recommendation eligibility and explanations.
-- Integrity signal rule inputs and evidence references.
-- LLM response schema validation.
-- Execution status normalization.
-Integration tests
-- Authentication and session expiration.
-- Role and resource ownership enforcement.
-- Database transactions and migrations.
-- Syllabus generation job lifecycle.
-- Publishing and content versioning.
-- Hidden-test isolation.
-- Event ingestion deduplication and replay reconstruction.
-- Job retries and terminal failure states.
-End-to-end tests
-1. Trainer creates a course, imports a syllabus, edits concepts, approves content, and publishes.
-2. Student enrolls, completes a diagnostic, sees concept feedback, and receives a next activity.
-3. Student runs and submits code, receives a correct terminal status, and sees safe feedback.
-4. Coding events reconstruct the expected code and a signal links to the right timeline moment.
-5. Trainer reviews a signal and saves a human-review outcome.
-6. Student answers code-viva questions and receives code-grounded feedback.
-7. Cross-user requests cannot read another student's private records.
-8. Provider outages and incomplete recordings are represented honestly.
-Security tests
-- Cross-role and cross-course access attempts.
-- SQL injection and malformed payloads.
-- File upload type/size bypass.
-- Rate-limit enforcement.
-- Hidden-test and answer-key leakage.
-- Session fixation/CSRF cases appropriate to the authentication design.
-- Execution resource exhaustion and network restrictions.
-- Prompt injection in uploaded syllabus text.
-19. Deployment topology
-Development
-- Run Vite client and Express API in separate terminals.
-- Use a local MySQL database.
-- Use provider sandbox credentials and test accounts.
-- Keep .env files out of Git.
-- Use migrations and seed scripts to create a repeatable local setup.
-Production
+
+- Do not expose internal exception messages in production responses.
+- Use appropriate status codes: `200` for successful reads/updates, `201` for created resources, `202` for accepted asynchronous jobs, `204` for successful no-content operations, `400` for malformed requests, `401` for unauthenticated requests, `403` for forbidden operations, `404` for unavailable/not-visible resources, `409` for state conflicts, `422` for semantically invalid input, and `429` for rate limits.
+- Use pagination for lists that can grow; prefer cursor pagination for event histories or high-volume data.
+- Use idempotency keys for retry-prone create/submit operations where duplicate processing would be harmful.
+- Define DTOs separately from database rows; do not return entire database records by default.
+
+### External integration adapters
+
+Wrap Supabase, AI providers, storage, and code execution in explicit adapters. Each adapter should define timeouts, retries, error mapping, logging/redaction, and tests with mocked provider responses. Retry only transient failures, use exponential backoff with jitter where suitable, and avoid retrying non-idempotent operations without deduplication.
+
+### Asynchronous work
+
+Use a durable job runner/queue for document extraction, large AI generations, and code execution workflows that may outlive a normal HTTP request. Persist job state so the UI can poll or subscribe to status updates. Workers must be retry-safe, observable, and bounded by concurrency and cost limits. If a queue is not implemented in the first release, use a clearly isolated, persisted job abstraction rather than placing long-running work directly in request handlers.
+
+---
+
+## 7. Security and Privacy
+
+Security controls are mandatory, not optional enhancements.
+
+### Authentication and authorization
+
+- Verify Supabase access tokens server-side.
+- Use a central authorization layer for role, ownership, enrollment, trainer assignment, and resource-state checks.
+- Apply RLS to exposed tables according to `DATABASE.md`.
+- Never trust client-provided roles or ownership identifiers.
+- Prevent insecure direct object references by checking access to each requested resource.
+- Require elevated authorization for course publishing, role changes, private grading data, and integrity reviews.
+
+### Secrets and configuration
+
+- Keep secrets in environment variables or the hosting platform's secret manager.
+- Commit `.env.example` with variable names and safe placeholders only.
+- Never commit real keys, tokens, service-role secrets, or production data.
+- Expose only explicitly public configuration to the Vite client; variables prefixed for client exposure must contain no secrets.
+- Rotate compromised credentials and use separate credentials/environments for development, staging, and production.
+
+### Input and output safety
+
+- Validate all input, including uploaded file metadata, AI output, code execution output, and third-party callbacks.
+- Apply request-size limits, upload allowlists, rate limiting, and safe error handling.
+- Sanitize rendered Markdown/HTML and prevent XSS.
+- Use parameterized database queries; never concatenate untrusted input into SQL.
+- Configure CORS for known client origins; do not use permissive wildcard origins with credentials in production.
+- Use secure cookie/session settings if cookies are used, and follow CSRF protections appropriate to the chosen authentication transport.
+
+### Privacy and retention
+
+- Collect only data needed for learning, assessment, safety, and product operation.
+- Document why editor events and integrity evidence are collected and who can view them.
+- Apply retention and deletion rules from the product/database requirements.
+- Avoid putting raw learner content, tokens, private test cases, or personally identifying information in logs or AI prompts unless necessary and authorized.
+- Use synthetic data in development and tests.
+
+---
+
+## 8. Reliability, Observability, and Cost Controls
+
+### Reliability
+
+- Apply explicit timeouts to database, AI, storage, and code-runner calls.
+- Make asynchronous jobs retry-safe and idempotent.
+- Handle provider outages with graceful errors and retry/recovery states.
+- Use bounded concurrency and backpressure for AI and code execution.
+- Persist critical state transitions before reporting completion to the client.
+- Avoid depending on an in-memory API process for durable job state.
+
+### Observability
+
+Record structured logs with:
+- Timestamp, severity, environment, service/module, request ID, and job ID when applicable.
+- Operation name, latency, result status, and safe error code.
+- User ID only where necessary and permitted; avoid logging sensitive request bodies.
+
+Monitor at minimum:
+- API error rate and latency.
+- Database latency and connection/pool saturation where visible.
+- AI request failures, latency, token/cost usage, and generation review/rejection rate.
+- Queue depth, retry count, job age, and dead-letter/failure count.
+- Code execution timeouts, failures, resource-limit violations, and queue latency.
+- Assessment submission/finalization failures.
+
+Do not log access tokens, passwords, service-role keys, hidden tests, answer keys, or raw private assessment content.
+
+### Cost controls
+
+- Set per-user/course rate limits for AI generation and viva.
+- Use token and request budgets; constrain prompts and retrieved context.
+- Cache only content that is safe to share across the relevant authorization scope.
+- Avoid duplicate generation through deduplication/idempotency.
+- Set maximum execution duration and concurrency for code jobs.
+- Track provider costs and add alerts before production traffic is enabled.
+
+---
+
+## 9. Deployment Topology
+
+Recommended logical environments:
+
+- **Local:** local frontend/API, Supabase local development or a dedicated development Supabase project, mocked AI/code runner where useful.
+- **Preview/Staging:** isolated Supabase project or isolated schema/data, non-production credentials, test AI budget, restricted code runner.
+- **Production:** separate credentials and data, protected deployments, backups and recovery procedures, monitoring, least-privilege access.
+
+### Deployment flow
+
 ```mermaid
-flowchart TB
-    Browser[User browser]
-    CDN[Static frontend hosting / CDN]
-    APIHost[Node.js API host]
-    Worker[Background worker process]
-    MySQL[(Managed MySQL)]
-    Storage[(Private object storage)]
-    LLM[LLM provider]
-    Judge[Isolated code execution service]
+flowchart LR
+    Dev[Developer / Pull Request]
+    CI[CI: lint, typecheck, tests, build]
+    Review[Code Review + Migration Review]
+    Preview[Preview Deployment]
+    Stage[Staging Validation]
+    Prod[Production Deployment]
+    Migrate[Reviewed Database Migrations]
 
-    Browser --> CDN
-    Browser -->|HTTPS API| APIHost
-    APIHost --> MySQL
-    APIHost --> Storage
-    APIHost --> LLM
-    APIHost --> Judge
-    APIHost --> Worker
-    Worker --> MySQL
-    Worker --> Storage
-    Worker --> LLM
-    Worker --> Judge
+    Dev --> CI --> Review --> Preview --> Stage --> Prod
+    Review --> Migrate
+    Migrate --> Stage
+    Migrate --> Prod
 ```
-Deployment requirements:
-- HTTPS for all production traffic.
-- Separate frontend and backend environment configuration.
-- Database backups and tested restoration procedure.
-- Private storage and least-privilege access.
-- Health checks and deploy rollback strategy.
-- Explicit timeouts and quotas for external providers.
-- Run migrations as a controlled release step.
-- Verify execution-provider security and language availability before enabling a language in assessments.
-- Do not store production secrets in source control or frontend build variables.
-20. Scaling strategy
-Start simple and scale only when measured bottlenecks justify the change.
-Initial scale
-- One Express API deployment.
-- One MySQL database.
-- One worker process or small worker pool.
-- External LLM and isolated execution provider.
-- Indexed relational queries and pagination.
-When growth requires it
-- Add more API instances behind a load balancer.
-- Move background jobs to a durable queue.
-- Add a cache for safe, frequently read data.
-- Add read replicas or query optimization if database load requires it.
-- Move high-volume session events to partitioned tables or a specialized event store if MySQL measurements justify it.
-- Separate execution orchestration or analytics into services only when independent scaling, isolation, or deployment needs are demonstrated.
-Do not introduce distributed infrastructure just because the product contains AI or code execution.
-21. Delivery sequence
-Phase 1: Foundation
-- Establish repository structure and environment configuration.
-- Implement MySQL migrations and session-based authentication.
-- Add role/resource authorization and audit basics.
-- Build course, module, concept, and prerequisite management.
-- Add API error conventions and tests.
-Phase 2: Syllabus and approved content
-- Add private document upload and text extraction.
-- Add LLM provider adapter and structured draft generation.
-- Add concept/prerequisite validation and trainer review.
-- Add versioned publication.
-- Add theory resources.
-Phase 3: Questions and assessments
-- Build question bank and concept mapping.
-- Add fixed quizzes/test series and attempt lifecycle.
-- Add backend-owned scoring and protected answer keys.
-- Add generated-question validation and approval.
-Phase 4: Adaptive learning
-- Add learning-attempt records and initial mastery service.
-- Add prerequisite-aware recommendations and reason strings.
-- Add student progress and trainer concept analytics.
-Phase 5: Coding assessment
-- Integrate Monaco and execution adapter.
-- Add run/submit flows, limits, hidden tests, and status normalization.
-- Test provider failures and prevent hidden-data exposure.
-Phase 6: Replay and viva
-- Add event batching, sequence numbers, snapshots, and replay.
-- Add versioned integrity rules and evidence links.
-- Add human review and audit history.
-- Add code-specific viva generation and rubric evaluation.
-Phase 7: Hardening and pilot
-- Review access controls, privacy, retention, and execution isolation.
-- Run end-to-end, accessibility, and load tests.
-- Test recovery, backups, job retries, and observability.
-- Pilot with real learners and calibrate product metrics.
-Advanced BKT, voice viva, RAG/vector retrieval, DevOps labs, and repository evaluation should follow after the end-to-end MVP is reliable.
-22. Key architecture decisions
-Decision	Initial choice	Rationale
-Application topology	Modular monolith	Lower operational complexity and clear domain boundaries
-Frontend language	JavaScript	Matches the project's stated preference
-Backend language	JavaScript on Node.js	Shared language and simple integration
-Database	MySQL	Matches the current project setup
-Authentication	Server-side sessions	Centralized session revocation and access control
-LLM provider	One configurable provider adapter	One model can support multiple tasks with different prompts and validation
-Code execution	External isolated execution service	Avoid running untrusted code in the API process
-Mastery	Replaceable service, simple model first	Validate evidence pipeline before adding BKT
-Background jobs	Simple worker/job table initially	Avoid premature queue infrastructure
-Integrity review	Evidence-linked, human-reviewed	Avoid automatic accusations and punitive outcomes
-Content publication	Trainer approval and versioning	Protect curriculum quality and historical assessment integrity
 
+Apply schema changes through ordered migrations. Review destructive changes carefully and use a staged expand/migrate/contract approach when a change could break deployed application versions. Do not automatically run destructive production migrations merely because a branch was deployed.
 
-23. Open decisions before production
-The following require explicit project decisions and should be recorded in configuration or a separate decision log:
-1. Required programming languages for the MVP.
-2. Hosted versus self-hosted execution service, including isolation, quotas, cost, and availability.
-3. LLM provider/model, budget, data-retention settings, and whether local Ollama is needed.
-4. Maximum syllabus file sizes and whether OCR is required at launch.
-5. Session-event and source-code retention periods.
-6. Assessment attempt, timer, and late-submission policies.
-7. Default mastery thresholds and evidence-sufficiency rules.
-8. Which trainer roles can approve/publish courses and review integrity signals.
-9. Production hosting, backup, and restoration requirements.
-10. Whether text-only code viva is sufficient for the first release.
-Do not silently hard-code unresolved policy decisions throughout the application.
-24. Architecture acceptance checklist
-- [ ] The client communicates with the Express API and never connects directly to MySQL.
-- [ ] Authentication, role checks, ownership checks, and lifecycle checks are enforced server-side.
-- [ ] LLM and execution providers are accessed through adapters.
-- [ ] Generated content is validated and remains a draft until approval.
-- [ ] Published course and assessment versions preserve historical attempt context.
-- [ ] Scores and mastery updates are computed by backend services.
-- [ ] Code executes only in the configured isolated execution service.
-- [ ] Hidden tests, answer keys, and reference solutions are not exposed to student APIs.
-- [ ] Long-running work has job IDs, terminal states, safe retries, and observable failures.
-- [ ] Session events are ordered, deduplicated, replayable, and marked incomplete when data is missing.
-- [ ] Integrity signals point to evidence and cannot automatically punish students.
-- [ ] Database migrations, tests, logs, and environment configuration are maintained in version control without secrets.
-- [ ] The core student learning loop works end to end before optional advanced infrastructure is introduced.
-25. Final principle
-Pathwise is built around three separate responsibilities:
-1. The curriculum model defines concepts, learning objectives, and prerequisites.
-2. The mastery service estimates what a student understands from valid learning evidence.
-3. The recommendation service selects the next useful activity and explains why.
-The LLM assists with drafting and interpretation. The execution service evaluates code in isolation. Session replay preserves assessment-relevant evidence for human review. Trainers remain responsible for curriculum approval and consequential integrity decisions.
-The first release should prioritize a secure, testable, explainable end-to-end learning loop over breadth of features or infrastructure complexity.
+### Environment variables
+
+Document required variables in `.env.example`. Exact names should be finalized in the implementation and API documentation. Common categories include:
+
+- Public frontend: Supabase project URL and publishable/anon key, API base URL.
+- API: Supabase URL and server-side key appropriate to the chosen access pattern, allowed client origins, environment, port, logging configuration.
+- AI: provider name, API key, model name, timeout, token/cost limits.
+- Code runner: endpoint, authentication credential, timeout/resource defaults.
+- Worker/queue: connection details and concurrency settings, if a queue is selected.
+
+Never copy production secrets into local configuration or share them in prompts, logs, screenshots, or documentation.
+
+---
+
+## 10. Testing Strategy
+
+| Test level | What it should verify |
+|---|---|
+| Unit | Domain rules, mastery updates, recommendation rationale, validation, state transitions |
+| API integration | Authentication, authorization, request validation, database behavior, consistent errors |
+| RLS/security | Students cannot access another student's private data; trainers are limited to assigned courses; protected keys/tests are inaccessible to clients |
+| Workflow integration | Syllabus upload → generation → trainer review → publication; assessment attempt → submission → grading; coding submission → isolated execution → result persistence |
+| AI contract tests | Structured output validation, malformed output handling, timeout/retry behavior, evidence/source linkage |
+| Execution security tests | Timeouts, resource limits, network isolation, oversized output, malformed payloads, concurrency caps |
+| End-to-end | Critical student/trainer flows, responsive UI, assessment completion and dashboard updates |
+| Migration tests | Clean database setup, migration order, seed behavior, and compatibility of schema changes |
+
+Use deterministic fixtures and mocked external services for most automated tests. Keep a small, controlled set of integration tests for real provider connections. Never use real hidden tests or production learner data in ordinary test fixtures.
+
+### Definition of ready for release
+
+- Type checking, linting, tests, and production build pass.
+- Authorization and RLS tests cover affected data paths.
+- Database migrations are reviewed and tested from a clean state.
+- Error, loading, retry, and empty states exist for the changed workflow.
+- Sensitive information is not exposed in client bundles, API responses, or logs.
+- New background jobs have timeout, retry, idempotency, and failure handling.
+- Documentation is updated where architecture, schema, or API contracts changed.
+
+---
+
+## 11. Recommended Implementation Sequence
+
+The exact release scope is controlled by `PRD.md`. A practical technical sequence is:
+
+1. **Foundation:** repository conventions, environment configuration, shared validation, logging, error handling, CI checks.
+2. **Identity and access:** Supabase Auth integration, profiles/roles, course enrollment and trainer assignment, RLS tests.
+3. **Course and syllabus:** course versioning, uploads, concept graph, prerequisite validation, trainer approval.
+4. **Learning content:** resources, AI generation jobs, source evidence, review/publish workflow.
+5. **Question bank and assessments:** question versioning, assessment configuration, attempts, submission, secure grading.
+6. **Mastery and recommendations:** evidence capture, mastery service, history, explainable recommendations.
+7. **Coding assessments:** isolated executor integration, job tracking, result persistence, quotas and security tests.
+8. **Replay, integrity, and viva:** privacy-bounded event capture, review workflows, AI viva and evaluation validation.
+9. **Dashboards and hardening:** analytics, accessibility, performance, monitoring, backups, recovery and deployment validation.
+
+Deliver in vertical slices where possible: complete a feature across UI, API, persistence, authorization, tests, and documentation before moving to the next slice.
+
+---
+
+## 12. Architecture Decision Records
+
+Record meaningful changes in `docs/decisions/` using short ADR files. Each ADR should include context, decision, alternatives considered, consequences, date, and status.
+
+The following baseline decisions should be treated as current unless explicitly superseded:
+
+| ID | Decision | Rationale |
+|---|---|---|
+| ADR-001 | Start with a modular monolith for the application API | Keeps development and deployment manageable while preserving domain boundaries |
+| ADR-002 | Use Supabase Auth + PostgreSQL, with RLS and application authorization | Managed identity/data platform with defense-in-depth access control |
+| ADR-003 | Keep AI and code-runner integrations behind adapters | Enables provider changes, tests, and consistent failure handling |
+| ADR-004 | Run untrusted student code only in a dedicated isolated executor | Protects API, database, and infrastructure from arbitrary code |
+| ADR-005 | Version published learning content, questions, and assessments | Preserves the context and reproducibility of historical attempts |
+| ADR-006 | Keep mastery computation deterministic/configurable and evidence-backed | Makes learning recommendations explainable and auditable |
+| ADR-007 | Treat integrity signals as review evidence, not automatic proof | Reduces false accusations and supports human review |
+
+---
+
+## 13. Rules for Future Architecture Changes
+
+Before introducing a new service, library, database, queue, or provider:
+
+1. Identify the requirement it satisfies and the problem with the current design.
+2. Check compatibility with `PRD.md`, `DATABASE.md`, `AGENT.md`, and the API contract.
+3. Describe security, privacy, cost, operational, and migration implications.
+4. Add or update an ADR for decisions that materially affect system boundaries or data flow.
+5. Update environment documentation, tests, and deployment instructions.
+6. Avoid unnecessary microservices, duplicate sources of truth, and parallel implementations of the same business rule.
+
+Do not silently change the database schema, role model, mastery algorithm, grading rules, evidence-retention policy, or code-execution boundary. Propose the change and update the authoritative documents first.
+
+---
+
+## 14. Related Documents
+
+- `PRD.md` — product scope, requirements, user journeys, and acceptance criteria.
+- `DATABASE.md` — database entities, relationships, constraints, RLS, migrations, and data ownership.
+- `AGENT.md` — instructions and workflow for AI coding agents and developers.
+- `API_SPEC.md` — planned source of truth for REST endpoints, request/response schemas, status codes, and error contracts.
+- `README.md` — setup, local development, testing, environment configuration, and deployment commands.
+
+**Implementation rule:** Read the relevant documents before coding. If a required behavior or design decision is missing, document the assumption or ask for clarification rather than inventing a conflicting contract.
