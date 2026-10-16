@@ -1,5 +1,6 @@
 import { getSupabase } from '../integrations/supabase.js';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors.js';
+import { gradingService } from '../services/grading.service.js';
 
 export const attemptsController = {
   /**
@@ -314,6 +315,74 @@ export const attemptsController = {
           status: finalized.status,
           submittedAt: finalized.submitted_at,
         },
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get attempt result and scoring breakdown (TASK-021)
+   */
+  async getAttemptResult(req, res, next) {
+    try {
+      const { attemptId } = req.params;
+      const user = req.user;
+      const supabase = getSupabase();
+
+      const { data: attempt } = await supabase
+        .from('assessment_attempts')
+        .select('*')
+        .eq('id', attemptId)
+        .maybeSingle();
+
+      if (!attempt) {
+        throw new NotFoundError('Attempt not found.');
+      }
+
+      const isPrivileged = user.role === 'trainer' || user.role === 'admin';
+      if (!isPrivileged && attempt.student_id !== user.id) {
+        throw new ForbiddenError('You do not have permission to view this result.');
+      }
+
+      if (attempt.status === 'in_progress') {
+        throw new ConflictError('Cannot view result while assessment attempt is still in progress.');
+      }
+
+      let result;
+      if (attempt.status === 'submitted') {
+        result = await gradingService.gradeAttempt(attemptId);
+      } else {
+        const { data: answers = [] } = await supabase
+          .from('student_answers')
+          .select('*')
+          .eq('attempt_id', attemptId);
+
+        const percentage = attempt.max_score > 0 ? (Number(attempt.score) / Number(attempt.max_score)) * 100 : 0;
+        result = {
+          attemptId: attempt.id,
+          assessmentId: attempt.assessment_id,
+          status: attempt.status,
+          score: Number(attempt.score),
+          maxScore: Number(attempt.max_score),
+          percentage: Math.round(percentage * 100) / 100,
+          passed: attempt.passed,
+          completedAt: attempt.completed_at || attempt.submitted_at,
+          items: (answers || []).map((a) => ({
+            questionVersionId: a.question_version_id,
+            score: a.score,
+            maxScore: a.max_score,
+            isCorrect: a.is_correct,
+            feedback: a.feedback,
+          })),
+        };
+      }
+
+      res.status(200).json({
+        data: result,
         meta: {
           requestId: req.requestId,
         },

@@ -31,7 +31,8 @@ router.put(
 );
 router.post('/attempts/:attemptId/submit', authenticate, attemptsController.submitAttempt);
 
-// Student attempts listing
+// Student attempts listing & results
+router.get('/attempts/:attemptId/result', authenticate, attemptsController.getAttemptResult);
 router.get('/me/attempts', authenticate, attemptsController.listMyAttempts);
 
 export default router;

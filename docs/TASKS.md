@@ -250,12 +250,12 @@ Adjust after auditing the repository. Prefer a thin end-to-end vertical slice ov
 **Acceptance:** Learners cannot alter others' attempts; repeated submissions do not double-grade.
 
 ### TASK-021 — Grading and results
-**Status:** TODO · **Priority:** P1 · **Depends on:** TASK-020
-- [ ] Grade objective questions server-side.
-- [ ] Apply versioned rubrics where required.
-- [ ] Separate learner-visible feedback from protected grading data.
-- [ ] Store results and per-concept evidence.
-- [ ] Implement authorized result views.
+**Status:** DONE · **Priority:** P1 · **Depends on:** TASK-020
+- [x] Grade objective questions server-side.
+- [x] Apply versioned rubrics where required.
+- [x] Separate learner-visible feedback from protected grading data.
+- [x] Store results and per-concept evidence.
+- [x] Implement authorized result views.
 
 **Acceptance:** Scores use trusted server data; answer disclosure follows policy; grading is testable and repeatable.
 
