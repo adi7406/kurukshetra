@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, X, Sparkles, CheckCircle2, AlertTriangle, GitFork } from 'lucide-react';
-import MasteryBadge from '../common/MasteryBadge';
+import { ArrowRight, X, Sparkles, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
+import MasteryChip from '../common/MasteryChip';
 import { normalizeMastery } from '../../utils/mastery';
 
 export function WhyThisModal({ isOpen, onClose, recommendation, onStartActivity }) {
@@ -45,38 +45,44 @@ export function WhyThisModal({ isOpen, onClose, recommendation, onStartActivity 
         tabIndex={-1}
         className="modal-dialog-card animate-fade-in"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '580px', width: '100%', outline: 'none' }}
+        style={{
+          maxWidth: '560px',
+          width: '100%',
+          outline: 'none',
+          borderRadius: '20px',
+          border: '1px solid var(--border-hairline)',
+        }}
       >
         {/* Header */}
         <div
           style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid var(--border)',
+            padding: '18px 22px',
+            borderBottom: '1px solid var(--border-hairline)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: 'var(--primary-subtle)',
+                width: '34px',
+                height: '34px',
+                borderRadius: '10px',
+                background: 'var(--coral-soft)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--primary)',
+                color: 'var(--coral)',
               }}
             >
-              <GitFork size={16} />
+              <Layers size={18} strokeWidth={1.5} />
             </div>
             <div>
-              <h2 id="why-this-title" style={{ fontSize: '16px', fontWeight: '700' }}>
+              <h2 id="why-this-title" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
                 Why This Recommendation?
               </h2>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', margin: 0 }}>
                 Evidence-based adaptive curriculum reasoning
               </p>
             </div>
@@ -85,44 +91,39 @@ export function WhyThisModal({ isOpen, onClose, recommendation, onStartActivity 
           <button
             type="button"
             onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--text-light)',
-              padding: '4px',
-            }}
+            className="icon-btn-circle"
+            style={{ width: '32px', height: '32px' }}
             aria-label="Close dialog"
           >
-            <X size={18} />
+            <X size={16} strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Target Activity Summary */}
           <div
             style={{
-              padding: '12px 14px',
-              borderRadius: '8px',
+              padding: '14px 16px',
+              borderRadius: '14px',
               background: 'var(--surface-muted)',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--border-hairline)',
             }}
           >
-            <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em' }}>
               Selected Activity
             </div>
-            <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
               {recommendation.title}
             </div>
-            <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
               {recommendation.description}
             </div>
           </div>
 
           {/* Prerequisite Path Visual */}
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>
               Prerequisite Mastery Chain
             </div>
 
@@ -135,54 +136,49 @@ export function WhyThisModal({ isOpen, onClose, recommendation, onStartActivity 
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '10px 14px',
-                    borderRadius: '8px',
-                    background: step.isTarget
-                      ? 'rgba(59, 130, 246, 0.08)'
-                      : step.isWeakest
-                      ? 'rgba(245, 158, 11, 0.08)'
-                      : 'var(--surface)',
+                    borderRadius: '12px',
+                    background: step.isTarget ? 'var(--coral-soft)' : 'var(--surface-muted)',
                     border: step.isTarget
-                      ? '1px solid var(--primary-border)'
-                      : step.isWeakest
-                      ? '1px solid var(--warning-border)'
-                      : '1px solid var(--border)',
+                      ? '1px solid var(--coral)'
+                      : '1px solid var(--border-hairline)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span
                       style={{
-                        width: '20px',
-                        height: '20px',
+                        width: '22px',
+                        height: '22px',
                         borderRadius: '50%',
-                        background: 'var(--surface-muted)',
+                        background: step.isTarget ? 'var(--coral)' : 'var(--surface)',
                         fontSize: '11px',
-                        fontWeight: '700',
+                        fontWeight: 600,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'var(--text-muted)',
+                        color: step.isTarget ? '#FFFFFF' : 'var(--text-secondary)',
+                        border: step.isTarget ? 'none' : '1px solid var(--border-hairline)',
                       }}
                     >
                       {idx + 1}
                     </span>
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
                         {step.name}
                       </div>
                       {step.isWeakest && (
-                        <div style={{ fontSize: '11px', color: '#FBBF24', fontWeight: '600', marginTop: '1px' }}>
-                          Weakest prerequisite bottleneck
+                        <div style={{ fontSize: '11px', color: 'var(--mastery-developing)', fontWeight: 500, marginTop: '1px' }}>
+                          Primary prerequisite bottleneck (52%)
                         </div>
                       )}
                       {step.isTarget && (
-                        <div style={{ fontSize: '11px', color: '#60A5FA', fontWeight: '600', marginTop: '1px' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--coral)', fontWeight: 500, marginTop: '1px' }}>
                           Target recommended concept
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <MasteryBadge score={step.score} size="sm" />
+                  <MasteryChip score={step.score} size="sm" />
                 </div>
               ))}
             </div>
@@ -191,17 +187,17 @@ export function WhyThisModal({ isOpen, onClose, recommendation, onStartActivity 
           {/* Plain Language Rationale */}
           <div
             style={{
-              padding: '12px 14px',
-              borderRadius: '8px',
-              background: 'var(--surface-subtle)',
-              border: '1px solid var(--border)',
-              fontSize: '12.5px',
-              lineHeight: '1.55',
-              color: 'var(--text-muted)',
+              padding: '14px 16px',
+              borderRadius: '14px',
+              background: 'var(--surface-muted)',
+              border: '1px solid var(--border-hairline)',
+              fontSize: '13px',
+              lineHeight: '1.5',
+              color: 'var(--text-secondary)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', fontWeight: '600', marginBottom: '4px' }}>
-              <Sparkles size={14} color="var(--primary)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', fontWeight: 600, marginBottom: '4px' }}>
+              <Sparkles size={14} strokeWidth={1.5} color="var(--coral)" />
               <span>Adaptive Reasoning</span>
             </div>
             {recommendation.reasoning || (
@@ -215,28 +211,27 @@ export function WhyThisModal({ isOpen, onClose, recommendation, onStartActivity 
         {/* Footer Actions */}
         <div
           style={{
-            padding: '12px 20px',
-            borderTop: '1px solid var(--border)',
-            background: 'var(--surface-muted)',
+            padding: '14px 22px',
+            borderTop: '1px solid var(--border-hairline)',
+            background: 'var(--surface)',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '10px',
           }}
         >
-          <button type="button" className="btn-secondary" onClick={onClose} style={{ padding: '7px 14px' }}>
+          <button type="button" className="btn-ghost-pill btn-compact" onClick={onClose}>
             Dismiss
           </button>
           <button
             type="button"
-            className="btn-primary"
+            className="btn-coral-pill btn-compact"
             onClick={() => {
               onClose();
               if (onStartActivity) onStartActivity();
             }}
-            style={{ padding: '7px 16px' }}
           >
-            <span>Start This Activity</span>
-            <ArrowRight size={14} />
+            <span>Start Activity</span>
+            <ArrowRight size={13} strokeWidth={1.5} />
           </button>
         </div>
       </div>

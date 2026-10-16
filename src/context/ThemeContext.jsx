@@ -6,7 +6,7 @@ const THEME_STORAGE_KEY = 'pathwise_theme';
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    return saved || 'dark';
+    return saved || 'light';
   });
 
   useEffect(() => {

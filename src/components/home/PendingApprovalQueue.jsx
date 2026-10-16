@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Check, Edit2, Clock, Layers, HelpCircle, Code2, AlertCircle } from 'lucide-react';
+import { Check, Edit2, Layers, HelpCircle, Code2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import RailCard from '../common/RailCard';
 
 export function PendingApprovalQueue({ items = [], onApproveItem }) {
   const toast = useToast();
@@ -10,29 +11,21 @@ export function PendingApprovalQueue({ items = [], onApproveItem }) {
       : [
           {
             id: 'appr_01',
-            title: 'Hash Tables Collision Handling Diagnostic Quiz',
+            title: 'Hash Tables Collision Diagnostic',
             type: 'Practice Quiz',
-            module: 'Module 1: Linear & Key-Value Structures',
-            questionsCount: 4,
-            status: 'Pending Instructor Verification',
-            date: 'Today at 10:15 AM',
+            module: 'Module 1: Linear & Key-Value',
           },
           {
             id: 'appr_02',
-            title: 'LRU Cache Design (Doubly-Linked Sentinel)',
+            title: 'LRU Cache Design Challenge',
             type: 'Coding Challenge',
-            module: 'Module 1: Linear & Key-Value Structures',
-            constraints: 'O(1) get & put, 18 unit tests',
-            status: 'Pending Instructor Verification',
-            date: 'Today at 11:40 AM',
+            module: 'Module 1: Linear & Key-Value',
           },
           {
             id: 'appr_03',
-            title: 'Self-Balancing AVL Trees Concept Definition',
+            title: 'Self-Balancing AVL Trees',
             type: 'Concept DAG Node',
-            module: 'Module 2: Hierarchical Tree & Graph Structures',
-            status: 'Pending Instructor Verification',
-            date: 'Yesterday',
+            module: 'Module 2: Tree & Graph',
           },
         ]
   );
@@ -43,98 +36,95 @@ export function PendingApprovalQueue({ items = [], onApproveItem }) {
     if (onApproveItem) onApproveItem(id);
   };
 
-  if (queue.length === 0) {
-    return (
-      <div className="saas-card" style={{ padding: '24px', textAlign: 'center' }}>
-        <div style={{ color: '#34D399', fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>
-          ✓ No Pending Content Approvals
-        </div>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-          All synthesized curriculum concepts, practice quizzes, and coding challenges are verified and published.
-        </p>
-      </div>
-    );
-  }
+  const handleEdit = (title) => {
+    toast.info(`Opening editor for "${title}"`);
+  };
 
   return (
-    <div className="saas-card" style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <div>
-          <h3 style={{ fontSize: '15px', fontWeight: '700' }}>Curriculum Approval Queue</h3>
-          <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '2px' }}>
-            Extracted syllabus items requiring instructor sign-off before student publication
-          </p>
-        </div>
-        <span className="badge-clean amber">
-          {queue.length} Pending Approval
+    <RailCard
+      title="Pending Approvals"
+      action={
+        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+          {queue.length} pending
         </span>
-      </div>
+      }
+    >
+      {queue.length === 0 ? (
+        <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>
+          ✓ All syllabus items approved & published.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {queue.map((item) => {
+            const isQuiz = item.type.includes('Quiz');
+            const isCode = item.type.includes('Coding');
+            const Icon = isQuiz ? HelpCircle : isCode ? Code2 : Layers;
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {queue.map((item) => {
-          const isQuiz = item.type.includes('Quiz');
-          const isCode = item.type.includes('Coding');
-          const Icon = isQuiz ? HelpCircle : isCode ? Code2 : Layers;
-
-          return (
-            <div
-              key={item.id}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '12px 14px',
-                borderRadius: '8px',
-                background: 'var(--surface-muted)',
-                border: '1px solid var(--border)',
-                gap: '12px',
-                flexWrap: 'wrap',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', minWidth: '240px', flex: 1 }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--primary)',
-                    marginTop: '2px',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={16} />
+            return (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  background: 'var(--surface-muted)',
+                  border: '1px solid var(--border-hairline)',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                  <Icon size={15} strokeWidth={1.5} color="var(--coral)" style={{ flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        color: 'var(--text-main)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                      title={item.title}
+                    >
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '1px' }}>
+                      {item.type}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)' }}>
-                    {item.title}
-                  </div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '2px' }}>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>{item.type}</span> &bull; {item.module}
-                  </div>
+
+                {/* Approve & Edit Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(item.title)}
+                    className="btn-ghost-pill btn-compact"
+                    style={{ height: '28px', padding: '0 8px', fontSize: '11px' }}
+                    title="Edit item"
+                  >
+                    <Edit2 size={11} strokeWidth={1.5} />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(item.id, item.title)}
+                    className="btn-coral-pill btn-compact"
+                    style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}
+                    title="Approve item"
+                  >
+                    <Check size={11} strokeWidth={2} />
+                    <span>Approve</span>
+                  </button>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => handleApprove(item.id, item.title)}
-                  style={{ padding: '6px 12px', fontSize: '12px', background: '#059669', borderColor: '#059669' }}
-                >
-                  <Check size={13} />
-                  <span>Approve & Publish</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            );
+          })}
+        </div>
+      )}
+    </RailCard>
   );
 }
 

@@ -1,22 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  GitCommit,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  ExternalLink,
-  Code2,
-  HelpCircle,
-  AlertCircle,
   Layers,
-  ChevronRight,
+  ArrowRight,
+  Flame,
+  CheckCircle2,
   BookOpen,
-  Award,
-  Sparkles,
+  Code2,
 } from 'lucide-react';
-import MasteryBadge from '../common/MasteryBadge';
-import { normalizeMastery, getMasteryLevel } from '../../utils/mastery';
+import RailCard from '../common/RailCard';
+import ProgressRing from '../common/ProgressRing';
+import ChecklistItem from '../common/ChecklistItem';
+import MasteryChip from '../common/MasteryChip';
+import Chip from '../common/Chip';
+import { normalizeMastery } from '../../utils/mastery';
 
 export function RightContextSidebar({
   recommendation,
@@ -28,513 +25,281 @@ export function RightContextSidebar({
 }) {
   const navigate = useNavigate();
 
-  const totalPending = pendingQuizzes.length + pendingAssessments.length;
-  const totalCompleted = completedQuizzes.length + completedAssessments.length;
+  // Tasks for session queue
+  const sessionTasks = [
+    {
+      id: 'task-1',
+      title: 'Collision Resolution Quiz',
+      duration: '8 min',
+      points: 25,
+      completed: false,
+      type: 'Quiz',
+      route: '/content/quizzes',
+    },
+    {
+      id: 'task-2',
+      title: 'LRU Cache Implementation',
+      duration: '25 min',
+      points: 50,
+      completed: false,
+      type: 'Code',
+      route: '/content/coding',
+    },
+    {
+      id: 'task-3',
+      title: 'Dynamic Arrays Diagnostic',
+      duration: '5 min',
+      points: 15,
+      completed: true,
+      type: 'Quiz',
+      route: '/content/quizzes',
+    },
+  ];
+
+  // Prerequisite steps
+  const prereqSteps = recommendation?.prerequisitePath || [
+    { name: 'Dynamic Arrays & Memory', score: 92, status: 'solid' },
+    { name: 'Hash Functions & Distribution', score: 52, status: 'developing' },
+    { name: 'Hash Tables & Collision Resolution', score: 48, status: 'developing' },
+  ];
+
+  // Related concepts
+  const relatedConcepts = [
+    {
+      id: 'rel-1',
+      title: 'Doubly-Linked Lists & Sentinels',
+      meta: '4 lessons · 12 exercises',
+      gradient: 'linear-gradient(135deg, #FF5B37 0%, #EE4A26 100%)',
+    },
+    {
+      id: 'rel-2',
+      title: 'Tree Map Invariants & Balancing',
+      meta: '6 lessons · 18 exercises',
+      gradient: 'linear-gradient(135deg, #1C1C21 0%, #2C2C34 100%)',
+    },
+  ];
 
   return (
     <aside
-      className="home-right-context-sidebar"
+      className="home-workspace-sidebar"
+      aria-label="Contextual Learning Sidebar"
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '18px',
+        gap: '16px',
         width: '100%',
       }}
-      aria-label="Contextual Learning Sidebar"
     >
-      {/* 1. PREREQUISITE MASTERY PATH */}
-      <div
-        className="saas-card"
-        style={{
-          padding: '18px',
-          borderRadius: '12px',
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '12px',
-            paddingBottom: '10px',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={15} color="var(--primary)" />
-            <h3 style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-              Prerequisite Mastery Path
-            </h3>
+      {/* 1. COURSE PROGRESS CARD */}
+      <RailCard title="Course Progress">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <ProgressRing progress={48} size={64} strokeWidth={5} color="var(--coral)" />
+          <div>
+            <div
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: 'var(--text-main)',
+                lineHeight: '1.3',
+              }}
+            >
+              2 of 6 concepts mastered
+            </div>
+            <div
+              style={{
+                fontSize: '12px',
+                color: 'var(--text-secondary)',
+                marginTop: '4px',
+              }}
+            >
+              Data Structures & Algorithms
+            </div>
           </div>
-          {onOpenWhyThis && (
+        </div>
+      </RailCard>
+
+      {/* 2. SESSION TASKS / PRACTICE QUEUE */}
+      <RailCard
+        title="Session Tasks"
+        action={
+          <span
+            style={{
+              fontSize: '11px',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+            }}
+          >
+            2 pending
+          </span>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {sessionTasks.map((task) => (
+            <ChecklistItem
+              key={task.id}
+              title={task.title}
+              duration={task.duration}
+              points={task.points}
+              completed={task.completed}
+              actionLabel={task.type}
+              onAction={() => navigate(task.route)}
+            />
+          ))}
+        </div>
+      </RailCard>
+
+      {/* 3. PREREQUISITE PATH */}
+      <RailCard
+        title="Prerequisite Path"
+        action={
+          onOpenWhyThis && (
             <button
               type="button"
               onClick={onOpenWhyThis}
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--primary)',
-                fontSize: '11px',
-                fontWeight: '600',
+                color: 'var(--coral)',
+                fontSize: '11.5px',
+                fontWeight: 500,
                 cursor: 'pointer',
-                padding: '2px 4px',
+                padding: 0,
               }}
-              title="Inspect prerequisite bottleneck breakdown"
             >
               Why this?
             </button>
-          )}
-        </div>
-
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: '1.4' }}>
-          Adaptive sequencing for <strong>{recommendation?.conceptName || 'Target Concept'}</strong>
-        </p>
-
-        {/* Vertical Prerequisite Chain */}
-        <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
-          {(recommendation?.prerequisitePath || []).map((step, idx, arr) => {
+          )
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {prereqSteps.map((step, idx) => {
             const normalized = normalizeMastery(step.score);
-            const meta = getMasteryLevel(normalized);
-            const isLast = idx === arr.length - 1;
-
             return (
               <div
                 key={step.name || idx}
                 style={{
                   display: 'flex',
-                  gap: '12px',
-                  position: 'relative',
-                  paddingBottom: isLast ? '4px' : '16px',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 10px',
+                  borderRadius: '12px',
+                  background: 'var(--surface-muted)',
+                  border: '1px solid var(--border-hairline)',
+                  gap: '8px',
                 }}
               >
-                {/* Vertical connecting line */}
-                {!isLast && (
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div
                     style={{
-                      position: 'absolute',
-                      left: '11px',
-                      top: '22px',
-                      bottom: '0',
-                      width: '2px',
-                      background: 'var(--border)',
-                      zIndex: 1,
+                      fontSize: '12.5px',
+                      fontWeight: 500,
+                      color: 'var(--text-main)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
-                    aria-hidden="true"
-                  />
-                )}
-
-                {/* Node marker indicator */}
-                <div
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: step.isTarget
-                      ? 'var(--primary)'
-                      : step.isWeakest
-                      ? '#F59E0B'
-                      : meta.color,
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '10px',
-                    fontWeight: '800',
-                    zIndex: 2,
-                    flexShrink: 0,
-                    boxShadow: step.isTarget
-                      ? '0 0 0 3px rgba(37, 99, 235, 0.2)'
-                      : step.isWeakest
-                      ? '0 0 0 3px rgba(245, 158, 11, 0.2)'
-                      : 'none',
-                  }}
-                >
-                  {normalized >= 70 ? <CheckCircle2 size={13} /> : idx + 1}
-                </div>
-
-                {/* Concept details */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '6px' }}>
-                    <span
-                      style={{
-                        fontSize: '12.5px',
-                        fontWeight: step.isTarget ? '700' : '600',
-                        color: step.isTarget ? 'var(--primary)' : 'var(--text-main)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                      title={step.name}
-                    >
-                      {step.name}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '11.5px',
-                        fontWeight: '700',
-                        color: meta.textLight,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {normalized}%
-                    </span>
+                    title={step.name}
+                  >
+                    {step.name}
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: '600',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        background: meta.bgLight,
-                        color: meta.textLight,
-                        border: `1px solid ${meta.borderLight}`,
-                      }}
-                    >
-                      {meta.label}
-                    </span>
-                    {step.isWeakest && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          background: 'rgba(245, 158, 11, 0.14)',
-                          color: '#F59E0B',
-                          border: '1px solid rgba(245, 158, 11, 0.3)',
-                        }}
-                      >
-                        Prerequisite Bottleneck
-                      </span>
-                    )}
-                    {step.isTarget && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          background: 'var(--primary-subtle)',
-                          color: 'var(--primary)',
-                          border: '1px solid var(--primary-border)',
-                        }}
-                      >
-                        Target
-                      </span>
-                    )}
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: 'var(--text-secondary)',
+                      marginTop: '1px',
+                    }}
+                  >
+                    {normalized}% estimated mastery
                   </div>
                 </div>
+
+                {/* Single status chip per item max */}
+                <MasteryChip score={normalized} size="sm" />
               </div>
             );
           })}
         </div>
+      </RailCard>
 
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => navigate('/content/concepts')}
-          style={{
-            width: '100%',
-            marginTop: '12px',
-            padding: '7px 12px',
-            fontSize: '12px',
-            justifyContent: 'center',
-          }}
-        >
-          <span>View Interactive Graph</span>
-          <ArrowRight size={13} />
-        </button>
-      </div>
-
-      {/* 2. UPCOMING PRACTICE QUEUE */}
-      <div
-        className="saas-card"
-        style={{
-          padding: '18px',
-          borderRadius: '12px',
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '12px',
-            paddingBottom: '10px',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={15} color="var(--primary)" />
-            <h3 style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-              Practice Queue
-            </h3>
-          </div>
-          <span className="badge-clean blue" style={{ fontSize: '10.5px' }}>
-            {totalPending} Tasks
-          </span>
-        </div>
-
-        {totalPending === 0 ? (
-          <div
-            style={{
-              padding: '16px',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-              fontSize: '12px',
-              background: 'var(--surface-muted)',
-              borderRadius: '8px',
-            }}
-          >
-            All scheduled practice items are completed! Great work.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Quizzes in Queue */}
-            {pendingQuizzes.slice(0, 3).map((quiz) => (
+      {/* 4. RELATED CONCEPTS */}
+      <RailCard title="Related Concepts">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {relatedConcepts.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => navigate('/content/concepts')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') navigate('/content/concepts');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px',
+                borderRadius: '14px',
+                border: '1px solid var(--border-hairline)',
+                background: 'var(--surface)',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--coral)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-hairline)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              {/* Gradient thumbnail placeholder */}
               <div
-                key={quiz.id}
                 style={{
-                  padding: '10px 12px',
-                  background: 'var(--surface-muted)',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: item.gradient,
+                  flexShrink: 0,
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '8px',
-                  transition: 'border-color 140ms ease',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: '12.5px',
-                      fontWeight: '600',
-                      color: 'var(--text-main)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={quiz.title}
-                  >
-                    {quiz.title}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '2px' }}>
-                    {quiz.questions?.length || 5} questions &bull; {quiz.estimatedTime || '8 min'}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => navigate('/content/quizzes')}
-                  style={{
-                    padding: '5px 10px',
-                    fontSize: '11px',
-                    flexShrink: 0,
-                  }}
-                  title="Launch quiz practice"
-                >
-                  <HelpCircle size={12} />
-                  <span>Quiz</span>
-                </button>
+                <Layers size={18} strokeWidth={1.5} />
               </div>
-            ))}
 
-            {/* Coding Challenges in Queue */}
-            {pendingAssessments.slice(0, 2).map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  padding: '10px 12px',
-                  background: 'var(--surface-muted)',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'border-color 140ms ease',
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: '12.5px',
-                      fontWeight: '600',
-                      color: 'var(--text-main)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={item.title}
-                  >
-                    {item.title}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '2px' }}>
-                    Isolated Sandbox & Viva
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => navigate('/content/coding')}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
                   style={{
-                    padding: '5px 10px',
-                    fontSize: '11px',
-                    flexShrink: 0,
-                    borderColor: 'var(--primary-border)',
-                    color: 'var(--primary)',
-                  }}
-                  title="Open code sandbox"
-                >
-                  <Code2 size={12} />
-                  <span>Code</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 3. COMPLETED MILESTONES */}
-      <div
-        className="saas-card"
-        style={{
-          padding: '18px',
-          borderRadius: '12px',
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '12px',
-            paddingBottom: '10px',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Award size={15} color="#10B981" />
-            <h3 style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-              Recent Milestones
-            </h3>
-          </div>
-          <span style={{ fontSize: '11px', color: '#10B981', fontWeight: '700' }}>
-            {totalCompleted} Verified
-          </span>
-        </div>
-
-        {totalCompleted === 0 ? (
-          <div
-            style={{
-              padding: '14px',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-              fontSize: '12px',
-              background: 'var(--surface-muted)',
-              borderRadius: '8px',
-            }}
-          >
-            Complete quizzes and code challenges to record verified mastery milestones.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {completedQuizzes.slice(0, 2).map((q) => (
-              <div
-                key={q.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px 10px',
-                  background: 'var(--surface-muted)',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border)',
-                  fontSize: '11.5px',
-                }}
-              >
-                <span
-                  style={{
+                    fontSize: '12.5px',
+                    fontWeight: 600,
                     color: 'var(--text-main)',
-                    fontWeight: '500',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    maxWidth: '180px',
                   }}
-                  title={q.title}
+                  title={item.title}
                 >
-                  {q.title}
-                </span>
-                <span style={{ color: '#10B981', fontWeight: '700', flexShrink: 0 }}>
-                  {normalizeMastery(q.lastAttemptScore || 100)}%
-                </span>
-              </div>
-            ))}
-
-            {completedAssessments.slice(0, 2).map((a) => (
-              <div
-                key={a.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px 10px',
-                  background: 'var(--surface-muted)',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border)',
-                  fontSize: '11.5px',
-                }}
-              >
-                <span
+                  {item.title}
+                </div>
+                <div
                   style={{
-                    color: 'var(--text-main)',
-                    fontWeight: '500',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '180px',
+                    fontSize: '11px',
+                    color: 'var(--text-secondary)',
+                    marginTop: '2px',
                   }}
-                  title={a.title}
                 >
-                  {a.title}
-                </span>
-                <span style={{ color: '#10B981', fontWeight: '700', flexShrink: 0 }}>
-                  Verified
-                </span>
+                  {item.meta}
+                </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => navigate('/progress')}
-          style={{
-            width: '100%',
-            marginTop: '12px',
-            padding: '7px 12px',
-            fontSize: '12px',
-            justifyContent: 'center',
-          }}
-        >
-          <span>View Complete Mastery History</span>
-          <ChevronRight size={13} />
-        </button>
-      </div>
+              <ArrowRight size={14} strokeWidth={1.5} color="var(--text-secondary)" />
+            </div>
+          ))}
+        </div>
+      </RailCard>
     </aside>
   );
 }

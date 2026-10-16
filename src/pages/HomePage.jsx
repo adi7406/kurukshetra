@@ -3,41 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Clock,
-  BookOpen,
   HelpCircle,
   Code2,
   CheckCircle2,
   Layers,
   UploadCloud,
   Users,
-  Award,
-  ChevronRight,
-  Zap,
-  Check,
-  FileText,
-  Shield,
-  Terminal,
-  BarChart2,
-  AlertTriangle,
-  Sparkles,
   Flame,
   Info,
   TrendingUp,
+  AlertTriangle,
+  Terminal,
+  ChevronRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { learningService } from '../services/learningService';
 import { authService } from '../services/authService';
 import LoadingState from '../components/feedback/LoadingState';
-import MasteryBadge from '../components/common/MasteryBadge';
-import MasteryRing from '../components/common/MasteryRing';
-import Sparkline from '../components/common/Sparkline';
+import StatCard from '../components/common/StatCard';
+import ProgressRing from '../components/common/ProgressRing';
+import RailCard from '../components/common/RailCard';
+import Chip from '../components/common/Chip';
+import MasteryChip from '../components/common/MasteryChip';
 import WhyThisModal from '../components/home/WhyThisModal';
 import MiniConceptMap from '../components/home/MiniConceptMap';
 import ClassHeatmap from '../components/home/ClassHeatmap';
 import PendingApprovalQueue from '../components/home/PendingApprovalQueue';
 import RightContextSidebar from '../components/home/RightContextSidebar';
 import OnboardingTour from '../components/common/OnboardingTour';
-import { normalizeMastery, getMasteryLevel } from '../utils/mastery';
+import { normalizeMastery } from '../utils/mastery';
 
 export function HomePage() {
   const { user, role } = useAuth();
@@ -70,7 +65,7 @@ export function HomePage() {
         setStudents(loadedStudents || []);
         setProgressData(loadedProgress || null);
       } catch (err) {
-        console.error('Failed to load live workspace data:', err);
+        console.error('Failed to load workspace data:', err);
       } finally {
         setLoading(false);
       }
@@ -80,13 +75,12 @@ export function HomePage() {
   }, []);
 
   if (loading) {
-    return <LoadingState message="Loading command center..." />;
+    return <LoadingState message="Loading your Pathwise workspace..." />;
   }
 
   const primaryCourse = courses[0] || null;
   const firstName = user?.name ? user.name.split(' ')[0] : 'Learner';
 
-  // Greeting by time of day (Section 3.1)
   const hour = new Date().getHours();
   const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
@@ -100,7 +94,6 @@ export function HomePage() {
     });
   });
 
-  // Dynamic calculations for Student View
   const completedQuizzes = quizzes.filter((q) => q.status === 'completed');
   const completedAssessments = assessments.filter((a) => a.status === 'completed');
   const pendingQuizzes = quizzes.filter((q) => q.status !== 'completed');
@@ -121,7 +114,7 @@ export function HomePage() {
     : 3;
   const totalConceptsCount = progressData?.conceptBreakdown?.length || allConcepts.length || 6;
 
-  // Recommended Next Action (Section 3.2 & 3.3)
+  // Recommended Next Action
   const targetConcept = allConcepts.find((c) => c.name?.includes('Hash Tables')) || allConcepts[1] || {
     name: 'Hash Tables & Collision Resolution',
   };
@@ -143,7 +136,7 @@ export function HomePage() {
     reasoning: 'Your mastery of Hash Tables is 48% (Developing). Diagnostic quiz attempts show error patterns clustering around hash collision handling, where prerequisite concept Hash Functions (52%) is the primary bottleneck. Practicing this diagnostic quiz strengthens prerequisite retention before advancing to hierarchical tree structures.',
   };
 
-  // Dynamic calculations for Teacher View
+  // Instructor View calculations
   const teacherCourse = user?.courseTaught || primaryCourse?.title || 'Data Structures & Algorithms';
   const cohortCount = students.length;
   const avgCohortMastery =
@@ -151,17 +144,14 @@ export function HomePage() {
       ? Math.round(students.reduce((acc, s) => acc + (s.overallMastery || 0), 0) / cohortCount)
       : 0;
 
-  // Weakest Concept in Class for Teacher Dashboard (Section 5.5)
   const weakestConceptInClass = {
     name: 'Dynamic Programming & Memoization',
     score: 38,
     strugglingCount: 6,
   };
 
-  // Needs Attention students list (Section 5.1)
   const needsAttentionStudents = students.filter((s) => s.overallMastery < 50 || s.status === 'Needs Guidance');
 
-  // Sessions to Review (Section 5.2)
   const sessionsToReview = [
     {
       id: 'rev_02',
@@ -174,59 +164,71 @@ export function HomePage() {
   ];
 
   // =============================================================
-  // TEACHER / INSTRUCTOR COMMAND CENTER (Section 5)
+  // INSTRUCTOR HOME VIEW
   // =============================================================
   if (role === 'teacher') {
     return (
-      <div style={{ padding: '0 24px 32px 24px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
-        {/* Compact Greeting (Section 3.1 & 5) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-              {timeGreeting}, {user?.name || 'Instructor'}.
-            </h1>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
-              {needsAttentionStudents.length + sessionsToReview.length} student items require your review today.
-            </p>
+      <div className="home-workspace-container">
+        {/* Main Column */}
+        <div className="home-workspace-main">
+          {/* 1. Greeting line (24px, weight 600) with grey subline */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.01em', margin: 0 }}>
+                {timeGreeting}, {user?.name || 'Instructor'}
+              </h1>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
+                {needsAttentionStudents.length + sessionsToReview.length} student items require your review today in {teacherCourse.split(':')[0]}.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn-coral-pill btn-compact"
+                onClick={() => navigate('/teacher/content-upload')}
+              >
+                <UploadCloud size={14} strokeWidth={1.5} />
+                <span>Upload Syllabus</span>
+              </button>
+              <button
+                type="button"
+                className="btn-ghost-pill btn-compact"
+                onClick={() => navigate('/teacher/student-progress')}
+              >
+                <Users size={14} strokeWidth={1.5} />
+                <span>Class Roster</span>
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigate('/teacher/content-upload')}
-              style={{ padding: '7px 14px', fontSize: '12.5px' }}
-            >
-              <UploadCloud size={14} />
-              <span>Syllabus & Content</span>
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => navigate('/teacher/student-progress')}
-              style={{ padding: '7px 14px', fontSize: '12.5px' }}
-            >
-              <Users size={14} />
-              <span>Full Class Roster</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Top 2 Actionable Review Panels: "Who needs me right now?" (Sections 5.1 & 5.2) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '18px' }}>
-          {/* 5.1 Needs Attention Panel */}
-          <div className="saas-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle size={16} color="#FBBF24" />
-                <h3 style={{ fontSize: '14.5px', fontWeight: '700' }}>Needs Attention</h3>
+          {/* 2. "Needs Attention" List */}
+          <div
+            style={{
+              background: 'var(--surface)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-hairline)',
+              boxShadow: 'var(--shadow-card)',
+              padding: '22px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
+                  Intervention Queue
+                </div>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
+                  Needs Attention
+                </h3>
               </div>
-              <span className="badge-clean amber">{needsAttentionStudents.length} Students</span>
+              <Chip variant="warning" size="sm">
+                {needsAttentionStudents.length} Students
+              </Chip>
             </div>
 
             {needsAttentionStudents.length === 0 ? (
-              <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12.5px' }}>
-                No students currently in need of concept intervention.
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                All students currently meeting concept mastery targets.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -234,32 +236,43 @@ export function HomePage() {
                   <div
                     key={s.id}
                     onClick={() => navigate(`/teacher/student-progress?studentId=${s.id}`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') navigate(`/teacher/student-progress?studentId=${s.id}`);
+                    }}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '10px 12px',
+                      padding: '12px 14px',
                       background: 'var(--surface-muted)',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)',
+                      borderRadius: '14px',
+                      border: '1px solid var(--border-hairline)',
                       cursor: 'pointer',
-                      transition: 'border-color 140ms ease',
+                      transition: 'all 150ms ease',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary-border)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--coral)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-hairline)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
                   >
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>
-                        {s.name} ({s.rollNo})
+                      <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                        {s.name} <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '12px' }}>({s.rollNo})</span>
                       </div>
-                      <div style={{ fontSize: '11.5px', color: '#FBBF24', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--mastery-developing)', marginTop: '2px', fontWeight: 500 }}>
                         Struggling with {weakestConceptInClass.name} (3+ attempts)
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <MasteryBadge score={s.overallMastery} size="sm" />
-                      <ChevronRight size={13} color="var(--text-light)" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <MasteryChip score={s.overallMastery} size="sm" />
+                      <ChevronRight size={15} strokeWidth={1.5} color="var(--text-secondary)" />
                     </div>
                   </div>
                 ))}
@@ -267,425 +280,338 @@ export function HomePage() {
             )}
           </div>
 
-          {/* 5.2 Sessions to Review Panel */}
-          <div className="saas-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Shield size={16} color="var(--primary)" />
-                <h3 style={{ fontSize: '14.5px', fontWeight: '700' }}>Sessions to Review</h3>
+          {/* 3. "Sessions to review" List with "Open replay" pills */}
+          <div
+            style={{
+              background: 'var(--surface)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-hairline)',
+              boxShadow: 'var(--shadow-card)',
+              padding: '22px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
+                  Integrity & Verification
+                </div>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
+                  Sessions to Review
+                </h3>
               </div>
-              <span className="badge-clean blue">{sessionsToReview.length} Flagged</span>
+              <Chip variant="warning" size="sm">
+                {sessionsToReview.length} Flagged
+              </Chip>
             </div>
 
-            {sessionsToReview.length === 0 ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12.5px' }}>
-                No sessions to review. All clear.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {sessionsToReview.map((session) => (
-                  <div
-                    key={session.id}
-                    style={{
-                      padding: '12px 14px',
-                      background: 'rgba(245, 158, 11, 0.06)',
-                      borderRadius: '8px',
-                      border: '1px solid var(--warning-border)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-                          {session.studentName} &bull; {session.assessmentTitle}
-                        </div>
-                        <div style={{ fontSize: '11.5px', color: '#FBBF24', fontWeight: '600', marginTop: '2px' }}>
-                          {session.signalText}
-                        </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {sessionsToReview.map((session) => (
+                <div
+                  key={session.id}
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: '14px',
+                    background: 'var(--surface-muted)',
+                    border: '1px solid var(--border-hairline)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                        {session.studentName} &bull; {session.assessmentTitle}
                       </div>
-                      <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>
-                        {session.timestamp}
-                      </span>
+                      {/* Integrity signal: amber chip with wording "Review suggested", never red and never "cheating" */}
+                      <div style={{ marginTop: '4px' }}>
+                        <Chip variant="warning" size="sm">
+                          Review suggested
+                        </Chip>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                          Sudden large paste (+340 chars) at 02:14
+                        </span>
+                      </div>
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(245, 158, 11, 0.2)', paddingTop: '6px' }}>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => navigate(`/teacher/replay/${session.id}`)}
-                        style={{ padding: '4px 10px', fontSize: '11.5px', borderColor: 'var(--warning-border)' }}
-                      >
-                        <Terminal size={12} />
-                        <span>Open Replay</span>
-                      </button>
-                    </div>
+                    <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                      {session.timestamp}
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--border-hairline)' }}>
+                    <button
+                      type="button"
+                      className="btn-ghost-pill btn-compact"
+                      onClick={() => navigate(`/teacher/replay/${session.id}`)}
+                    >
+                      <Terminal size={13} strokeWidth={1.5} />
+                      <span>Open Replay</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* 4. Class Mastery Heatmap Card */}
+          <ClassHeatmap students={students} concepts={allConcepts} />
         </div>
 
-        {/* 5.5 Class Average Mastery with Context */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-          <div className="saas-card" style={{ padding: '16px' }}>
-            <div style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
-              Class Average Mastery
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#34D399', letterSpacing: '-0.02em' }}>
-                {avgCohortMastery}%
+        {/* Right Rail for Instructor View */}
+        <aside
+          className="home-workspace-sidebar"
+          aria-label="Instructor Sidebar"
+          style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}
+        >
+          {/* Cohort Mastery Ring */}
+          <RailCard title="Cohort Mastery">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <ProgressRing progress={avgCohortMastery} size={64} strokeWidth={5} color="var(--mastery-solid)" />
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  {avgCohortMastery}% Average
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Across {cohortCount} students
+                </div>
               </div>
-              <MasteryBadge score={avgCohortMastery} size="sm" />
             </div>
-            <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Calculated across all {allConcepts.length || 6} concepts
-            </div>
-          </div>
+          </RailCard>
 
-          <div className="saas-card" style={{ padding: '16px' }}>
-            <div style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
-              Weakest Concept in Class
+          {/* Weakest Concepts Card */}
+          <RailCard title="Weakest Concept">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                {weakestConceptInClass.name}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <MasteryChip score={weakestConceptInClass.score} size="sm" />
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  {weakestConceptInClass.strugglingCount} students developing
+                </span>
+              </div>
             </div>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)' }}>
-              {weakestConceptInClass.name}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-              <MasteryBadge score={weakestConceptInClass.score} size="sm" />
-              <span style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>
-                {weakestConceptInClass.strugglingCount} students developing
-              </span>
-            </div>
-          </div>
+          </RailCard>
 
-          <div className="saas-card" style={{ padding: '16px' }}>
-            <div style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
-              Active Cohort Size
-            </div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-              {cohortCount}
-            </div>
-            <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Enrolled in {teacherCourse.split(':')[0]}
-            </div>
-          </div>
-        </div>
-
-        {/* 5.3 Class Mastery Heatmap */}
-        <ClassHeatmap students={students} concepts={allConcepts} />
-
-        {/* 5.4 Pending Approval Queue */}
-        <PendingApprovalQueue />
+          {/* Pending Approvals Checklist with Approve/Edit pills */}
+          <PendingApprovalQueue />
+        </aside>
       </div>
     );
   }
 
   // =============================================================
-  // STUDENT WORK-FIRST COMMAND CENTER (Priority 1)
+  // STUDENT WORK-FIRST COMMAND CENTER
   // =============================================================
   return (
-    <div style={{ padding: '0 24px 32px 24px' }}>
-      <div className="home-workspace-container">
-        {/* Main Learning Center Column (Visual Priority) */}
-        <div className="home-workspace-main">
-          {/* 3.1 Compact Greeting */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                {timeGreeting}, {firstName}.
-              </h1>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                You have {pendingTaskCount} {pendingTaskCount === 1 ? 'activity' : 'activities'} scheduled for practice today.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => navigate('/content/concepts')}
-              style={{ padding: '6px 14px', fontSize: '12.5px' }}
-            >
-              <Layers size={14} />
-              <span>Full Concept Graph</span>
-            </button>
+    <div className="home-workspace-container">
+      {/* Main Column */}
+      <div className="home-workspace-main">
+        {/* 1. Greeting Line (24px, weight 600) with grey subline */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.01em', margin: 0 }}>
+              {timeGreeting}, {firstName}
+            </h1>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
+              You have {pendingTaskCount} {pendingTaskCount === 1 ? 'activity' : 'activities'} scheduled for practice today.
+            </p>
           </div>
 
-          {/* 3.2 RECOMMENDED NEXT ACTION CARD (POSITIONED FIRST!) */}
-          <div
-            className="saas-card"
-            style={{
-              padding: '20px 22px',
-              borderRadius: '12px',
-              background: 'var(--surface)',
-              border: '1px solid var(--primary-border)',
-              borderLeft: '4px solid var(--primary)',
-              boxShadow: 'var(--card-shadow)',
-            }}
+          <button
+            type="button"
+            className="btn-ghost-pill btn-compact"
+            onClick={() => navigate('/content/concepts')}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-              <div style={{ flex: 1, minWidth: '280px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <span
-                    style={{
-                      fontSize: '10.5px',
-                      fontWeight: '800',
-                      textTransform: 'uppercase',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      background: 'var(--primary)',
-                      color: '#FFFFFF',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    Recommended Next Action
-                  </span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>
-                    Target: <strong>{recommendation.conceptName}</strong> ({recommendation.targetMastery}% · Developing)
-                  </span>
-                </div>
+            <Layers size={14} strokeWidth={1.5} />
+            <span>Curriculum Graph</span>
+          </button>
+        </div>
 
-                <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', marginTop: '4px' }}>
-                  {recommendation.title}
-                </h2>
-
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.5', maxWidth: '640px' }}>
-                  {recommendation.description}
-                </p>
-
-                {/* Restrained metadata row */}
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '14px', fontSize: '12px', color: 'var(--text-light)', marginTop: '12px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Clock size={13} />
-                    <span>Estimated duration: <strong>{recommendation.duration}</strong></span>
-                  </span>
-                  <span>&bull;</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <HelpCircle size={13} />
-                    <span>{recommendation.questionCount}</span>
-                  </span>
-                  <span>&bull;</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Sparkles size={13} color="var(--primary)" />
-                    <span>{recommendation.difficulty} Diagnostic</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Action Buttons: Start Activity & Why This? */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setWhyThisOpen(true)}
-                  style={{ padding: '8px 14px', fontSize: '12.5px' }}
-                  title="Inspect adaptive prerequisite reasoning"
-                >
-                  <Info size={14} color="var(--primary)" />
-                  <span>Why this?</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => navigate(recommendation.route)}
-                  style={{ padding: '8px 18px', fontSize: '13px' }}
-                >
-                  <span>Start Activity</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 3.4 KPIs ROW BENEATH THE ACTION CARD */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-            {/* KPI 1: Overall Concept Mastery (Circular Ring) */}
-            <div className="saas-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Overall Mastery
-                </span>
-                <TrendingUp size={14} color="var(--primary)" />
-              </div>
-              <MasteryRing score={studentMastery} size={84} strokeWidth={7} />
-            </div>
-
-            {/* KPI 2: Concepts Mastered */}
-            <div className="saas-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Concepts Mastered
-                  </span>
-                  <Layers size={14} color="var(--primary)" />
-                </div>
-                <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                  {solidConceptsCount} <span style={{ fontSize: '15px', fontWeight: '500', color: 'var(--text-light)' }}>of {totalConceptsCount}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
-                <span className="badge-clean green" style={{ fontSize: '10.5px' }}>
-                  {Math.round((solidConceptsCount / (totalConceptsCount || 1)) * 100)}% of curriculum
-                </span>
-                <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>Solid (&gt;70%)</span>
-              </div>
-            </div>
-
-            {/* KPI 3: Current Learning Streak */}
-            <div className="saas-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Learning Streak
-                  </span>
-                  <Flame size={14} color="#F97316" />
-                </div>
-                <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                  4 <span style={{ fontSize: '15px', fontWeight: '500', color: 'var(--text-light)' }}>Days Active</span>
-                </div>
-              </div>
-              <div style={{ fontSize: '11.5px', color: '#10B981', marginTop: '8px', fontWeight: '600' }}>
-                Daily practice maintained
-              </div>
-            </div>
-
-            {/* KPI 4: Practice Time This Week */}
-            <div className="saas-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Practiced This Week
-                  </span>
-                  <Clock size={14} color="var(--primary)" />
-                </div>
-                <div style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                  3.8 <span style={{ fontSize: '15px', fontWeight: '500', color: 'var(--text-light)' }}>hrs</span>
-                </div>
-              </div>
-              <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '8px' }}>
-                Across quizzes & code sandbox
-              </div>
-            </div>
-          </div>
-
-          {/* 3.6 MINI CONCEPT-MAP PREVIEW */}
-          <MiniConceptMap concepts={allConcepts} activeConceptId={targetConcept.id} />
-
-          {/* Quick Learning Focus Sandbox Card */}
+        {/* 2. HERO CARD for "Recommended next action" */}
+        {/* large (min 260px), 24px radius, soft coral-to-warm gradient on one side showing a mini concept-path graphic, title, one-line reason, meta chips (8 min · 5 questions · Adaptive), coral pill "Start activity" button and ghost pill "Why this?" button that opens popover with prerequisite path. No left border strip. */}
+        <div
+          className="hero-action-card"
+          style={{
+            minHeight: '260px',
+            borderRadius: '24px',
+            background: 'var(--surface)',
+            border: '1px solid var(--border-hairline)',
+            boxShadow: 'var(--shadow-card)',
+            padding: '28px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Soft coral-to-warm gradient background graphic */}
           <div
-            className="saas-card"
             style={{
-              padding: '18px 20px',
-              borderRadius: '12px',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: '40%',
+              background: 'radial-gradient(ellipse at 80% 30%, var(--coral-soft) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              zIndex: 0,
             }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Code2 size={16} color="var(--primary)" />
-                <div>
-                  <h3 style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-                    Active Topic: Hash Collisions & Open Addressing
-                  </h3>
-                  <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '2px', margin: 0 }}>
-                    Linear probing, quadratic probing, and separate chaining algorithms
-                  </p>
-                </div>
-              </div>
+            aria-hidden="true"
+          />
 
-              <span className="badge-clean blue" style={{ fontSize: '11px' }}>
-                In Progress
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: 'var(--coral)',
+                  background: 'var(--coral-soft)',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-pill)',
+                }}
+              >
+                Recommended Next Action
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                Target: {recommendation.conceptName} (48% · Developing)
               </span>
             </div>
 
-            <div
+            <h2
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '12px',
-                marginTop: '12px',
+                fontSize: '20px',
+                fontWeight: 600,
+                color: 'var(--text-main)',
+                letterSpacing: '-0.01em',
+                margin: '6px 0 0 0',
               }}
             >
-              <div
-                onClick={() => navigate('/content/quizzes')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') navigate('/content/quizzes'); }}
-                style={{
-                  padding: '12px 14px',
-                  borderRadius: '8px',
-                  background: 'var(--surface-muted)',
-                  border: '1px solid var(--border)',
-                  cursor: 'pointer',
-                  transition: 'border-color 140ms ease',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-              >
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>
-                    Diagnostic Quiz
-                  </div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '2px' }}>
-                    5 adaptive questions &bull; 8 min
-                  </div>
-                </div>
-                <ArrowRight size={14} color="var(--primary)" />
-              </div>
+              {recommendation.title}
+            </h2>
 
-              <div
-                onClick={() => navigate('/content/coding')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') navigate('/content/coding'); }}
-                style={{
-                  padding: '12px 14px',
-                  borderRadius: '8px',
-                  background: 'var(--surface-muted)',
-                  border: '1px solid var(--border)',
-                  cursor: 'pointer',
-                  transition: 'border-color 140ms ease',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-              >
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>
-                    Coding Sandbox
-                  </div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '2px' }}>
-                    Implement HashTable class & handle collisions
-                  </div>
-                </div>
-                <ArrowRight size={14} color="var(--primary)" />
-              </div>
+            {/* One-line reason */}
+            <p
+              style={{
+                fontSize: '13.5px',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.5',
+                marginTop: '6px',
+                marginBottom: 0,
+              }}
+            >
+              Strengthen Hash Functions bottleneck retention before advancing to hierarchical tree structures.
+            </p>
+
+            {/* Meta chips (8 min · 5 questions · Adaptive) */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+              <Chip variant="default" size="sm">
+                <Clock size={12} strokeWidth={1.5} style={{ marginRight: '4px' }} />
+                8 min
+              </Chip>
+              <Chip variant="default" size="sm">
+                <HelpCircle size={12} strokeWidth={1.5} style={{ marginRight: '4px' }} />
+                5 questions
+              </Chip>
+              <Chip variant="default" size="sm">
+                Adaptive
+              </Chip>
             </div>
+          </div>
+
+          {/* Buttons: coral pill "Start activity" + ghost pill "Why this?" */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '22px', position: 'relative', zIndex: 1 }}>
+            <button
+              type="button"
+              className="btn-coral-pill"
+              onClick={() => navigate(recommendation.route)}
+            >
+              <span>Start activity</span>
+              <ArrowRight size={14} strokeWidth={1.5} />
+            </button>
+
+            <button
+              type="button"
+              className="btn-ghost-pill"
+              onClick={() => setWhyThisOpen(true)}
+            >
+              <Info size={14} strokeWidth={1.5} color="var(--text-secondary)" />
+              <span>Why this?</span>
+            </button>
           </div>
         </div>
 
-        {/* Right Contextual Sidebar Column (Secondary Context) */}
-        <div className="home-workspace-sidebar">
-          <RightContextSidebar
-            recommendation={recommendation}
-            pendingQuizzes={pendingQuizzes}
-            pendingAssessments={pendingAssessments}
-            completedQuizzes={completedQuizzes}
-            completedAssessments={completedAssessments}
-            onOpenWhyThis={() => setWhyThisOpen(true)}
+        {/* 3. ROW OF 3-4 COMPACT STAT CARDS */}
+        {/* Each has small uppercase grey label, large number (28px weight 600), one grey caption. No tinted inner boxes. */}
+        <div className="stat-cards-grid">
+          {/* Stat 1: Mastery Ring */}
+          <div
+            style={{
+              background: 'var(--surface)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-hairline)',
+              boxShadow: 'var(--shadow-card)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Overall Mastery
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0' }}>
+              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                {studentMastery}%
+              </div>
+              <ProgressRing progress={studentMastery} size={46} strokeWidth={4} color="var(--coral)" />
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              Curriculum average
+            </div>
+          </div>
+
+          {/* Stat 2: Concepts Mastered */}
+          <StatCard
+            label="Concepts Mastered"
+            value={`${solidConceptsCount} of ${totalConceptsCount}`}
+            caption="Solid mastery (&gt;70%)"
+          />
+
+          {/* Stat 3: Streak */}
+          <StatCard
+            label="Streak"
+            value="4 days"
+            caption="Daily practice maintained"
+          />
+
+          {/* Stat 4: Hours this week */}
+          <StatCard
+            label="Hours This Week"
+            value="3.8 hrs"
+            caption="Across quizzes & code"
           />
         </div>
+
+        {/* 4. CONCEPT PATH: Horizontal scroller of rounded step cards with mastery chip and arrows; recommended step has coral outline and Next pill */}
+        <MiniConceptMap concepts={allConcepts} activeConceptId={targetConcept.id} />
       </div>
 
-      {/* 3.3 Functional "Why this?" Modal Dialog */}
+      {/* Right Rail (320px, stacked cards, same card style, 16px gap) */}
+      <RightContextSidebar
+        recommendation={recommendation}
+        pendingQuizzes={pendingQuizzes}
+        pendingAssessments={pendingAssessments}
+        completedQuizzes={completedQuizzes}
+        completedAssessments={completedAssessments}
+        onOpenWhyThis={() => setWhyThisOpen(true)}
+      />
+
+      {/* "Why this?" Modal with prerequisite path popover */}
       <WhyThisModal
         isOpen={whyThisOpen}
         onClose={() => setWhyThisOpen(false)}
@@ -693,7 +619,6 @@ export function HomePage() {
         onStartActivity={() => navigate(recommendation.route)}
       />
 
-      {/* 8. First-run Onboarding Tour */}
       <OnboardingTour role={role} />
     </div>
   );

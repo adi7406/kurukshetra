@@ -1,61 +1,94 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layers, ArrowRight } from 'lucide-react';
-import { getMasteryLevel, normalizeMastery } from '../../utils/mastery';
+import MasteryChip from '../common/MasteryChip';
+import { normalizeMastery } from '../../utils/mastery';
 
 export function MiniConceptMap({ concepts = [], activeConceptId }) {
   const navigate = useNavigate();
 
-  // Pick top key concepts if list is long (up to 5)
+  // Top sequential concepts
   const displayConcepts = concepts.slice(0, 5);
 
   return (
-    <div className="saas-card" style={{ padding: '18px 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Layers size={16} color="var(--primary)" />
-          <div>
-            <h3 style={{ fontSize: '14.5px', fontWeight: '700' }}>Concept Prerequisite Path</h3>
-            <p style={{ fontSize: '11.5px', color: 'var(--text-light)', marginTop: '1px' }}>
-              Sequential dependency flow & mastery states
-            </p>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border-hairline)',
+        borderRadius: '20px',
+        boxShadow: 'var(--shadow-card)',
+        padding: '20px 24px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: '11.5px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: 'var(--text-secondary)',
+              marginBottom: '2px',
+            }}
+          >
+            Concept Path
           </div>
+          <h3
+            style={{
+              fontSize: '16px',
+              fontWeight: 600,
+              color: 'var(--text-main)',
+              margin: 0,
+            }}
+          >
+            Curriculum Sequence
+          </h3>
         </div>
 
         <button
           type="button"
-          className="btn-secondary"
+          className="btn-ghost-pill btn-compact"
           onClick={() => navigate('/content/concepts')}
-          style={{ padding: '5px 12px', fontSize: '12px' }}
         >
-          <span>Open Full Graph</span>
-          <ArrowRight size={13} />
+          <span>Full Concept Graph</span>
+          <ArrowRight size={13} strokeWidth={1.5} />
         </button>
       </div>
 
-      {/* Interactive Horizontal Concept Flow Line */}
+      {/* Horizontal Scroller of Rounded Step Cards with Arrows */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '12px',
           overflowX: 'auto',
-          padding: '6px 2px 10px 2px',
+          padding: '6px 2px 14px 2px',
         }}
         tabIndex={0}
         aria-label="Horizontal prerequisite concept path"
       >
         {displayConcepts.map((c, index) => {
-          const rawScore = c.masteryScore ?? c.mastery ?? (index === 0 ? 0.94 : index === 1 ? 0.72 : index === 2 ? 0.48 : index === 3 ? 0.86 : 0.38);
+          const rawScore =
+            c.masteryScore ??
+            c.mastery ??
+            (index === 0 ? 94 : index === 1 ? 72 : index === 2 ? 48 : index === 3 ? 86 : 38);
           const normalizedScore = normalizeMastery(rawScore);
-          const meta = getMasteryLevel(normalizedScore);
           const isTarget = c.id === activeConceptId || index === 2;
+          const isLast = index === displayConcepts.length - 1;
 
           return (
             <React.Fragment key={c.id || index}>
               <div
                 onClick={() => navigate(`/content/concepts`)}
-                title={`${c.name || c.title}: ${normalizedScore}% · ${meta.label}`}
+                title={`${c.name || c.title}: ${normalizedScore}%`}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -66,51 +99,56 @@ export function MiniConceptMap({ concepts = [], activeConceptId }) {
                 }}
                 style={{
                   flexShrink: 0,
-                  width: '185px',
-                  padding: '12px 14px',
-                  borderRadius: '8px',
-                  background: isTarget ? 'rgba(37, 99, 235, 0.08)' : 'var(--surface-muted)',
-                  border: isTarget ? '2px solid var(--primary)' : '1px solid var(--border)',
+                  width: '190px',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  background: isTarget ? 'var(--coral-soft)' : 'var(--surface-muted)',
+                  border: isTarget ? '2px solid var(--coral)' : '1px solid var(--border-hairline)',
                   cursor: 'pointer',
-                  transition: 'border-color 140ms ease, transform 140ms ease',
+                  transition: 'all 150ms ease',
                   position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--primary)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  if (!isTarget) e.currentTarget.style.borderColor = 'var(--coral)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = isTarget ? 'var(--primary)' : 'var(--border)';
+                  if (!isTarget) e.currentTarget.style.borderColor = 'var(--border-hairline)';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
+                {/* Recommended step has a Next pill */}
                 {isTarget && (
                   <div
                     style={{
                       position: 'absolute',
-                      top: '-9px',
-                      left: '10px',
-                      background: 'var(--primary)',
+                      top: '-10px',
+                      left: '14px',
+                      background: 'var(--coral)',
                       color: '#FFFFFF',
-                      fontSize: '9px',
-                      fontWeight: '800',
-                      padding: '1px 6px',
-                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-pill)',
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
+                      boxShadow: '0 2px 6px rgba(255, 91, 55, 0.3)',
                     }}
                   >
-                    Recommended
+                    Next
                   </div>
                 )}
 
                 <div
                   style={{
-                    fontSize: '12.5px',
-                    fontWeight: '700',
+                    fontSize: '13px',
+                    fontWeight: 600,
                     color: 'var(--text-main)',
-                    lineHeight: '1.35',
-                    height: '34px',
+                    lineHeight: '1.4',
+                    minHeight: '36px',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -118,50 +156,36 @@ export function MiniConceptMap({ concepts = [], activeConceptId }) {
                     textOverflow: 'ellipsis',
                   }}
                 >
-                  {c.name || c.title}
+                  {c.name || c.title || `Concept Module ${index + 1}`}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '500' }}>
-                    Step {index + 1}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <MasteryChip score={normalizedScore} size="sm" />
                   <span
                     style={{
-                      fontSize: '11.5px',
-                      fontWeight: '700',
-                      color: meta.textLight,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: 'var(--text-main)',
                     }}
                   >
-                    <span
-                      style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        background: meta.color,
-                        flexShrink: 0,
-                      }}
-                      aria-hidden="true"
-                    />
-                    <span>{meta.score}% · {meta.label}</span>
+                    {normalizedScore}%
                   </span>
                 </div>
               </div>
 
-              {index < displayConcepts.length - 1 && (
+              {/* Arrow between step cards */}
+              {!isLast && (
                 <div
                   style={{
-                    color: 'var(--text-light)',
+                    color: 'var(--text-secondary)',
+                    opacity: 0.6,
+                    flexShrink: 0,
                     display: 'flex',
                     alignItems: 'center',
-                    flexShrink: 0,
-                    padding: '0 2px',
                   }}
                   aria-hidden="true"
                 >
-                  <ArrowRight size={14} />
+                  <ArrowRight size={16} strokeWidth={1.5} />
                 </div>
               )}
             </React.Fragment>
