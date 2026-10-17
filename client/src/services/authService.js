@@ -94,6 +94,7 @@ export const authService = {
       courseTaught: courseTaught || 'General Computer Science',
     };
 
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
     return sessionUser;
   },
@@ -145,6 +146,7 @@ export const authService = {
       enrolledCourse: courseName || 'General Computer Science',
     };
 
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
     return sessionUser;
   },
@@ -180,8 +182,20 @@ export const authService = {
       token,
     };
 
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
     return sessionUser;
+  },
+
+  /**
+   * Set isolated session specifically for current tab
+   */
+  setTabUser(user) {
+    if (!user) {
+      sessionStorage.removeItem(SESSION_KEY);
+    } else {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    }
   },
 
   /**
@@ -189,6 +203,7 @@ export const authService = {
    */
   async logout() {
     try {
+      sessionStorage.removeItem(SESSION_KEY);
       localStorage.removeItem(SESSION_KEY);
       localStorage.removeItem('pathwise_progress_store');
       localStorage.removeItem('pathwise_quizzes_store');
@@ -200,11 +215,13 @@ export const authService = {
   },
 
   /**
-   * Get current stored session user
+   * Get current stored session user (prioritizes tab-isolated sessionStorage)
    */
   getCurrentUser() {
     try {
-      const stored = localStorage.getItem(SESSION_KEY);
+      const stored =
+        sessionStorage.getItem(SESSION_KEY) ||
+        localStorage.getItem(SESSION_KEY);
       if (stored) {
         return JSON.parse(stored);
       }
@@ -216,8 +233,47 @@ export const authService = {
 
   /**
    * Check and restore active session on app startup
+   * Supports ?launch=student or ?launch=teacher URL params for seamless dual-tab launch
    */
   async checkSession() {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const launchRole = params.get('launch') || params.get('role');
+      if (launchRole === 'student') {
+        const studentUser = {
+          id: 'student_masterpath_demo',
+          name: 'Alex Chen (Student)',
+          email: 'student@masterpath.ai',
+          role: 'student',
+          token: 'mock_token_student_masterpath_demo_session',
+          enrolledCourse: 'CS201 Data Structures & Algorithms (DSA)',
+        };
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(studentUser));
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch {
+          // ignore
+        }
+        return studentUser;
+      } else if (launchRole === 'teacher' || launchRole === 'trainer') {
+        const teacherUser = {
+          id: 'teacher_masterpath_demo',
+          name: 'Dr. Katherine Vance (Instructor)',
+          email: 'teacher@masterpath.ai',
+          role: 'teacher',
+          token: 'mock_token_teacher_masterpath_demo_session',
+          courseTaught: 'CS201 Data Structures & Algorithms (DSA)',
+        };
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(teacherUser));
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch {
+          // ignore
+        }
+        return teacherUser;
+      }
+    }
+
     const user = this.getCurrentUser();
     if (!user) return null;
     try {
@@ -242,6 +298,7 @@ export const authService = {
           ...profile,
           role: profile.role === 'trainer' ? 'teacher' : (profile.role || current.role),
         };
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
         localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
         return updated;
       }
@@ -264,6 +321,7 @@ export const authService = {
       name: profile?.display_name || current.name,
       role: profile?.role === 'trainer' ? 'teacher' : (profile?.role || current.role),
     };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
     localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
     return updated;
   },

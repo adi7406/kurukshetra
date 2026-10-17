@@ -3,10 +3,14 @@ import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.
 
 export const PERMITTED_SIGNAL_TYPES = [
   'rapid_paste',
+  'large_pastes',
   'multiple_focus_loss',
   'excessive_blur',
   'unusual_timeline_gap',
   'time_anomaly',
+  'fast_typing_rhythm',
+  'no_write_run_fix_cycle',
+  'no_corrections_uniform_typing',
 ];
 
 export const VALID_REVIEW_STATUSES = [
@@ -23,6 +27,12 @@ export const SIGNAL_TYPE_METADATA = {
     description: 'A sudden large insertion or paste of code without incremental typing.',
     baselineContext: 'May indicate external snippet copying or legitimate clipboard use.',
     defaultConfidence: 0.65,
+  },
+  large_pastes: {
+    name: 'Large Pastes Detected',
+    description: 'A large paste of complete code or major snippets without incremental typing.',
+    baselineContext: 'May indicate external source code insertion or clipboard dumping.',
+    defaultConfidence: 0.90,
   },
   multiple_focus_loss: {
     name: 'Multiple Focus Loss',
@@ -47,6 +57,24 @@ export const SIGNAL_TYPE_METADATA = {
     description: 'Complex problem solved or submitted in an implausibly short duration.',
     baselineContext: 'May indicate prior problem familiarity or prepared solution insertion.',
     defaultConfidence: 0.7,
+  },
+  fast_typing_rhythm: {
+    name: 'Code Appearing Faster Than Typing Rhythm',
+    description: 'Code appearing at an inhuman velocity exceeding natural typing cadence (>14 chars/sec).',
+    baselineContext: 'May indicate macro injection, automation, or rapid paste simulator.',
+    defaultConfidence: 0.85,
+  },
+  no_write_run_fix_cycle: {
+    name: 'No Write-Run-Fix Cycle',
+    description: 'Solution was submitted without executing sample test suites or iterative debugging.',
+    baselineContext: 'Normal development involves incremental test runs and syntax verification.',
+    defaultConfidence: 0.82,
+  },
+  no_corrections_uniform_typing: {
+    name: 'Code Typed Evenly With No Corrections',
+    description: 'Code entered with perfectly uniform speed and zero deletions/backspaces across 100+ chars.',
+    baselineContext: 'Natural typing typically includes pauses, backspaces, and typographic edits.',
+    defaultConfidence: 0.80,
   },
 };
 
@@ -272,6 +300,99 @@ export const integrityService = {
           });
         }
       }
+    }
+
+    // Detector 4: Large Pastes Detector
+    for (const ev of events) {
+      let pasteLen = 0;
+      if (ev.event_type === 'paste') {
+        pasteLen = ev.payload?.text?.length || ev.payload?.length || ev.payload?.charLength || 0;
+      } else if (ev.event_type === 'document_change' && (ev.payload?.inserted?.length || ev.payload?.delta || 0) >= 60) {
+        pasteLen = ev.payload?.inserted?.length || ev.payload?.delta || 0;
+      }
+      if (pasteLen >= 60) {
+        detectedSignals.push({
+          signalType: 'large_pastes',
+          confidence: 0.90,
+          occurredAt: ev.occurred_at,
+          evidence: {
+            eventSequence: ev.sequence_number,
+            eventType: ev.event_type,
+            length: pasteLen,
+            rationale: `Large code paste detected: ${pasteLen} characters inserted at once.`,
+          },
+        });
+      }
+    }
+
+    // Detector 5: Code Appearing Faster Than Typing Rhythm
+    let fastTypingBursts = 0;
+    for (let i = 0; i < events.length - 1; i++) {
+      const curr = events[i];
+      const next = events[i + 1];
+      if (
+        (curr.event_type === 'keystroke' || curr.event_type === 'document_change') &&
+        (next.event_type === 'keystroke' || next.event_type === 'document_change')
+      ) {
+        const msDiff = new Date(next.occurred_at).getTime() - new Date(curr.occurred_at).getTime();
+        const delta = Math.abs(next.payload?.delta || next.payload?.charCount || 1);
+        if (msDiff > 0 && msDiff < 100 && delta >= 3) {
+          fastTypingBursts++;
+        }
+      }
+    }
+    if (fastTypingBursts >= 2) {
+      detectedSignals.push({
+        signalType: 'fast_typing_rhythm',
+        confidence: 0.85,
+        occurredAt: events[0]?.occurred_at || new Date().toISOString(),
+        evidence: {
+          fastTypingBursts,
+          rationale: 'Code appeared significantly faster than natural student typing rhythm (>14 chars/sec).',
+        },
+      });
+    }
+
+    // Detector 6: No Write-Run-Fix Cycle
+    const runEvents = events.filter((e) => e.event_type === 'run');
+    const submitEvents = events.filter((e) => e.event_type === 'submit');
+    if (submitEvents.length > 0 && runEvents.length === 0) {
+      detectedSignals.push({
+        signalType: 'no_write_run_fix_cycle',
+        confidence: 0.82,
+        occurredAt: submitEvents[0].occurred_at,
+        evidence: {
+          runCount: 0,
+          submitCount: submitEvents.length,
+          rationale: 'Absence of iterative write-run-fix cycle: student submitted solution without running local test suites.',
+        },
+      });
+    }
+
+    // Detector 7: Code Typed Evenly With No Corrections
+    const deletionEvents = events.filter(
+      (e) =>
+        e.event_type === 'deletion' ||
+        (e.event_type === 'document_change' && (e.payload?.delta < 0 || e.payload?.action === 'delete'))
+    );
+    const totalCharsTyped = events.reduce((sum, e) => {
+      if (e.event_type === 'keystroke' || e.event_type === 'document_change') {
+        const d = e.payload?.delta || e.payload?.charCount || 0;
+        return d > 0 ? sum + d : sum;
+      }
+      return sum;
+    }, 0);
+    if (totalCharsTyped >= 80 && deletionEvents.length === 0) {
+      detectedSignals.push({
+        signalType: 'no_corrections_uniform_typing',
+        confidence: 0.80,
+        occurredAt: events[events.length - 1]?.occurred_at || new Date().toISOString(),
+        evidence: {
+          totalCharsTyped,
+          deletions: 0,
+          rationale: 'Code typed with uniform cadence and zero backspace corrections across entire implementation.',
+        },
+      });
     }
 
     // Persist all detected signals

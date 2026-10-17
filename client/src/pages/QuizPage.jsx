@@ -19,6 +19,7 @@ import LoadingState from '../components/feedback/LoadingState';
 import EmptyState from '../components/feedback/EmptyState';
 import Chip from '../components/common/Chip';
 import MasteryChip from '../components/common/MasteryChip';
+import { subscribeToLiveSync } from '../utils/liveSync';
 
 export function QuizPage() {
   const { quizId } = useParams();
@@ -47,6 +48,10 @@ export function QuizPage() {
 
   useEffect(() => {
     loadQuizzes();
+    const unsubscribe = subscribeToLiveSync(() => {
+      loadQuizzes();
+    });
+    return () => unsubscribe();
   }, [quizId, conceptParam, targetQuizId]);
 
   async function loadQuizzes() {

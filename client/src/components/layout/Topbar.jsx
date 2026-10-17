@@ -11,6 +11,7 @@ import {
   ChevronRight,
   GraduationCap,
   Shield,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
@@ -280,8 +281,48 @@ export function Topbar({ onToggleMobileSidebar }) {
             }}
           >
             {role === 'teacher' ? <Shield size={13} strokeWidth={1.5} /> : <GraduationCap size={13} strokeWidth={1.5} />}
-            <span>{role === 'teacher' ? 'Instructor Workspace' : 'Student Workspace'}</span>
+            <span>{role === 'teacher' ? 'Instructor' : 'Student'}</span>
           </div>
+
+          {/* Dual-Tab Live Studio Launcher */}
+          <button
+            type="button"
+            className="topbar-live-launcher-btn"
+            onClick={() => {
+              const target = role === 'teacher' ? '/?launch=student' : '/?launch=teacher';
+              window.open(target, '_blank');
+            }}
+            title={role === 'teacher' ? 'Launch Student View in synchronized second tab' : 'Launch Instructor Studio in synchronized second tab'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '7px',
+              height: '32px',
+              padding: '0 12px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid var(--border-hairline)',
+              background: 'var(--surface-muted)',
+              color: 'var(--text-main)',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 140ms ease',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: '#10B981',
+                boxShadow: '0 0 6px #10B981',
+                display: 'inline-block',
+              }}
+            />
+            <span>{role === 'teacher' ? 'Open Student Tab' : 'Open Instructor Tab'}</span>
+            <ExternalLink size={12} strokeWidth={1.5} color="var(--text-secondary)" />
+          </button>
 
           {/* Circular 36px Notifications Button with Dot */}
           <button

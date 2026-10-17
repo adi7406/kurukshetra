@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../services/authService';
+import MasterPathLogo from '../../components/common/MasterPathLogo';
 
 export function LoginPage() {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
@@ -150,43 +151,9 @@ export function LoginPage() {
           />
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Brand Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  backgroundColor: '#2A2A32',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--coral)',
-                }}
-              >
-                <GraduationCap size={20} strokeWidth={1.5} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
-                  Pathwise
-                </span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    padding: '2px 8px',
-                    borderRadius: 'var(--radius-pill)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                  }}
-                >
-                  Beta
-                </span>
-              </div>
+            {/* MasterPath Official Brand Logo */}
+            <div style={{ marginBottom: '32px' }}>
+              <MasterPathLogo variant="full" height={42} />
             </div>
 
             <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: '12px' }}>

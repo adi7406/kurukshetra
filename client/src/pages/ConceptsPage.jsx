@@ -25,6 +25,7 @@ import Chip from '../components/common/Chip';
 import { normalizeMastery } from '../utils/mastery';
 import { ConceptDiagram } from '../components/common/ConceptDiagram';
 import MiniConceptMap from '../components/home/MiniConceptMap';
+import { subscribeToLiveSync } from '../utils/liveSync';
 
 export function ConceptsPage() {
   const navigate = useNavigate();
@@ -74,9 +75,10 @@ export function ConceptsPage() {
     }
     loadConcepts();
 
-    const handleSync = () => loadConcepts();
-    window.addEventListener('pathwise_curriculum_updated', handleSync);
-    return () => window.removeEventListener('pathwise_curriculum_updated', handleSync);
+    const unsubscribe = subscribeToLiveSync(() => {
+      loadConcepts();
+    });
+    return () => unsubscribe();
   }, [conceptId]);
 
   if (loading) {

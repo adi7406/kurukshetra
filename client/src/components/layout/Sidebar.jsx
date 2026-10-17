@@ -13,6 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import MasterPathLogo from '../common/MasterPathLogo';
 
 export function Sidebar({ isOpen, onCloseMobile }) {
   const { user, role, logout } = useAuth();
@@ -34,7 +35,7 @@ export function Sidebar({ isOpen, onCloseMobile }) {
         .join('')
         .slice(0, 2)
         .toUpperCase()
-    : 'PW';
+    : 'MP';
 
   return (
     <aside
@@ -42,13 +43,9 @@ export function Sidebar({ isOpen, onCloseMobile }) {
       aria-label="Main Application Navigation"
     >
       {/* Brand at top */}
-      <div className="sidebar-brand-wrapper">
-        <NavLink to="/home" className="sidebar-brand" onClick={handleLinkClick}>
-          <div className="sidebar-brand-icon">
-            <GraduationCap size={18} strokeWidth={1.5} />
-          </div>
-          <span className="sidebar-brand-title">Pathwise</span>
-          <span className="sidebar-brand-tag">ADAPTIVE</span>
+      <div className="sidebar-brand-wrapper" style={{ padding: '16px 18px 12px 18px' }}>
+        <NavLink to="/home" className="sidebar-brand" onClick={handleLinkClick} style={{ textDecoration: 'none' }}>
+          <MasterPathLogo variant="full" height={32} />
         </NavLink>
       </div>
 

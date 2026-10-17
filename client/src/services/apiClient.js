@@ -34,7 +34,9 @@ export async function request(endpoint, options = {}) {
 
   if (!headers.Authorization && !headers.authorization && typeof window !== 'undefined') {
     try {
-      const stored = localStorage.getItem('pathwise_active_session');
+      const stored =
+        sessionStorage.getItem('pathwise_active_session') ||
+        localStorage.getItem('pathwise_active_session');
       if (stored) {
         const session = JSON.parse(stored);
         const token =

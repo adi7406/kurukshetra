@@ -8,6 +8,7 @@ import ProblemStatementPanel from '../components/coding/ProblemStatementPanel';
 import CodingEditorPanel from '../components/coding/CodingEditorPanel';
 import TestResultsPanel from '../components/coding/TestResultsPanel';
 import CodeReasoningModal from '../components/coding/CodeReasoningModal';
+import { subscribeToLiveSync } from '../utils/liveSync';
 
 export function CodeAssessmentsPage() {
   const { assessmentId } = useParams();
@@ -48,6 +49,7 @@ export function CodeAssessmentsPage() {
 
   // Telemetry Event Recording
   const sessionIdRef = useRef('sess_init');
+  const sessionStartRef = useRef(Date.now());
   const eventSequenceRef = useRef(0);
   const eventBufferRef = useRef([]);
   const lastCodeLenRef = useRef(0);
@@ -63,33 +65,54 @@ export function CodeAssessmentsPage() {
   const recordEvent = useCallback((eventType, payload = {}) => {
     const seq = eventSequenceRef.current + 1;
     eventSequenceRef.current = seq;
+    const elapsedSec = Math.max(0, Math.round((Date.now() - sessionStartRef.current) / 1000));
+
+    let label = payload.label || `${eventType}`;
+    if (eventType === 'keystroke') {
+      label = `Keystroke (+${payload.charCount || payload.delta || 1} chars)`;
+    } else if (eventType === 'deletion') {
+      label = `Deletion (-${payload.deletedChars || Math.abs(payload.delta || 1)} chars)`;
+    } else if (eventType === 'paste') {
+      label = `Paste (+${payload.charLength || payload.delta || 0} chars)`;
+    } else if (eventType === 'tab_switch' || eventType === 'visibility_change' || eventType === 'editor_blur') {
+      label = payload.hidden ? 'Tab Switch (Focus lost)' : 'Tab Switch (Focus regained)';
+    } else if (eventType === 'run') {
+      label = 'Run Code (Test Suite Executed)';
+    } else if (eventType === 'submit') {
+      label = 'Submit Solution (Official Assessment)';
+    }
+
     const eventItem = {
       sequenceNumber: seq,
       eventType,
+      time: elapsedSec,
+      label,
       occurredAt: new Date().toISOString(),
+      codeSnapshot: payload.code !== undefined ? payload.code : code,
       payload,
     };
     eventBufferRef.current.push(eventItem);
-    if (eventBufferRef.current.length >= 8) {
+    if (eventBufferRef.current.length >= 6) {
       flushEvents(false);
     }
-  }, [flushEvents]);
+  }, [code, flushEvents]);
 
-  // Window Focus & Visibility Telemetry
+  // Window Focus & Visibility Telemetry (Tab Switch detection)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      recordEvent('visibility_change', {
+      recordEvent('tab_switch', {
         hidden: document.hidden,
         state: document.visibilityState,
+        note: document.hidden ? 'Window hidden' : 'Window visible',
       });
     };
 
     const handleBlur = () => {
-      recordEvent('editor_blur', { note: 'Window focus lost' });
+      recordEvent('tab_switch', { hidden: true, note: 'Window focus lost' });
     };
 
     const handleFocus = () => {
-      recordEvent('editor_focus', { note: 'Window focus regained' });
+      recordEvent('tab_switch', { hidden: false, note: 'Window focus regained' });
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -98,7 +121,7 @@ export function CodeAssessmentsPage() {
 
     const interval = setInterval(() => {
       flushEvents(false);
-    }, 12000);
+    }, 10000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -155,9 +178,10 @@ export function CodeAssessmentsPage() {
 
     // Initialize Telemetry session
     sessionIdRef.current = `sess_${item.id}_${Date.now()}`;
+    sessionStartRef.current = Date.now();
     eventSequenceRef.current = 0;
     eventBufferRef.current = [];
-    recordEvent('document_change', { action: 'session_init', assessmentId: item.id, language: initialLang });
+    recordEvent('keystroke', { action: 'session_init', assessmentId: item.id, language: initialLang, code: starter, delta: starter.length });
   }, [recordEvent]);
 
   // Load Assessments and Resolve Current Topic
@@ -204,6 +228,10 @@ export function CodeAssessmentsPage() {
       }
     }
     loadData();
+    const unsubscribe = subscribeToLiveSync(() => {
+      loadData();
+    });
+    return () => unsubscribe();
   }, [assessmentId, topicParam, selectAssessment]);
 
   const handleCodeChange = (newCode) => {
@@ -217,17 +245,30 @@ export function CodeAssessmentsPage() {
     const starter = activeAssessment?.starterCode?.[selectedLanguage] || '';
     setHasUnsavedChanges(newCode !== starter);
 
-    // Detect large paste event
-    if (delta > 150) {
+    if (delta > 50) {
+      // Large Paste detection
       recordEvent('paste', {
         charLength: delta,
-        totalLength: newCode.length,
-        language: selectedLanguage,
-      });
-    } else {
-      recordEvent('document_change', {
         delta,
         totalLength: newCode.length,
+        language: selectedLanguage,
+        code: newCode,
+      });
+    } else if (delta < 0) {
+      // Keystroke deletion (backspace or remove)
+      recordEvent('deletion', {
+        deletedChars: Math.abs(delta),
+        delta,
+        totalLength: newCode.length,
+        code: newCode,
+      });
+    } else if (delta > 0) {
+      // Incremental keystroke insertion
+      recordEvent('keystroke', {
+        charCount: delta,
+        delta,
+        totalLength: newCode.length,
+        code: newCode,
       });
     }
   };
@@ -266,7 +307,7 @@ export function CodeAssessmentsPage() {
       setIsRunning(true);
       setRunStatus(null);
       setOutputLog(`[Piston Sandbox: Isolated Execution Initialized]\nLanguage: ${selectedLanguage.toUpperCase()}\nExecuting...`);
-      recordEvent('run', { language: selectedLanguage, mode: activeAssessment ? 'sample' : 'sandbox' });
+      recordEvent('run', { language: selectedLanguage, code, mode: activeAssessment ? 'sample' : 'sandbox' });
 
       const assessmentId = activeAssessment?.id || 'sandbox';
       const res = await learningService.runCode(assessmentId, code, selectedLanguage);
@@ -287,7 +328,7 @@ export function CodeAssessmentsPage() {
     try {
       setIsRunningCustom(true);
       setOutputLog(`[Piston Sandbox: Running Custom stdin input]\nInput Size: ${(customInput || '').length} bytes\nExecuting...`);
-      recordEvent('run', { language: selectedLanguage, mode: 'custom', inputSize: (customInput || '').length });
+      recordEvent('run', { language: selectedLanguage, code, mode: 'custom', inputSize: (customInput || '').length });
 
       const assessmentId = activeAssessment?.id || 'sandbox';
       const res = await learningService.runCode(assessmentId, code, selectedLanguage, customInput);
@@ -308,7 +349,7 @@ export function CodeAssessmentsPage() {
       setIsSubmitting(true);
       setRunStatus(null);
       setOutputLog('[Piston Sandbox: Official Submission in progress]\nAuthenticating attempt and evaluating against protected server-side hidden test suite...');
-      recordEvent('submit', { language: selectedLanguage, codeLength: code.length });
+      recordEvent('submit', { language: selectedLanguage, code, codeLength: code.length });
 
       if (!activeAssessment) {
         toast.info('No assessment selected. Select a coding challenge to submit a solution.');

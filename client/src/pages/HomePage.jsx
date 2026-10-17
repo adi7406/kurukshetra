@@ -36,6 +36,8 @@ import OnboardingTour from '../components/common/OnboardingTour';
 import DiagnosticAssessmentModal from '../components/home/DiagnosticAssessmentModal';
 import { normalizeMastery } from '../utils/mastery';
 
+import { subscribeToLiveSync } from '../utils/liveSync';
+
 export function HomePage() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
@@ -86,6 +88,10 @@ export function HomePage() {
 
   useEffect(() => {
     loadWorkspaceData();
+    const unsubscribe = subscribeToLiveSync(() => {
+      loadWorkspaceData();
+    });
+    return () => unsubscribe();
   }, [role]);
 
   if (loading) {

@@ -3,12 +3,15 @@ import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.
 
 export const ALLOWED_EVENT_TYPES = [
   'document_change',
+  'keystroke',
+  'deletion',
   'paste',
   'run',
   'submit',
   'editor_focus',
   'editor_blur',
   'visibility_change',
+  'tab_switch',
   'language_change',
   'snapshot',
 ];

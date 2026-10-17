@@ -50,11 +50,15 @@ export function SessionReplayPage() {
         const mappedEvents = rawEvents.map((ev, idx) => {
           const time = ev.time !== undefined ? ev.time : idx * 30;
           let type = 'info';
-          if (ev.eventType === 'paste' || ev.type === 'signal') type = 'signal';
-          if (ev.eventType === 'run' || ev.eventType === 'submit' || ev.type === 'test') type = 'test';
+          const evType = ev.eventType || ev.event_type;
+          if (evType === 'paste' || ev.type === 'signal') type = 'signal';
+          else if (evType === 'deletion') type = 'deletion';
+          else if (evType === 'keystroke') type = 'keystroke';
+          else if (evType === 'tab_switch' || evType === 'editor_blur' || evType === 'visibility_change') type = 'tab_switch';
+          else if (evType === 'run' || evType === 'submit' || ev.type === 'test') type = 'test';
           return {
             time,
-            label: ev.label || ev.description || `${ev.eventType || 'Telemetry Event'}`,
+            label: ev.label || ev.description || `${evType || 'Telemetry Event'}`,
             type,
             codeSnapshot: ev.payload?.code || ev.codeSnapshot || null,
           };
@@ -379,7 +383,27 @@ export function SessionReplayPage() {
                   </div>
                   {ev.type === 'signal' && (
                     <Chip variant="warning" size="sm">
-                      Flag
+                      Paste Flag
+                    </Chip>
+                  )}
+                  {ev.type === 'deletion' && (
+                    <Chip variant="danger" size="sm">
+                      Deletion
+                    </Chip>
+                  )}
+                  {ev.type === 'tab_switch' && (
+                    <Chip variant="neutral" size="sm">
+                      Tab Switch
+                    </Chip>
+                  )}
+                  {ev.type === 'test' && (
+                    <Chip variant="success" size="sm">
+                      Run
+                    </Chip>
+                  )}
+                  {ev.type === 'keystroke' && (
+                    <Chip variant="neutral" size="sm">
+                      Type
                     </Chip>
                   )}
                 </div>
@@ -421,14 +445,14 @@ export function SessionReplayPage() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <strong style={{ color: 'var(--text-main)', textTransform: 'capitalize' }}>
-                        {(sig.signalType || 'Anomaly').replace('_', ' ')}
+                        {sig.title || (sig.signalType || 'Anomaly').replace(/_/g, ' ')}
                       </strong>
                       <span style={{ fontSize: '10.5px', color: 'var(--warning-text)', fontWeight: 600 }}>
-                        Confidence: {Math.round((sig.confidenceScore || 0.8) * 100)}%
+                        Confidence: {Math.round((sig.confidenceScore || sig.confidence || 0.8) * 100)}%
                       </span>
                     </div>
                     <div style={{ color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                      {sig.description || 'Observed telemetry event divergence from expected baseline.'}
+                      {sig.description || sig.evidence?.rationale || 'Observed telemetry event divergence from expected baseline.'}
                     </div>
                   </div>
                 ))}

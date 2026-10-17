@@ -241,12 +241,36 @@ export const diagnosticService = {
       diagnostic_completed: true,
       diagnostic_completed_at: diagnosticResults.completedAt,
       diagnostic_results: diagnosticResults,
+      overallMastery: diagnosticResults.percentage,
+      lastQuizScore: diagnosticResults.percentage,
+      conceptMastery: {
+        ...(profile?.metadata?.conceptMastery || {}),
+        'c-oop': placements['subject-oop']?.percentage || 60,
+        'c-dsa': placements['subject-dsa']?.percentage || 60,
+        'c-os': placements['subject-os']?.percentage || 60,
+        'c-arrays': placements['subject-dsa']?.percentage || 60,
+        'c-linked-lists': Math.max(20, (placements['subject-dsa']?.percentage || 60) - 15),
+        'c-memory-management': placements['subject-os']?.percentage || 60,
+      },
     };
 
     await supabase
       .from('profiles')
       .update({ metadata: updatedMetadata, updated_at: new Date().toISOString() })
       .eq('id', studentId);
+
+    // Record assessment attempt so teacher and cohort analytics reflect calibrated mastery
+    await supabase.from('assessment_attempts').insert({
+      student_id: studentId,
+      status: 'completed',
+      score: totalScore,
+      max_score: 30,
+      passed: diagnosticResults.percentage >= 50,
+      is_passing: diagnosticResults.percentage >= 50,
+      started_at: new Date(Date.now() - 600000).toISOString(),
+      submitted_at: diagnosticResults.completedAt,
+      completed_at: diagnosticResults.completedAt,
+    });
 
     // 6. Initialize baseline concept mastery for student based on diagnostic tiers
     const initialMasteryByTier = {

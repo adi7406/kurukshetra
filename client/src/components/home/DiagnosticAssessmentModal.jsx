@@ -150,7 +150,11 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="diagnostic-modal-title"
-      style={{ zIndex: 1000 }}
+      style={{
+        zIndex: 1000,
+        backgroundColor: 'rgba(15, 15, 20, 0.75)',
+        backdropFilter: 'blur(8px)',
+      }}
     >
       <div
         ref={dialogRef}
@@ -165,9 +169,9 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
           flexDirection: 'column',
           outline: 'none',
           borderRadius: '20px',
-          border: '1px solid var(--border-hairline)',
-          backgroundColor: 'var(--bg-card)',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.45)',
+          border: '1px solid var(--border-hairline, #ECEAE8)',
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.45)',
           overflow: 'hidden',
         }}
       >
@@ -175,11 +179,11 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
         <div
           style={{
             padding: '18px 24px',
-            borderBottom: '1px solid var(--border-hairline)',
+            borderBottom: '1px solid var(--border-hairline, #ECEAE8)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'var(--bg-card-subtle)',
+            background: 'var(--surface-muted, #F7F6F5)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -188,12 +192,12 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2))',
-                border: '1px solid rgba(168,85,247,0.3)',
+                background: 'var(--coral-soft, #FFEDE8)',
+                border: '1px solid var(--coral-border, rgba(255, 91, 55, 0.25))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--primary-light)',
+                color: 'var(--coral, #FF5B37)',
               }}
             >
               <Sparkles size={18} />
@@ -205,7 +209,7 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                   margin: 0,
                   fontSize: '1.05rem',
                   fontWeight: '600',
-                  color: 'var(--text-main)',
+                  color: 'var(--text-main, #16161A)',
                 }}
               >
                 {results ? 'Diagnostic Placement Results' : 'Initial Adaptive Placement Diagnostic'}
@@ -213,16 +217,16 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
               <div
                 style={{
                   fontSize: '0.78rem',
-                  color: 'var(--text-muted)',
+                  color: 'var(--text-secondary, #6B6B73)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
                   marginTop: '2px',
                 }}
               >
-                <span>30 Marks • 3 Subjects (OOP, DSA, OS)</span>
-                <span>•</span>
-                <span style={{ color: 'var(--primary-light)' }}>BKT Baseline Calibration</span>
+                <span>30 Marks &bull; 3 Subjects (OOP, DSA, OS)</span>
+                <span>&bull;</span>
+                <span style={{ color: 'var(--coral, #FF5B37)', fontWeight: 600 }}>BKT Baseline Calibration</span>
               </div>
             </div>
           </div>
@@ -232,7 +236,7 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-muted)',
+                color: 'var(--text-muted, #6B6B73)',
                 cursor: 'pointer',
                 padding: '6px',
                 borderRadius: '8px',
@@ -476,10 +480,10 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                       style={{
                         padding: '8px 14px',
                         borderRadius: '10px',
-                        border: '1px solid',
-                        borderColor: isActive ? 'var(--primary)' : 'var(--border-hairline)',
-                        background: isActive ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
-                        color: isActive ? 'var(--primary-light)' : 'var(--text-muted)',
+                        border: '1.5px solid',
+                        borderColor: isActive ? 'var(--coral, #FF5B37)' : 'var(--border-hairline, #ECEAE8)',
+                        background: isActive ? 'var(--coral-soft, #FFEDE8)' : '#FFFFFF',
+                        color: isActive ? 'var(--coral, #FF5B37)' : 'var(--text-secondary, #6B6B73)',
                         fontSize: '0.82rem',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -498,9 +502,10 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                           borderRadius: '10px',
                           background:
                             secAnsweredCount === 10
-                              ? 'rgba(16, 185, 129, 0.2)'
-                              : 'rgba(255, 255, 255, 0.08)',
-                          color: secAnsweredCount === 10 ? '#10b981' : 'inherit',
+                              ? 'var(--mastery-solid-soft, #E8F7F0)'
+                              : 'var(--surface-muted, #F7F6F5)',
+                          color: secAnsweredCount === 10 ? 'var(--mastery-solid, #17A673)' : 'inherit',
+                          fontWeight: 600,
                         }}
                       >
                         {secAnsweredCount}/10
@@ -517,7 +522,7 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   fontSize: '0.82rem',
-                  color: 'var(--text-muted)',
+                  color: 'var(--text-secondary, #6B6B73)',
                 }}
               >
                 <span>
@@ -526,10 +531,12 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                 </span>
                 <span
                   style={{
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    background: 'var(--bg-card-subtle)',
-                    border: '1px solid var(--border-hairline)',
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-pill, 9999px)',
+                    background: 'var(--surface-muted, #F7F6F5)',
+                    border: '1px solid var(--border-hairline, #ECEAE8)',
+                    fontWeight: 600,
+                    color: 'var(--text-main, #16161A)',
                   }}
                 >
                   Overall Progress: {answeredCount} / {totalQuestions} Answered
@@ -542,8 +549,8 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                   style={{
                     padding: '20px',
                     borderRadius: '16px',
-                    background: 'var(--bg-card-subtle)',
-                    border: '1px solid var(--border-hairline)',
+                    background: 'var(--surface-muted, #F7F6F5)',
+                    border: '1px solid var(--border-hairline, #ECEAE8)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '16px',
@@ -556,13 +563,13 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                         fontWeight: 600,
                         padding: '2px 8px',
                         borderRadius: '6px',
-                        background: 'rgba(99, 102, 241, 0.15)',
-                        color: 'var(--primary-light)',
+                        background: 'var(--coral-soft, #FFEDE8)',
+                        color: 'var(--coral, #FF5B37)',
                       }}
                     >
                       {currentQuestion.topicName}
                     </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>1 Mark</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B73)', fontWeight: 600 }}>1 Mark</span>
                   </div>
 
                   <p
@@ -570,8 +577,8 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                       margin: 0,
                       fontSize: '0.98rem',
                       lineHeight: '1.5',
-                      fontWeight: 500,
-                      color: 'var(--text-main)',
+                      fontWeight: 600,
+                      color: 'var(--text-main, #16161A)',
                       whiteSpace: 'pre-line',
                     }}
                   >
@@ -589,11 +596,9 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                           style={{
                             padding: '12px 16px',
                             borderRadius: '12px',
-                            border: '1px solid',
-                            borderColor: isSelected ? 'var(--primary)' : 'var(--border-hairline)',
-                            background: isSelected
-                              ? 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15))'
-                              : 'var(--bg-card)',
+                            border: '1.5px solid',
+                            borderColor: isSelected ? 'var(--coral, #FF5B37)' : 'var(--border-hairline, #ECEAE8)',
+                            background: isSelected ? 'var(--coral-soft, #FFEDE8)' : '#FFFFFF',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -607,11 +612,12 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                               height: '20px',
                               borderRadius: '50%',
                               border: '2px solid',
-                              borderColor: isSelected ? 'var(--primary)' : 'var(--border-hairline)',
+                              borderColor: isSelected ? 'var(--coral, #FF5B37)' : 'var(--border-hairline, #ECEAE8)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               flexShrink: 0,
+                              background: '#FFFFFF',
                             }}
                           >
                             {isSelected && (
@@ -620,7 +626,7 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                                   width: '10px',
                                   height: '10px',
                                   borderRadius: '50%',
-                                  background: 'var(--primary)',
+                                  background: 'var(--coral, #FF5B37)',
                                 }}
                               />
                             )}
@@ -628,7 +634,7 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                           <span
                             style={{
                               fontSize: '0.9rem',
-                              color: isSelected ? 'var(--text-main)' : 'var(--text-muted)',
+                              color: isSelected ? 'var(--coral, #FF5B37)' : 'var(--text-main, #16161A)',
                               fontWeight: isSelected ? 600 : 400,
                             }}
                           >
@@ -649,11 +655,11 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
           <div
             style={{
               padding: '16px 24px',
-              borderTop: '1px solid var(--border-hairline)',
+              borderTop: '1px solid var(--border-hairline, #ECEAE8)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'var(--bg-card-subtle)',
+              background: 'var(--surface-muted, #F7F6F5)',
             }}
           >
             <button
@@ -661,11 +667,12 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
               disabled={activeSubjectIndex === 0 && activeQuestionIndex === 0}
               style={{
                 padding: '8px 16px',
-                borderRadius: '10px',
-                border: '1px solid var(--border-hairline)',
-                background: 'transparent',
-                color: 'var(--text-main)',
+                borderRadius: 'var(--radius-pill, 9999px)',
+                border: '1px solid var(--border-hairline, #ECEAE8)',
+                background: '#FFFFFF',
+                color: 'var(--text-main, #16161A)',
                 fontSize: '0.85rem',
+                fontWeight: 500,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -683,13 +690,12 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                 disabled={submitting}
                 style={{
                   padding: '9px 18px',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--radius-pill, 9999px)',
                   background:
                     answeredCount === totalQuestions
-                      ? 'linear-gradient(135deg, #10b981, #059669)'
-                      : 'rgba(99, 102, 241, 0.2)',
-                  border: '1px solid',
-                  borderColor: answeredCount === totalQuestions ? '#10b981' : 'var(--primary)',
+                      ? 'var(--mastery-solid, #17A673)'
+                      : 'var(--coral, #FF5B37)',
+                  border: 'none',
                   color: '#fff',
                   fontSize: '0.85rem',
                   fontWeight: 600,
@@ -697,6 +703,7 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <Send size={15} />
@@ -710,12 +717,13 @@ export function DiagnosticAssessmentModal({ isOpen, onClose, onComplete }) {
                   activeQuestionIndex === (currentSection?.questions.length || 10) - 1
                 }
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-hairline)',
-                  background: 'transparent',
-                  color: 'var(--text-main)',
+                  padding: '8px 18px',
+                  borderRadius: 'var(--radius-pill, 9999px)',
+                  border: 'none',
+                  background: 'var(--dark-pill, #1C1C21)',
+                  color: '#FFFFFF',
                   fontSize: '0.85rem',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
