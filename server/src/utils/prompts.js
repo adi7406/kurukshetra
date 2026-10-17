@@ -44,29 +44,37 @@ Existing Question Samples to avoid duplicating: ${JSON.stringify(existingQuestio
   },
 
   CONTENT_GEN: {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Generates structured draft learning content and explanations for a syllabus concept',
     format: 'json',
-    buildPrompt({ title, conceptName, difficulty = 'intermediate', focusTopic }) {
+    buildPrompt({ title, conceptName, difficulty = 'intermediate', focusTopic, language = 'Java' }) {
       return {
-        systemPrompt: `You are an expert instructional designer. Output ONLY valid JSON adhering to the following schema:
+        systemPrompt: `You are an expert instructional designer and computer science professor. Output ONLY valid JSON adhering to the following schema:
 {
   "title": "Clear educational title",
-  "summary": "High-level summary of the concept",
+  "summary": "High-level summary of the concept (min 20 words)",
   "sections": [
-    {"heading": "Introduction", "content": "Detailed explanatory text."},
-    {"heading": "Practical Application", "content": "Example code or walkthrough."}
+    {"heading": "Learning Objectives & Prerequisite Review", "content": "Clear learning objectives and prerequisite concepts."},
+    {"heading": "Core Invariant Explanation", "content": "Detailed theoretical mechanics and invariants."},
+    {"heading": "Worked Code Implementation (${language})", "content": "Complete, correct runnable code example in ${language} with line-by-line explanation."},
+    {"heading": "Common Misconceptions & Pitfalls", "content": "Common developer errors, runtime pitfalls, and how to avoid them."}
   ],
-  "keyTakeaways": ["Core takeaway 1", "Core takeaway 2"]
+  "keyTakeaways": [
+    "Key takeaway point 1",
+    "Key takeaway point 2",
+    "Key takeaway point 3"
+  ]
 }
 Strict constraints:
 - Do not output markdown code blocks or preamble.
-- Output pure JSON only.`,
+- Output pure JSON only.
+- Validate all code syntax for ${language}.`,
         userPrompt: `<context>
 Title: ${title}
 Concept: ${conceptName}
+Language: ${language}
 Difficulty: ${difficulty}
-Focus: ${focusTopic || 'Comprehensive overview'}
+Focus: ${focusTopic || 'Classes and Objects instantiation, state encapsulation, heap memory allocation'}
 </context>`,
       };
     },

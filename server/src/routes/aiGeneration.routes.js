@@ -74,5 +74,13 @@ router.post(
   aiGenerationController.extractCurriculum
 );
 
+// Protected diagnostic endpoint for NVIDIA AI models (trainers & admins)
+router.get(
+  '/ai/diagnostics',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  aiGenerationController.getModelDiagnostics
+);
+
 export default router;
 

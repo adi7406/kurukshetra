@@ -534,4 +534,19 @@ export const aiGenerationService = {
 
     return extracted;
   },
+
+  /**
+   * Diagnostic verification for an individual AI model
+   */
+  async checkModelDiagnostics(model) {
+    return await aiProvider.testModelDiagnostics(model);
+  },
+
+  /**
+   * Diagnostic verification for all configured dual NVIDIA models
+   */
+  async checkAllModelDiagnostics() {
+    return await aiProvider.runAllModelDiagnostics();
+  },
 };
+

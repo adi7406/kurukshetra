@@ -118,5 +118,29 @@ export const aiGenerationController = {
       next(error);
     }
   },
+
+  /**
+   * Diagnostic verification for configured NVIDIA AI models
+   */
+  async getModelDiagnostics(req, res, next) {
+    try {
+      const { model } = req.query;
+      let result;
+      if (model) {
+        result = await aiGenerationService.checkModelDiagnostics(model);
+      } else {
+        result = await aiGenerationService.checkAllModelDiagnostics();
+      }
+
+      res.status(200).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 

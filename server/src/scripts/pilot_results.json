@@ -1,0 +1,154 @@
+{
+  "openai/gpt-oss-20b": {
+    "model": "openai/gpt-oss-20b",
+    "concept": {
+      "success": true,
+      "latencyMs": 85406,
+      "validated": {
+        "title": "Classes and Objects in Java",
+        "summary": "This lesson explores how Java classes define objects, how state is encapsulated, the difference between reference and heap allocation, and how to instantiate and interact with objects while maintaining class invariants.",
+        "sections": [
+          {
+            "heading": "Learning Objectives & Prerequisite Review",
+            "content": "Learning Objectives:\n- Distinguish between classes and objects.\n- Explain instance variables, methods, constructors, and the 'this' keyword.\n- Understand reference versus heap memory allocation.\n- Identify and maintain class invariants.\n\nPrerequisite Concepts:\n- Basic Java syntax (variables, data types, operators).\n- Control flow statements (if, for, while).\n- Simple method creation and invocation."
+          },
+          {
+            "heading": "Core Invariant Explanation",
+            "content": "In object‑oriented design, an invariant is a condition that remains true for an object throughout its lifetime. For example, a BankAccount should never have a negative balance. In Java, invariants are enforced by:\n- Using private fields to prevent external tampering.\n- Providing public methods that validate input before mutation.\n- Documenting expected states in Javadoc.\n\nThe heap stores the actual object data; the reference variable holds an address to that heap location. All objects are allocated on the heap, while the reference itself resides on the stack (or as a field of another object). This distinction matters for garbage collection and memory management."
+          },
+          {
+            "heading": "Worked Code Implementation (Java)",
+            "content": "public class Dog {\n    private String name;\n    private int age;\n\n    public Dog(String name, int age) {\n        this.name = name; // assign name\n        this.age = age;   // assign age\n    }\n\n    public void bark() {\n        System.out.println(name + \" says: Woof!\"); // output\n    }\n\n    public int getAge() {\n        return age; // return age\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Dog fido = new Dog(\"Fido\", 3); // instantiate dog\n        fido.bark();                  // call method\n        System.out.println(fido.getAge() + \" years old\"); // print age\n    }\n}\n"
+          },
+          {
+            "heading": "Common Misconceptions & Pitfalls",
+            "content": "1. **Assuming a new instance creates a new memory block** – the reference points to the same heap location; multiple references can refer to the same object.\n2. **Ignoring encapsulation** – directly accessing fields breaks invariants; always use getters/setters with validation.\n3. **Using mutable static fields for shared state** – leads to unpredictable behavior in multi‑threaded contexts.\n4. **Overloading constructors without calling super()** – in inheritance, forgetting to invoke the superclass constructor can leave fields uninitialized.\n5. **Misunderstanding 'this'** – confusing it with static context; 'this' refers to the current instance only."
+          }
+        ],
+        "keyTakeaways": [
+          "Classes define blueprints; objects are concrete instances with state stored on the heap.",
+          "Encapsulation and private fields help maintain class invariants and prevent accidental corruption.",
+          "Reference variables hold addresses; the same object can be accessed via multiple references, which must be understood to avoid side effects."
+        ]
+      },
+      "error": null
+    },
+    "mcqs": {
+      "success": true,
+      "latencyMs": 29248,
+      "validated": {
+        "questions": [
+          {
+            "type": "mcq_single",
+            "stem": "Which of the following statements about constructors in Java is true?",
+            "options": [
+              {
+                "id": "A",
+                "text": "Constructors can be overloaded with the same parameter types."
+              },
+              {
+                "id": "B",
+                "text": "A class can have at most one constructor."
+              },
+              {
+                "id": "C",
+                "text": "If no constructor is defined, the compiler provides a default constructor that calls super()."
+              },
+              {
+                "id": "D",
+                "text": "Constructors can be static."
+              }
+            ],
+            "correctOptionIds": [
+              "C"
+            ],
+            "explanation": "When a class declares no constructors, the compiler automatically supplies a no-argument constructor that invokes the superclass constructor via super().",
+            "difficulty": "intermediate",
+            "conceptNames": [
+              "Classes and Objects (Java)"
+            ],
+            "marks": 1
+          },
+          {
+            "type": "mcq_single",
+            "stem": "Consider the following code:\nclass A { int x = 5; }\nclass B extends A { int x = 10; }\nB b = new B();\nSystem.out.println(b.x);",
+            "options": [
+              {
+                "id": "A",
+                "text": "5"
+              },
+              {
+                "id": "B",
+                "text": "10"
+              },
+              {
+                "id": "C",
+                "text": "15"
+              },
+              {
+                "id": "D",
+                "text": "0"
+              }
+            ],
+            "correctOptionIds": [
+              "B"
+            ],
+            "explanation": "The field x in class B hides the inherited field from class A. Accessing b.x refers to B's x, which is 10.",
+            "difficulty": "intermediate",
+            "conceptNames": [
+              "Classes and Objects (Java)"
+            ],
+            "marks": 1
+          },
+          {
+            "type": "mcq_single",
+            "stem": "Which access modifier in a subclass method is allowed to override a public method from a superclass?",
+            "options": [
+              {
+                "id": "A",
+                "text": "private"
+              },
+              {
+                "id": "B",
+                "text": "protected"
+              },
+              {
+                "id": "C",
+                "text": "default (package-private)"
+              },
+              {
+                "id": "D",
+                "text": "public"
+              }
+            ],
+            "correctOptionIds": [
+              "D"
+            ],
+            "explanation": "A public method in the superclass can only be overridden with a public method in the subclass; reducing visibility would violate the Liskov Substitution Principle.",
+            "difficulty": "intermediate",
+            "conceptNames": [
+              "Classes and Objects (Java)"
+            ],
+            "marks": 1
+          }
+        ]
+      },
+      "error": null
+    }
+  },
+  "nvidia/nemotron-3-ultra-550b-a55b": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "concept": {
+      "success": false,
+      "latencyMs": 8623,
+      "validated": null,
+      "error": "AI model nvidia/nemotron-3-ultra-550b-a55b is temporarily overloaded or unavailable."
+    },
+    "mcqs": {
+      "success": false,
+      "latencyMs": 8911,
+      "validated": null,
+      "error": "AI model nvidia/nemotron-3-ultra-550b-a55b is temporarily overloaded or unavailable."
+    }
+  }
+}
