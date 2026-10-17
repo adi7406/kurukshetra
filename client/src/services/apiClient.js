@@ -19,7 +19,11 @@ export class ApiError extends Error {
 }
 
 export async function request(endpoint, options = {}) {
-  const url = `${BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (BASE_URL.endsWith('/v1') && cleanEndpoint.startsWith('/v1/')) {
+    cleanEndpoint = cleanEndpoint.replace(/^\/v1/, '');
+  }
+  const url = `${BASE_URL}${cleanEndpoint}`;
   
   const headers = {
     ...(options.headers || {}),
