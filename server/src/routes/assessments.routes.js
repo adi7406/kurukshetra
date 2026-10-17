@@ -59,6 +59,7 @@ const createTestSeriesSchema = {
 
 // Assessment collection and creation
 router.get('/assessments', authenticate, assessmentsController.listAssessments);
+router.get('/quizzes', authenticate, assessmentsController.listAssessments);
 router.post(
   '/courses/:courseId/assessments',
   authenticate,
@@ -69,6 +70,7 @@ router.post(
 
 // Assessment operations
 router.get('/assessments/:assessmentId', authenticate, assessmentsController.getAssessmentById);
+router.get('/quizzes/:assessmentId', authenticate, assessmentsController.getAssessmentById);
 router.patch(
   '/assessments/:assessmentId',
   authenticate,

@@ -11,7 +11,8 @@ export const coursesController = {
       const supabase = getSupabase();
       const user = req.user;
 
-      let courses = await supabase.from('courses').select('*');
+      const { data: rawCourses = [] } = await supabase.from('courses').select('*');
+      let courses = Array.isArray(rawCourses) ? [...rawCourses] : [];
 
       // Visibility rules based on role
       if (user.role === 'student') {
@@ -364,4 +365,268 @@ export const coursesController = {
       next(error);
     }
   },
+
+  /**
+   * Publish complete extracted curriculum (concepts, quizzes, coding assessments)
+   * Connects Teacher Content Upload Studio end-to-end to student experience
+   */
+  async publishCurriculum(req, res, next) {
+    try {
+      const extractedData = req.body;
+      const user = req.user;
+      const supabase = getSupabase();
+
+      const courseTitle = extractedData.courseTitle || 'CS201 Data Structures & Algorithmic Problem Solving (DSA)';
+
+      // 1. Get or create course
+      let { data: course } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('title', courseTitle)
+        .maybeSingle();
+
+      if (!course) {
+        const { data: createdCourse } = await supabase
+          .from('courses')
+          .insert({
+            title: courseTitle,
+            description: 'Core foundational data structures, algorithmic paradigms, and problem solving.',
+            created_by: user.id,
+            status: 'published',
+          })
+          .select()
+          .single();
+        course = createdCourse;
+      } else {
+        await supabase.from('courses').update({ status: 'published' }).eq('id', course.id);
+      }
+
+      // Auto-enroll teacher and students
+      await supabase.from('enrollments').insert([
+        { course_id: course.id, student_id: user.id, status: 'active' },
+        { course_id: course.id, student_id: 'usr_demo_student', status: 'active' },
+      ]);
+
+      // 2. Create Module
+      const moduleName = extractedData.moduleName || 'Module 1: Linear Sequence Structures & Buffers';
+      const { data: moduleRecord } = await supabase
+        .from('modules')
+        .insert({
+          course_version_id: course.id,
+          title: moduleName,
+          order_index: 0,
+        })
+        .select()
+        .single();
+
+      const moduleId = moduleRecord?.id || `mod_${Date.now()}`;
+
+      // 3. Persist concepts and learning resources
+      let publishedConcepts = 0;
+      if (Array.isArray(extractedData.concepts)) {
+        for (const c of extractedData.concepts) {
+          const { data: conceptRow } = await supabase
+            .from('concepts')
+            .insert({
+              module_id: moduleId,
+              name: c.name || c.title,
+              description: c.description || c.title,
+              status: 'published',
+            })
+            .select()
+            .single();
+
+          if (conceptRow) {
+            publishedConcepts++;
+            await supabase.from('learning_resources').insert({
+              concept_id: conceptRow.id,
+              title: c.title || c.name,
+              resource_type: 'article',
+              content: JSON.stringify(c),
+              difficulty: c.difficulty || 'intermediate',
+              source_type: 'trainer_authored',
+              review_status: 'published',
+              version_number: 1,
+              created_by: user.id,
+            });
+          }
+        }
+      }
+
+      // 4. Persist quizzes as published assessments
+      let publishedQuizzes = 0;
+      if (Array.isArray(extractedData.quizzes) && extractedData.quizzes.length > 0) {
+        const grouped = {};
+        extractedData.quizzes.forEach((q) => {
+          const key = q.conceptName || 'General';
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(q);
+        });
+
+        for (const [conceptName, qList] of Object.entries(grouped)) {
+          const { data: assessment } = await supabase
+            .from('assessments')
+            .insert({
+              course_id: course.id,
+              title: `${conceptName}: Topic Mastery Diagnostic Quiz (${qList.length} Questions)`,
+              description: `Diagnostic quiz covering ${conceptName}`,
+              assessment_type: 'practice',
+              status: 'published',
+              max_attempts: 10,
+              passing_percentage: 70,
+              created_by: user.id,
+            })
+            .select()
+            .single();
+
+          if (assessment) {
+            publishedQuizzes++;
+            for (const q of qList) {
+              const { data: baseQ } = await supabase
+                .from('questions')
+                .insert({ course_id: course.id, created_by: user.id })
+                .select()
+                .single();
+
+              if (baseQ) {
+                const { data: qv } = await supabase
+                  .from('question_versions')
+                  .insert({
+                    question_id: baseQ.id,
+                    version_number: 1,
+                    question_type: 'mcq_single',
+                    title: q.prompt ? q.prompt.substring(0, 50) : 'Quiz Question',
+                    prompt: q.prompt,
+                    difficulty: 'intermediate',
+                    marks: 1,
+                    explanation: q.explanation || null,
+                    review_status: 'published',
+                    created_by: user.id,
+                  })
+                  .select()
+                  .single();
+
+                if (qv) {
+                  await supabase.from('assessment_questions').insert({
+                    assessment_id: assessment.id,
+                    question_version_id: qv.id,
+                  });
+
+                  if (Array.isArray(q.options)) {
+                    await supabase.from('question_options').insert(
+                      q.options.map((opt, idx) => ({
+                        question_version_id: qv.id,
+                        option_key: String(idx),
+                        option_text: opt,
+                        is_correct: idx === q.correctIndex,
+                        order_index: idx,
+                      }))
+                    );
+
+                    await supabase.from('question_answers').insert({
+                      question_version_id: qv.id,
+                      answer_type: 'mcq_single',
+                      answer_payload: { correctOptionIndex: q.correctIndex },
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 5. Persist coding assessments
+      let publishedCoding = 0;
+      if (Array.isArray(extractedData.codingAssessments)) {
+        for (const ca of extractedData.codingAssessments) {
+          const { data: assessment } = await supabase
+            .from('assessments')
+            .insert({
+              course_id: course.id,
+              title: ca.title || 'Coding Challenge',
+              description: ca.description,
+              assessment_type: 'practice',
+              status: 'published',
+              max_attempts: 10,
+              passing_percentage: 70,
+              created_by: user.id,
+            })
+            .select()
+            .single();
+
+          if (assessment) {
+            publishedCoding++;
+            const { data: baseQ } = await supabase
+              .from('questions')
+              .insert({ course_id: course.id, created_by: user.id })
+              .select()
+              .single();
+
+            if (baseQ) {
+              const { data: qv } = await supabase
+                .from('question_versions')
+                .insert({
+                  question_id: baseQ.id,
+                  version_number: 1,
+                  question_type: 'coding',
+                  title: ca.title,
+                  prompt: ca.description,
+                  difficulty: ca.difficulty || 'intermediate',
+                  marks: 10,
+                  metadata: {
+                    starterCode: {
+                      python: ca.starterCode,
+                      javascript: `// Implement solution for ${ca.title}\nfunction solve(input) {\n  // TODO\n}`,
+                    },
+                    constraints: ca.constraints,
+                    vivaQuestion: ca.vivaQuestion,
+                  },
+                  review_status: 'published',
+                  created_by: user.id,
+                })
+                .select()
+                .single();
+
+              if (qv) {
+                await supabase.from('assessment_questions').insert({
+                  assessment_id: assessment.id,
+                  question_version_id: qv.id,
+                });
+
+                if (Array.isArray(ca.sampleTests)) {
+                  await supabase.from('coding_test_cases').insert(
+                    ca.sampleTests.map((st, idx) => ({
+                      question_version_id: qv.id,
+                      input_payload: st.input,
+                      expected_output: st.expectedOutput,
+                      is_hidden: false,
+                      weight: 1,
+                      order_index: idx,
+                    }))
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          courseId: course.id,
+          publishedConceptsCount: publishedConcepts,
+          publishedQuizzesCount: publishedQuizzes,
+          publishedCodingCount: publishedCoding,
+        },
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+

@@ -64,6 +64,19 @@ router.post(
   codingController.runSampleTests
 );
 
+// Direct assessment execution endpoints (Frontend compatibility)
+router.post(
+  '/assessments/:assessmentId/run',
+  authenticate,
+  codingController.runAssessmentCode
+);
+
+router.post(
+  '/assessments/:assessmentId/submit',
+  authenticate,
+  codingController.submitAssessmentCode
+);
+
 const recordEventsSchema = {
   body: z.object({
     events: z

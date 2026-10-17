@@ -237,6 +237,10 @@ export const masteryService = {
   /**
    * Updates student mastery for a single concept and appends an entry to mastery_history.
    */
+  async updateMastery(params) {
+    return this.updateConceptMastery(params);
+  },
+
   async updateConceptMastery({
     studentId,
     conceptId,

@@ -77,7 +77,65 @@ export const authController = {
    */
   async signin(req, res, next) {
     try {
-      const { email, password } = req.body;
+      const { email: rawEmail, identifier, password, role: requestedRole } = req.body;
+      const targetIdentifier = (rawEmail || identifier || '').trim().toLowerCase();
+
+      // Universal Evaluator Demo credentials (ID: demo, PASS: demo)
+      if (targetIdentifier === 'demo' && (password || '').trim().toLowerCase() === 'demo') {
+        const isTrainer = requestedRole === 'teacher' || requestedRole === 'trainer';
+        const role = isTrainer ? 'trainer' : 'student';
+        const demoUser = isTrainer
+          ? {
+              id: 'usr_demo_teacher',
+              email: 'priya.nair@college.edu',
+              role: 'trainer',
+              name: 'Dr. Priya Nair',
+              display_name: 'Dr. Priya Nair',
+            }
+          : {
+              id: 'usr_demo_student',
+              email: 'aditya.sharma@college.edu',
+              role: 'student',
+              name: 'Aditya Sharma',
+              display_name: 'Aditya Sharma',
+            };
+
+        const token = `mock_token_${demoUser.id}_session`;
+        const profile = {
+          id: demoUser.id,
+          display_name: demoUser.name,
+          role,
+          metadata: {
+            courseTaught: 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
+            enrolledCourse: 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
+          },
+        };
+
+        const supabase = getSupabase();
+        if (supabase.isMock) {
+          try {
+            await supabase.from('profiles').insert(profile);
+          } catch {
+            // ignore
+          }
+        }
+
+        return res.status(200).json({
+          data: {
+            user: { id: demoUser.id, email: demoUser.email },
+            profile,
+            session: { access_token: token },
+          },
+          user: demoUser,
+          token,
+          session: { access_token: token },
+          meta: {
+            requestId: req.requestId,
+          },
+        });
+      }
+
+      const email = targetIdentifier;
       const supabase = getSupabase();
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -175,6 +233,80 @@ export const authController = {
         },
         meta: {
           requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /teachers — List registered teachers/trainers
+   */
+  async listTeachers(req, res, next) {
+    try {
+      const supabase = getSupabase();
+      const { data: profiles = [] } = await supabase.from('profiles').select('*');
+      const teachers = (profiles || [])
+        .filter((p) => p.role === 'trainer' || p.role === 'teacher')
+        .map((t) => ({
+          id: t.id,
+          name: t.display_name || t.name || 'Instructor',
+          role: 'teacher',
+          courseTaught: t.metadata?.courseTaught || 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
+          email: t.metadata?.email || `${t.id}@college.edu`,
+          department: t.metadata?.department || 'Department of Computer Science',
+        }));
+
+      if (teachers.length === 0) {
+        teachers.push({
+          id: 'usr_demo_teacher',
+          name: 'Dr. Priya Nair',
+          role: 'teacher',
+          courseTaught: 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
+          email: 'priya.nair@college.edu',
+          department: 'Department of Computer Science',
+        });
+      }
+
+      res.status(200).json({
+        data: teachers,
+        teachers, // Compatibility with client
+        meta: {
+          requestId: req.requestId,
+          count: teachers.length,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /students — List enrolled students for cohort view
+   */
+  async listStudents(req, res, next) {
+    try {
+      const supabase = getSupabase();
+      const { data: profiles = [] } = await supabase.from('profiles').select('*');
+      const students = (profiles || [])
+        .filter((p) => p.role === 'student')
+        .map((s) => ({
+          id: s.id,
+          name: s.display_name || s.name || 'Student',
+          role: 'student',
+          rollNo: s.metadata?.rollNo || 'CS22B001',
+          className: s.metadata?.className || 'B.Tech CSE II-A',
+          enrolledCourse: s.metadata?.enrolledCourse || 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
+          overallMastery: s.metadata?.overallMastery || 0,
+        }));
+
+      res.status(200).json({
+        data: students,
+        students, // Compatibility with client
+        meta: {
+          requestId: req.requestId,
+          count: students.length,
         },
       });
     } catch (error) {

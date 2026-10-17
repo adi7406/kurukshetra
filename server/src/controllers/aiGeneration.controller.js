@@ -66,4 +66,57 @@ export const aiGenerationController = {
       next(error);
     }
   },
+
+  /**
+   * Generate draft coding assessment with test cases for a course/concept
+   */
+  async generateCoding(req, res, next) {
+    try {
+      const { courseId } = req.params;
+      const { conceptId, topic, difficulty } = req.body;
+
+      const result = await aiGenerationService.generateCodingAssessment({
+        courseId,
+        conceptId,
+        topic: topic || 'Algorithmic Problem Solving',
+        difficulty,
+        trainerUser: req.user,
+      });
+
+      res.status(201).json({
+        data: result,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Synthesize full curriculum from uploaded syllabus
+   */
+  async extractCurriculum(req, res, next) {
+    try {
+      const { syllabusText, courseTitle } = req.body;
+
+      const result = await aiGenerationService.extractCurriculum({
+        syllabusText: syllabusText || 'Data Structures & Algorithms',
+        courseTitle: courseTitle || 'CS201 Data Structures',
+        trainerUser: req.user,
+      });
+
+      res.status(200).json({
+        data: result,
+        ...result, // Frontend compatibility envelope
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+

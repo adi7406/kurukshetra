@@ -26,6 +26,14 @@ const generateContentSchema = {
   }),
 };
 
+const generateCodingSchema = {
+  body: z.object({
+    topic: z.string().optional(),
+    conceptId: z.string().optional(),
+    difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  }),
+};
+
 // Trainer & Admin endpoints for AI-assisted curriculum authoring
 router.post(
   '/courses/:courseId/ai/generate-questions',
@@ -43,4 +51,28 @@ router.post(
   aiGenerationController.generateContent
 );
 
+router.post(
+  '/courses/:courseId/ai/generate-coding',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  validateRequest(generateCodingSchema),
+  aiGenerationController.generateCoding
+);
+
+router.post(
+  '/concepts/:conceptId/ai/generate-coding',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  validateRequest(generateCodingSchema),
+  aiGenerationController.generateCoding
+);
+
+// Endpoints for syllabus curriculum extraction
+router.post(
+  '/ai/extract-curriculum',
+  authenticate,
+  aiGenerationController.extractCurriculum
+);
+
 export default router;
+

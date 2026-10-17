@@ -26,6 +26,25 @@ export async function request(endpoint, options = {}) {
     ...(options.headers || {}),
   };
 
+  if (!headers.Authorization && !headers.authorization && typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('pathwise_active_session');
+      if (stored) {
+        const session = JSON.parse(stored);
+        const token =
+          session.token ||
+          session.session?.access_token ||
+          session.access_token ||
+          (session.id ? `mock_token_${session.id}_session` : null);
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
   const config = {
     ...options,
     headers,

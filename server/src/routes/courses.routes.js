@@ -54,6 +54,20 @@ router.post(
   coursesController.publishCourse
 );
 
+// Publish full extracted curriculum
+router.post(
+  '/courses/curriculum',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  coursesController.publishCurriculum
+);
+router.post(
+  '/courses/:courseId/curriculum',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  coursesController.publishCurriculum
+);
+
 // Course enrollment operations
 router.post(
   '/courses/:courseId/enrollments',

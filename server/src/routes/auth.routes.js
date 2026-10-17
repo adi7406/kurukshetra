@@ -18,8 +18,10 @@ const signupSchema = {
 
 const signinSchema = {
   body: z.object({
-    email: z.string().email(),
+    email: z.string().optional(),
+    identifier: z.string().optional(),
     password: z.string().min(1, 'Password is required'),
+    role: z.string().optional(),
   }),
 };
 
@@ -33,6 +35,9 @@ const updateMeSchema = {
 
 router.post('/auth/signup', validateRequest(signupSchema), authController.signup);
 router.post('/auth/signin', validateRequest(signinSchema), authController.signin);
+router.post('/auth/login', validateRequest(signinSchema), authController.signin);
+router.get('/teachers', authController.listTeachers);
+router.get('/students', authenticate, authController.listStudents);
 router.get('/me', authenticate, authController.getMe);
 router.patch('/me', authenticate, validateRequest(updateMeSchema), authController.updateMe);
 

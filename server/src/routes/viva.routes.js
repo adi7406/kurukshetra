@@ -69,5 +69,10 @@ router.patch(
   vivaController.reviewAnswer
 );
 
+router.post(
+  '/assessments/viva/evaluate',
+  vivaController.evaluateVivaAnswer
+);
+
 export default router;
 

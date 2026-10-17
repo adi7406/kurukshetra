@@ -3,6 +3,15 @@ import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
+function normalizeUser(u) {
+  if (!u) return null;
+  const isTeacher = u.role === 'trainer' || u.role === 'teacher';
+  return {
+    ...u,
+    role: isTeacher ? 'teacher' : (u.role || 'student'),
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +22,7 @@ export function AuthProvider({ children }) {
       try {
         setLoading(true);
         const activeUser = await authService.checkSession();
-        setUser(activeUser);
+        setUser(normalizeUser(activeUser));
       } catch (err) {
         console.error('Session check failed:', err);
         setUser(null);
@@ -28,8 +37,9 @@ export function AuthProvider({ children }) {
     setError(null);
     try {
       const authenticatedUser = await authService.login(email, password, selectedRole);
-      setUser(authenticatedUser);
-      return authenticatedUser;
+      const normalized = normalizeUser(authenticatedUser);
+      setUser(normalized);
+      return normalized;
     } catch (err) {
       setError(err.message || 'Login failed');
       throw err;
@@ -40,8 +50,9 @@ export function AuthProvider({ children }) {
     setError(null);
     try {
       const newUser = await authService.signupTeacher(data);
-      setUser(newUser);
-      return newUser;
+      const normalized = normalizeUser(newUser);
+      setUser(normalized);
+      return normalized;
     } catch (err) {
       setError(err.message || 'Teacher signup failed');
       throw err;
@@ -52,8 +63,9 @@ export function AuthProvider({ children }) {
     setError(null);
     try {
       const newUser = await authService.signupStudent(data);
-      setUser(newUser);
-      return newUser;
+      const normalized = normalizeUser(newUser);
+      setUser(normalized);
+      return normalized;
     } catch (err) {
       setError(err.message || 'Student signup failed');
       throw err;
@@ -70,8 +82,9 @@ export function AuthProvider({ children }) {
 
   const updateProfile = async (updates) => {
     const updated = await authService.updateProfile(updates);
-    setUser(updated);
-    return updated;
+    const normalized = normalizeUser(updated);
+    setUser(normalized);
+    return normalized;
   };
 
   const value = {

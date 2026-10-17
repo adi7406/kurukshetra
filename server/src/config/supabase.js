@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from './env.js';
+import { getSupabase } from '../integrations/supabase.js';
 
 let defaultClient = null;
 let serviceClient = null;
@@ -75,6 +76,15 @@ export function getSupabaseClient() {
     return defaultClient;
   }
 
+  const isUnitTest =
+    (env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') &&
+    process.env.USE_LIVE_SUPABASE !== 'true';
+
+  if (isUnitTest) {
+    defaultClient = getSupabase();
+    return defaultClient;
+  }
+
   const { url, key } = validateSupabaseConfig();
   defaultClient = createSupabaseClient(url, key);
   return defaultClient;
@@ -133,16 +143,31 @@ export async function checkDatabaseConnection(options = {}) {
   let client = options.client;
 
   if (!client) {
-    try {
-      client = getSupabaseClient();
-    } catch (configErr) {
-      return {
-        ok: false,
-        status: 'misconfigured',
-        latencyMs: Date.now() - start,
-        timestamp,
-        error: configErr.message || 'Supabase configuration is invalid or missing',
-      };
+    const isUnitTest =
+      (env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') &&
+      process.env.USE_LIVE_SUPABASE !== 'true';
+
+    if (isUnitTest) {
+      try {
+        const { getSupabase } = await import('../integrations/supabase.js');
+        client = getSupabase();
+      } catch {
+        // Fall back to getSupabaseClient()
+      }
+    }
+
+    if (!client) {
+      try {
+        client = getSupabaseClient();
+      } catch (configErr) {
+        return {
+          ok: false,
+          status: 'misconfigured',
+          latencyMs: Date.now() - start,
+          timestamp,
+          error: configErr.message || 'Supabase configuration is invalid or missing',
+        };
+      }
     }
   }
 

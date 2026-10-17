@@ -458,4 +458,31 @@ export const attemptsController = {
       next(error);
     }
   },
+
+  /**
+   * Directly record a student attempt and update Bayesian knowledge tracing
+   */
+  async recordDirectAttempt(req, res, next) {
+    try {
+      const { conceptId, isSuccess } = req.body || {};
+      const user = req.user;
+      if (!conceptId) {
+        throw new ValidationError('conceptId is required.');
+      }
+      const updatedMastery = await masteryService.updateMastery({
+        studentId: user.id,
+        conceptId,
+        isCorrect: Boolean(isSuccess),
+        evidenceType: 'diagnostic_quiz',
+      });
+      res.status(200).json({
+        data: updatedMastery,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

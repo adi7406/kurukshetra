@@ -46,3 +46,39 @@ export const generatedContentSchema = z.object({
   sections: z.array(generatedContentSectionSchema).min(1),
   keyTakeaways: z.array(z.string().min(3)).optional().default([]),
 });
+
+export const generatedTestCaseSchema = z.object({
+  id: z.string().optional(),
+  input: z.string().default(''),
+  expectedOutput: z.string().default(''),
+  isHidden: z.boolean().default(false),
+  weight: z.number().positive().default(1),
+  orderIndex: z.number().int().default(0),
+});
+
+export const generatedCodingAssessmentSchema = z.object({
+  title: z.string().min(3),
+  description: z.string().min(10),
+  difficulty: z.enum(['beginner', 'intermediate', 'advanced']).default('intermediate'),
+  constraints: z.string().optional().default('Time Limit: 2000ms | Memory Limit: 256MB'),
+  starterCode: z.object({
+    python: z.string().min(5),
+    javascript: z.string().min(5),
+  }),
+  testCases: z.array(generatedTestCaseSchema).min(1),
+  vivaQuestion: z
+    .object({
+      prompt: z.string().min(5),
+      rubric: z.string().optional().default('Evaluate conceptual complexity, edge cases, and algorithmic invariant guarantees.'),
+    })
+    .optional(),
+});
+
+export const generatedCurriculumSchema = z.object({
+  courseTitle: z.string().min(3),
+  moduleName: z.string().optional(),
+  concepts: z.array(z.any()).min(1),
+  quizzes: z.array(z.any()).optional().default([]),
+  codingAssessments: z.array(z.any()).optional().default([]),
+});
+

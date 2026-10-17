@@ -4,6 +4,8 @@ import { PROMPT_REGISTRY } from '../utils/prompts.js';
 import {
   generatedQuestionsArraySchema,
   generatedContentSchema,
+  generatedCodingAssessmentSchema,
+  generatedCurriculumSchema,
 } from '../utils/aiSchemas.js';
 import { jobsService } from './jobs.service.js';
 import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.js';
@@ -144,7 +146,6 @@ export const aiGenerationService = {
       systemPrompt,
       userPrompt,
       schema: generatedQuestionsArraySchema,
-      model: 'gpt-4o-mini',
       userId: trainerUser.id,
       courseId,
       operation: 'ai_question_generation',
@@ -334,7 +335,6 @@ export const aiGenerationService = {
       systemPrompt,
       userPrompt,
       schema: generatedContentSchema,
-      model: 'gpt-4o-mini',
       userId: trainerUser.id,
       courseId,
       operation: 'ai_content_generation',
@@ -369,5 +369,169 @@ export const aiGenerationService = {
       sectionsCount: contentData.sections?.length || 0,
       requiresTrainerApproval: true,
     };
+  },
+
+  /**
+   * Generates curriculum-aligned draft coding assessment with test cases using NVIDIA AI models.
+   * Assessment is saved as 'draft' awaiting trainer review.
+   */
+  async generateCodingAssessment({
+    courseId,
+    conceptId = null,
+    topic,
+    difficulty = 'intermediate',
+    trainerUser,
+  }) {
+    const isPrivileged = trainerUser.role === 'trainer' || trainerUser.role === 'admin';
+    if (!isPrivileged) {
+      throw new ForbiddenError('Only trainers and administrators may generate coding assessments.');
+    }
+
+    const supabase = getSupabase();
+
+    // 1. Verify course existence and ownership
+    const { data: course } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', courseId)
+      .maybeSingle();
+
+    if (!course) {
+      throw new NotFoundError('Course not found.');
+    }
+
+    if (trainerUser.role !== 'admin' && course.created_by !== trainerUser.id) {
+      throw new ForbiddenError('You are not authorized to generate assessments for this course.');
+    }
+
+    // 2. Resolve concept name if provided
+    let conceptName = null;
+    if (conceptId) {
+      const { data: concept } = await supabase
+        .from('concepts')
+        .select('*')
+        .eq('id', conceptId)
+        .maybeSingle();
+      if (concept) {
+        conceptName = concept.title || concept.name;
+      }
+    }
+
+    const { systemPrompt, userPrompt } = PROMPT_REGISTRY.CODING_GEN.buildPrompt({
+      topic,
+      conceptName,
+      difficulty,
+    });
+
+    const codingData = await aiProvider.generateStructuredOutput({
+      systemPrompt,
+      userPrompt,
+      schema: generatedCodingAssessmentSchema,
+      userId: trainerUser.id,
+      courseId,
+      operation: 'ai_coding_generation',
+    });
+
+    // 3. Create question base
+    const { data: baseQuestion, error: qErr } = await supabase
+      .from('questions')
+      .insert({
+        course_id: courseId,
+        created_by: trainerUser.id,
+      })
+      .select()
+      .single();
+
+    if (qErr || !baseQuestion) {
+      throw new Error('Failed to create coding question identity.');
+    }
+
+    // 4. Create question version
+    const { data: version, error: vErr } = await supabase
+      .from('question_versions')
+      .insert({
+        question_id: baseQuestion.id,
+        version_number: 1,
+        question_type: 'coding',
+        title: codingData.title,
+        prompt: codingData.description,
+        difficulty: codingData.difficulty || difficulty,
+        marks: 10,
+        explanation: codingData.vivaQuestion?.rubric || 'Evaluates algorithmic optimality and invariant correctness.',
+        metadata: {
+          constraints: codingData.constraints,
+          starterCode: codingData.starterCode,
+          timeLimitMs: 2000,
+          memoryLimitMb: 256,
+          vivaQuestion: codingData.vivaQuestion,
+        },
+        review_status: 'draft', // Strictly draft awaiting trainer review
+        created_by: trainerUser.id,
+      })
+      .select()
+      .single();
+
+    if (vErr || !version) {
+      throw new Error('Failed to create coding question version.');
+    }
+
+    // 5. Save test cases
+    const testCasesToInsert = (codingData.testCases || []).map((tc, idx) => ({
+      question_version_id: version.id,
+      input_payload: tc.input,
+      expected_output: tc.expectedOutput,
+      is_hidden: Boolean(tc.isHidden),
+      weight: tc.weight || 1,
+      order_index: tc.orderIndex !== undefined ? tc.orderIndex : idx,
+      time_limit_ms: 2000,
+      memory_limit_mb: 256,
+    }));
+
+    if (testCasesToInsert.length > 0) {
+      await supabase.from('coding_test_cases').insert(testCasesToInsert);
+    }
+
+    // 6. Map concept if available
+    if (conceptId) {
+      await supabase.from('question_concepts').insert([
+        {
+          question_version_id: version.id,
+          concept_id: conceptId,
+        },
+      ]);
+    }
+
+    return {
+      questionId: baseQuestion.id,
+      versionId: version.id,
+      title: codingData.title,
+      difficulty: codingData.difficulty,
+      testCasesCount: testCasesToInsert.length,
+      sampleTestCasesCount: testCasesToInsert.filter((tc) => !tc.is_hidden).length,
+      hiddenTestCasesCount: testCasesToInsert.filter((tc) => tc.is_hidden).length,
+      reviewStatus: 'draft',
+      source: 'ai_generated',
+      requiresTrainerApproval: true,
+    };
+  },
+
+  /**
+   * Synthesizes full curriculum from uploaded syllabus text
+   */
+  async extractCurriculum({ syllabusText, courseTitle, trainerUser }) {
+    const { systemPrompt, userPrompt } = PROMPT_REGISTRY.CURRICULUM_EXTRACTION.buildPrompt({
+      syllabusText,
+      courseTitle,
+    });
+
+    const extracted = await aiProvider.generateStructuredOutput({
+      systemPrompt,
+      userPrompt,
+      schema: generatedCurriculumSchema,
+      userId: trainerUser?.id,
+      operation: 'ai_curriculum_extraction',
+    });
+
+    return extracted;
   },
 };

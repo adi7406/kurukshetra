@@ -37,9 +37,10 @@ export const syllabusAiService = {
           method: 'POST',
           body: { syllabusText, courseTitle },
         });
-        if (apiResult && apiResult.concepts) {
+        const extracted = apiResult?.data || apiResult;
+        if (extracted && extracted.concepts) {
           onProgress(100, 'API Model extraction succeeded.');
-          return apiResult;
+          return extracted;
         }
       }
     } catch {
