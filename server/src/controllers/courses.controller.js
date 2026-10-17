@@ -401,10 +401,9 @@ export const coursesController = {
         await supabase.from('courses').update({ status: 'published' }).eq('id', course.id);
       }
 
-      // Auto-enroll teacher and students
+      // Auto-enroll teacher
       await supabase.from('enrollments').insert([
         { course_id: course.id, student_id: user.id, status: 'active' },
-        { course_id: course.id, student_id: 'usr_demo_student', status: 'active' },
       ]);
 
       // 2. Create Module

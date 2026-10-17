@@ -27,8 +27,8 @@ export function LoginPage() {
   const [role, setRole] = useState('student'); // 'teacher' | 'student'
 
   // Common fields
-  const [email, setEmail] = useState('demo');
-  const [password, setPassword] = useState('demo');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [className, setClassName] = useState('');
   const [rollNo, setRollNo] = useState('');
@@ -104,8 +104,8 @@ export function LoginPage() {
             phone,
             email,
             password,
-            teacherId: selectedTeacherId,
-            courseName: chosenTeacher?.courseTaught,
+            teacherId: selectedTeacherId || null,
+            courseName: chosenTeacher?.courseTaught || courseTaught || 'General Computer Science',
           });
           setSuccessMessage('Student account created and enrolled. Redirecting...');
           setTimeout(() => navigate('/home'), 800);
@@ -324,43 +324,6 @@ export function LoginPage() {
             </button>
           </div>
 
-          {/* Universal Demo Credentials Pill */}
-          {mode === 'signin' && (
-            <div
-              style={{
-                backgroundColor: 'var(--coral-soft)',
-                border: '1px solid var(--coral-border)',
-                borderRadius: '14px',
-                padding: '10px 14px',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '8px',
-                fontSize: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--coral)', fontWeight: 600 }}>Login Credentials:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>Pre-filled for testing</span>
-              </div>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: 'var(--text-main)',
-                  backgroundColor: '#FFFFFF',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-hairline)',
-                }}
-              >
-                ID: <strong>demo</strong> &bull; PASS: <strong>demo</strong>
-              </span>
-            </div>
-          )}
 
           {/* Workspace Role Selector */}
           <div style={{ marginBottom: '16px' }}>
@@ -554,21 +517,31 @@ export function LoginPage() {
                 {role === 'student' && (
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-                      Select Instructor & Course
+                      {availableTeachers.length > 0 ? 'Select Instructor & Course' : 'Course / Field of Study'}
                     </label>
-                    <select
-                      value={selectedTeacherId}
-                      onChange={(e) => setSelectedTeacherId(e.target.value)}
-                      required
-                      className="auth-input"
-                      style={{ backgroundColor: '#FFFFFF' }}
-                    >
-                      {availableTeachers.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name} — {t.courseTaught || 'CS201 Data Structures'}
-                        </option>
-                      ))}
-                    </select>
+                    {availableTeachers.length > 0 ? (
+                      <select
+                        value={selectedTeacherId}
+                        onChange={(e) => setSelectedTeacherId(e.target.value)}
+                        className="auth-input"
+                        style={{ backgroundColor: '#FFFFFF' }}
+                      >
+                        <option value="">-- Choose Instructor --</option>
+                        {availableTeachers.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} — {t.courseTaught || 'General Track'}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="e.g. Data Structures & Algorithms (or general track)"
+                        value={courseTaught}
+                        onChange={(e) => setCourseTaught(e.target.value)}
+                        className="auth-input"
+                      />
+                    )}
                   </div>
                 )}
               </>
@@ -577,11 +550,11 @@ export function LoginPage() {
             {/* User ID / Email Address */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-                {mode === 'signin' ? 'User ID or Email' : 'Email Address'}
+                Email Address
               </label>
               <input
-                type={mode === 'signin' ? 'text' : 'email'}
-                placeholder={mode === 'signin' ? 'demo' : role === 'teacher' ? 'faculty@college.edu' : 'student@college.edu'}
+                type="email"
+                placeholder={role === 'teacher' ? 'faculty@college.edu' : 'student@college.edu'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -597,7 +570,7 @@ export function LoginPage() {
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={mode === 'signin' ? 'demo' : 'Enter secret password'}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

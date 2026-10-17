@@ -73,6 +73,7 @@ router.get('/health/database', async (req, res) => {
     data: {
       status: 'connected',
       database: 'postgresql',
+      mode: result.mode || (result.isSimulated ? 'mock_development' : 'live_cloud'),
       latencyMs: result.latencyMs,
       timestamp: result.timestamp,
     },

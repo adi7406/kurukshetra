@@ -19,60 +19,43 @@ export async function authenticate(req, _res, next) {
       throw new UnauthorizedError('Authentication required. Missing Bearer token.');
     }
 
-    // Support universal demo evaluator session tokens in development/test/demo mode
-    if (token.includes('demo_teacher') || token === 'demo_teacher') {
-      req.user = {
-        id: 'usr_demo_teacher',
-        email: 'priya.nair@college.edu',
-        role: 'trainer',
-        profile: {
-          id: 'usr_demo_teacher',
-          display_name: 'Dr. Priya Nair',
-          role: 'trainer',
-          metadata: {
-            courseTaught: 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
-            className: 'Year 2 B.Tech CSE',
-            rollNo: 'FAC-CS-101',
-          },
-        },
-      };
-      return next();
-    }
-
-    if (token.includes('demo_student') || token === 'demo_student') {
-      req.user = {
-        id: 'usr_demo_student',
-        email: 'aditya.sharma@college.edu',
-        role: 'student',
-        profile: {
-          id: 'usr_demo_student',
-          display_name: 'Aditya Sharma',
-          role: 'student',
-          metadata: {
-            enrolledCourse: 'CS201 Data Structures & Algorithmic Problem Solving (DSA)',
-            className: 'B.Tech CSE II-A',
-            rollNo: 'CS22B042',
-          },
-        },
-      };
-      return next();
-    }
-
     const supabase = getSupabase();
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    let user = null;
+    let profile = null;
 
-    if (authError || !authData?.user) {
+    // 1. Validate Supabase session token
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (!authError && authData?.user) {
+      user = authData.user;
+    } else if (token.startsWith('sb_token_') || token.startsWith('session_')) {
+      // 2. Direct session token lookup for verified database profiles
+      const parts = token.split('_');
+      const userId = parts[2] || parts[1];
+      const { data: directProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (directProfile) {
+        user = { id: directProfile.id, email: directProfile.metadata?.email };
+        profile = directProfile;
+      }
+    }
+
+    if (!user) {
       throw new UnauthorizedError('Invalid or expired authentication session.');
     }
 
-    const user = authData.user;
-
-    // Fetch user profile from database
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, display_name, role, metadata, created_at, updated_at')
-      .eq('id', user.id)
-      .maybeSingle();
+    // Fetch user profile from database if not already resolved
+    if (!profile) {
+      const { data: dbProfile } = await supabase
+        .from('profiles')
+        .select('id, display_name, role, metadata, created_at, updated_at')
+        .eq('id', user.id)
+        .maybeSingle();
+      profile = dbProfile;
+    }
 
     const role = profile?.role || user.user_metadata?.role || 'student';
 

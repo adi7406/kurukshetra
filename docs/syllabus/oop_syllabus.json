@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0",
+  "subject_id": "oop",
+  "subject_name": "Object-Oriented Programming (OOP)",
+  "description": "Introductory OOP syllabus for MasterPath content generation.",
+  "language": "Java",
+  "content_policy": {
+    "syllabus_only": true,
+    "generate_learning_content_with_llm": true,
+    "generate_quizzes_with_llm": true,
+    "generate_coding_assessments_with_llm": true,
+    "generated_content_must_be_validated": true,
+    "teacher_approval_required_before_publication": true
+  },
+  "topics": [
+    {
+      "id": "oop-01",
+      "name": "Classes and Objects",
+      "prerequisites": [],
+      "content_generation": {
+        "concepts": {
+          "generate_with_llm": true,
+          "required_sections": [
+            "learning_objectives",
+            "prerequisite_review",
+            "core_explanation",
+            "worked_examples",
+            "common_misconceptions",
+            "key_takeaways"
+          ],
+          "scope_hints": [
+            "class and object fundamentals",
+            "fields, methods, constructors, and object state",
+            "creating and using objects",
+            "encapsulation basics",
+            "instance members versus static members"
+          ]
+        },
+        "quiz": {
+          "generate_with_llm": true,
+          "question_type": "single_answer_mcq",
+          "question_count": 5,
+          "options_per_question": 4,
+          "include_explanation": true,
+          "answer_key_storage": "server_only"
+        },
+        "coding_assessments": {
+          "generate_with_llm": true,
+          "difficulty_levels": [
+            "easy",
+            "medium"
+          ],
+          "assessment_count_per_level": 1,
+          "execution_engine": "Piston",
+          "validate_reference_solution_and_tests": true,
+          "publish_requires_teacher_approval": true,
+          "scope_hints": [
+            "Easy: define a class with fields, constructor, and methods to solve a small problem",
+            "Medium: model a real-world entity using multiple objects and encapsulated state"
+          ]
+        }
+      }
+    },
+    {
+      "id": "oop-02",
+      "name": "Inheritance",
+      "prerequisites": [
+        "oop-01"
+      ],
+      "content_generation": {
+        "concepts": {
+          "generate_with_llm": true,
+          "required_sections": [
+            "learning_objectives",
+            "prerequisite_review",
+            "core_explanation",
+            "worked_examples",
+            "common_misconceptions",
+            "key_takeaways"
+          ],
+          "scope_hints": [
+            "base and derived classes",
+            "is-a relationship",
+            "method overriding",
+            "super keyword and constructor chaining",
+            "access modifiers in inheritance",
+            "inheritance benefits and limitations"
+          ]
+        },
+        "quiz": {
+          "generate_with_llm": true,
+          "question_type": "single_answer_mcq",
+          "question_count": 5,
+          "options_per_question": 4,
+          "include_explanation": true,
+          "answer_key_storage": "server_only"
+        },
+        "coding_assessments": {
+          "generate_with_llm": true,
+          "difficulty_levels": [
+            "easy",
+            "medium"
+          ],
+          "assessment_count_per_level": 1,
+          "execution_engine": "Piston",
+          "validate_reference_solution_and_tests": true,
+          "publish_requires_teacher_approval": true,
+          "scope_hints": [
+            "Easy: create a base class and one derived class with an overridden method",
+            "Medium: model a small hierarchy using inheritance and demonstrate runtime polymorphism"
+          ]
+        }
+      }
+    },
+    {
+      "id": "oop-03",
+      "name": "Dependency Injection",
+      "prerequisites": [
+        "oop-01",
+        "oop-02"
+      ],
+      "content_generation": {
+        "concepts": {
+          "generate_with_llm": true,
+          "required_sections": [
+            "learning_objectives",
+            "prerequisite_review",
+            "core_explanation",
+            "worked_examples",
+            "common_misconceptions",
+            "key_takeaways"
+          ],
+          "scope_hints": [
+            "dependency and dependency coupling",
+            "constructor injection",
+            "setter injection and interface-based injection",
+            "programming to an interface",
+            "testability and loose coupling",
+            "manual dependency injection without a framework"
+          ]
+        },
+        "quiz": {
+          "generate_with_llm": true,
+          "question_type": "single_answer_mcq",
+          "question_count": 5,
+          "options_per_question": 4,
+          "include_explanation": true,
+          "answer_key_storage": "server_only"
+        },
+        "coding_assessments": {
+          "generate_with_llm": true,
+          "difficulty_levels": [
+            "easy",
+            "medium"
+          ],
+          "assessment_count_per_level": 1,
+          "execution_engine": "Piston",
+          "validate_reference_solution_and_tests": true,
+          "publish_requires_teacher_approval": true,
+          "scope_hints": [
+            "Easy: inject a service dependency through a constructor",
+            "Medium: design a small application with interchangeable implementations injected through an interface"
+          ]
+        }
+      }
+    }
+  ]
+}

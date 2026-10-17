@@ -11,9 +11,10 @@ const signupSchema = {
     email: z.string().email(),
     password: z.string().min(6, 'Password must be at least 6 characters long'),
     displayName: z.string().min(1).optional(),
-    role: z.enum(['student', 'trainer', 'admin']).default('student'),
+    name: z.string().min(1).optional(),
+    role: z.enum(['student', 'trainer', 'teacher', 'admin']).default('student'),
     metadata: z.record(z.any()).optional(),
-  }),
+  }).passthrough(),
 };
 
 const signinSchema = {

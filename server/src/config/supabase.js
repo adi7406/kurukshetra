@@ -80,7 +80,14 @@ export function getSupabaseClient() {
     (env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') &&
     process.env.USE_LIVE_SUPABASE !== 'true';
 
-  if (isUnitTest) {
+  const isPlaceholder =
+    !env.SUPABASE_URL ||
+    env.SUPABASE_URL.includes('placeholder') ||
+    env.SUPABASE_URL.includes('example.com') ||
+    env.SUPABASE_URL.includes('mock') ||
+    process.env.USE_MOCK_SUPABASE === 'true';
+
+  if (isUnitTest || isPlaceholder) {
     defaultClient = getSupabase();
     return defaultClient;
   }
@@ -140,14 +147,21 @@ export async function checkDatabaseConnection(options = {}) {
   const start = Date.now();
   const timestamp = new Date().toISOString();
 
+  const isPlaceholder =
+    !env.SUPABASE_URL ||
+    env.SUPABASE_URL.includes('placeholder') ||
+    env.SUPABASE_URL.includes('example.com') ||
+    env.SUPABASE_URL.includes('mock') ||
+    process.env.USE_MOCK_SUPABASE === 'true';
+
+  const isUnitTest =
+    (env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') &&
+    process.env.USE_LIVE_SUPABASE !== 'true';
+
   let client = options.client;
 
   if (!client) {
-    const isUnitTest =
-      (env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') &&
-      process.env.USE_LIVE_SUPABASE !== 'true';
-
-    if (isUnitTest) {
+    if (isUnitTest || isPlaceholder) {
       try {
         const { getSupabase } = await import('../integrations/supabase.js');
         client = getSupabase();
@@ -201,6 +215,8 @@ export async function checkDatabaseConnection(options = {}) {
     return {
       ok: true,
       status: 'connected',
+      mode: isPlaceholder || isUnitTest ? 'mock_development' : 'live_cloud',
+      isSimulated: isPlaceholder || isUnitTest,
       latencyMs,
       timestamp,
     };

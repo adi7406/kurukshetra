@@ -10,13 +10,14 @@ import {
   Menu,
   ChevronRight,
   GraduationCap,
+  Shield,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import CommandPalette from '../common/CommandPalette';
 
 export function Topbar({ onToggleMobileSidebar }) {
-  const { user, role, logout, login } = useAuth();
+  const { user, role, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [profileOpen, setProfileOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -60,18 +61,6 @@ export function Topbar({ onToggleMobileSidebar }) {
     }
   };
 
-  const handleRoleToggle = async () => {
-    try {
-      if (role === 'teacher') {
-        await login('demo', 'demo', 'student');
-      } else {
-        await login('demo', 'demo', 'teacher');
-      }
-      navigate('/home');
-    } catch (err) {
-      console.error('Role switch failed:', err);
-    }
-  };
 
   const initials = user?.name
     ? user.name
@@ -271,34 +260,28 @@ export function Topbar({ onToggleMobileSidebar }) {
 
         {/* Right Actions: Dark Pill button + Circular 36px icon buttons + Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          {/* Dark Pill Switcher Button ("Demo mode · Switch to Instructor") */}
-          <button
-            type="button"
-            className="topbar-demo-pill"
-            onClick={handleRoleToggle}
-            title={`Switch view between Student and Instructor`}
+          {/* Active Workspace Role Badge */}
+          <div
+            className="topbar-role-badge"
+            title={`Active role: ${role === 'teacher' ? 'Instructor Workspace' : 'Student Workspace'}`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              height: '36px',
-              padding: '0 16px',
+              height: '32px',
+              padding: '0 12px',
               borderRadius: 'var(--radius-pill)',
-              background: 'var(--dark-pill)',
-              color: '#FFFFFF',
-              border: 'none',
-              fontSize: '12.5px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'background 140ms ease',
+              background: role === 'teacher' ? 'rgba(255, 91, 55, 0.12)' : 'rgba(23, 166, 115, 0.12)',
+              color: role === 'teacher' ? 'var(--coral)' : '#17A673',
+              border: `1px solid ${role === 'teacher' ? 'rgba(255, 91, 55, 0.25)' : 'rgba(23, 166, 115, 0.25)'}`,
+              fontSize: '12px',
+              fontWeight: '600',
               whiteSpace: 'nowrap',
             }}
           >
-            <GraduationCap size={14} strokeWidth={1.5} />
-            <span>
-              Demo mode &bull; Switch to <strong>{role === 'teacher' ? 'Student' : 'Instructor'}</strong>
-            </span>
-          </button>
+            {role === 'teacher' ? <Shield size={13} strokeWidth={1.5} /> : <GraduationCap size={13} strokeWidth={1.5} />}
+            <span>{role === 'teacher' ? 'Instructor Workspace' : 'Student Workspace'}</span>
+          </div>
 
           {/* Circular 36px Notifications Button with Dot */}
           <button

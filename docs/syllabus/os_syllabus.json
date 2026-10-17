@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.0",
+  "subject_id": "os",
+  "subject_name": "Operating Systems (OS)",
+  "description": "Introductory operating-systems syllabus with simple programming exercises.",
+  "language": "C",
+  "content_policy": {
+    "syllabus_only": true,
+    "generate_learning_content_with_llm": true,
+    "generate_quizzes_with_llm": true,
+    "generate_coding_assessments_with_llm": true,
+    "generated_content_must_be_validated": true,
+    "teacher_approval_required_before_publication": true
+  },
+  "topics": [
+    {
+      "id": "os-01",
+      "name": "Operating System Fundamentals",
+      "prerequisites": [],
+      "content_generation": {
+        "concepts": {
+          "generate_with_llm": true,
+          "required_sections": [
+            "learning_objectives",
+            "prerequisite_review",
+            "core_explanation",
+            "worked_examples",
+            "common_misconceptions",
+            "key_takeaways"
+          ],
+          "scope_hints": [
+            "purpose and functions of an operating system",
+            "kernel and user mode at an introductory level",
+            "system calls and command-line basics",
+            "simple programs demonstrating process or system information where supported",
+            "OS services and resource management"
+          ]
+        },
+        "quiz": {
+          "generate_with_llm": true,
+          "question_type": "single_answer_mcq",
+          "question_count": 5,
+          "options_per_question": 4,
+          "include_explanation": true,
+          "answer_key_storage": "server_only"
+        },
+        "coding_assessments": {
+          "generate_with_llm": true,
+          "difficulty_levels": [
+            "easy",
+            "medium"
+          ],
+          "assessment_count_per_level": 1,
+          "execution_engine": "Piston",
+          "validate_reference_solution_and_tests": true,
+          "publish_requires_teacher_approval": true,
+          "scope_hints": [
+            "Easy: write a small C program that demonstrates command-line arguments or basic process/system information where supported",
+            "Medium: write a small program using a supported system call or demonstrating parent-child processes in Linux"
+          ]
+        }
+      }
+    },
+    {
+      "id": "os-02",
+      "name": "Processes and CPU Scheduling",
+      "prerequisites": [
+        "os-01"
+      ],
+      "content_generation": {
+        "concepts": {
+          "generate_with_llm": true,
+          "required_sections": [
+            "learning_objectives",
+            "prerequisite_review",
+            "core_explanation",
+            "worked_examples",
+            "common_misconceptions",
+            "key_takeaways"
+          ],
+          "scope_hints": [
+            "program versus process",
+            "process states and process control block",
+            "context switching",
+            "introductory FCFS and SJF scheduling",
+            "simple scheduling calculations and simulation"
+          ]
+        },
+        "quiz": {
+          "generate_with_llm": true,
+          "question_type": "single_answer_mcq",
+          "question_count": 5,
+          "options_per_question": 4,
+          "include_explanation": true,
+          "answer_key_storage": "server_only"
+        },
+        "coding_assessments": {
+          "generate_with_llm": true,
+          "difficulty_levels": [
+            "easy",
+            "medium"
+          ],
+          "assessment_count_per_level": 1,
+          "execution_engine": "Piston",
+          "validate_reference_solution_and_tests": true,
+          "publish_requires_teacher_approval": true,
+          "scope_hints": [
+            "Easy: simulate FCFS scheduling and calculate waiting and turnaround times",
+            "Medium: implement a CPU-scheduling simulator for FCFS and non-preemptive SJF and compare results"
+          ]
+        }
+      }
+    },
+    {
+      "id": "os-03",
+      "name": "Memory Management",
+      "prerequisites": [
+        "os-01",
+        "os-02"
+      ],
+      "content_generation": {
+        "concepts": {
+          "generate_with_llm": true,
+          "required_sections": [
+            "learning_objectives",
+            "prerequisite_review",
+            "core_explanation",
+            "worked_examples",
+            "common_misconceptions",
+            "key_takeaways"
+          ],
+          "scope_hints": [
+            "memory-management goals",
+            "logical versus physical addresses",
+            "contiguous allocation concepts",
+            "paging and page tables",
+            "basic FIFO page-replacement simulation"
+          ]
+        },
+        "quiz": {
+          "generate_with_llm": true,
+          "question_type": "single_answer_mcq",
+          "question_count": 5,
+          "options_per_question": 4,
+          "include_explanation": true,
+          "answer_key_storage": "server_only"
+        },
+        "coding_assessments": {
+          "generate_with_llm": true,
+          "difficulty_levels": [
+            "easy",
+            "medium"
+          ],
+          "assessment_count_per_level": 1,
+          "execution_engine": "Piston",
+          "validate_reference_solution_and_tests": true,
+          "publish_requires_teacher_approval": true,
+          "scope_hints": [
+            "Easy: simulate a simple page-table lookup or calculate memory-allocation values",
+            "Medium: implement FIFO page replacement and report page faults for a reference string"
+          ]
+        }
+      }
+    }
+  ]
+}
