@@ -1,0 +1,1159 @@
+{
+  "subjects": [
+    {
+      "id": "subject-oop",
+      "code": "CS101",
+      "title": "Object-Oriented Programming",
+      "description": "Comprehensive study of object-oriented principles, modular class invariants, inheritance hierarchies, and loose-coupling abstractions.",
+      "language": "java",
+      "topics": [
+        {
+          "id": "oop-classes-objects",
+          "orderIndex": 1,
+          "name": "Classes and Objects",
+          "prerequisites": [],
+          "learningObjectives": [
+            "Encapsulate mutable state using private fields and immutable accessor contracts",
+            "Understand memory representation of heap-allocated instances vs stack references",
+            "Define constructor invariants and initial state initialization"
+          ],
+          "content": {
+            "title": "Classes and Objects: The Core Encapsulation Invariant",
+            "summary": "Classes serve as blueprints for allocating runtime state and behavior into coherent reference units.",
+            "sections": [
+              {
+                "heading": "1. Encapsulation & Invariants",
+                "content": "A class defines a blueprint consisting of fields (state) and methods (behavior). Encapsulation guarantees internal integrity by hiding state representations and providing controlled accessor methods."
+              },
+              {
+                "heading": "2. Memory Allocation in Java",
+                "content": "Instance creation with 'new' allocates memory on the Java Heap, while local reference variables exist on the stack frame pointing to that heap address."
+              },
+              {
+                "heading": "3. Worked Java Code Example",
+                "content": "public class BankAccount {\n    private double balance;\n    public BankAccount(double initial) {\n        if (initial < 0) throw new IllegalArgumentException('Negative balance');\n        this.balance = initial;\n    }\n    public void deposit(double amount) {\n        if (amount <= 0) throw new IllegalArgumentException('Invalid deposit');\n        this.balance += amount;\n    }\n    public double getBalance() { return this.balance; }\n}"
+              },
+              {
+                "heading": "4. Common Misconceptions",
+                "content": "Misconception: A class and an object are synonymous. Reality: The class is the static bytecode blueprint loaded in Metaspace; an object is an instantiated heap entity."
+              }
+            ],
+            "keyTakeaways": [
+              "Classes define types; objects are runtime instances allocated on the heap",
+              "Private member variables protect internal class invariants from external corruption",
+              "Constructors ensure valid initialization before any public method invocation"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "oop-mcq-1",
+              "stem": "Which of the following statements about Java memory allocation is TRUE?",
+              "options": [
+                { "id": "A", "text": "Object instances are allocated on the stack frame." },
+                { "id": "B", "text": "Object instances are allocated on the heap, while local references reside on the stack." },
+                { "id": "C", "text": "Primitive variables are always allocated on the heap." },
+                { "id": "D", "text": "Static methods cannot access static member variables." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "In Java, all objects allocated via 'new' reside on the heap, whereas local variable references exist on the call stack."
+            },
+            {
+              "id": "oop-mcq-2",
+              "stem": "What is the primary objective of declaring instance fields with 'private' access modifier in Java?",
+              "options": [
+                { "id": "A", "text": "To prevent other methods in the same class from reading the variable." },
+                { "id": "B", "text": "To prevent subclasses and external callers from bypassing validation rules and corrupting class state." },
+                { "id": "C", "text": "To increase garbage collector collection frequency." },
+                { "id": "D", "text": "To force the Java compiler to inline the variable in bytecode." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Private fields enforce encapsulation by restricting direct external access, ensuring changes occur only via validated class methods."
+            },
+            {
+              "id": "oop-mcq-3",
+              "stem": "What occurs if no constructor is explicitly declared in a Java class?",
+              "options": [
+                { "id": "A", "text": "The class cannot be instantiated under any circumstances." },
+                { "id": "B", "text": "The compiler automatically provides a no-argument default constructor." },
+                { "id": "C", "text": "The compiler throws a compilation error." },
+                { "id": "D", "text": "All field initializations fail at runtime." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "If no constructors are defined in a class, the Java compiler injects a default no-argument constructor that calls super()."
+            },
+            {
+              "id": "oop-mcq-4",
+              "stem": "In Java, what does the 'this' keyword explicitly reference?",
+              "options": [
+                { "id": "A", "text": "The parent superclass instance." },
+                { "id": "B", "text": "The current instance of the class on which the method or constructor is being invoked." },
+                { "id": "C", "text": "The Class loader instance in the JVM." },
+                { "id": "D", "text": "The first static field declared in the file." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "'this' is a reference to the current object executing the instance method or constructor."
+            },
+            {
+              "id": "oop-mcq-5",
+              "stem": "What happens when an object reference variable in Java is assigned the value 'null'?",
+              "options": [
+                { "id": "A", "text": "The referenced object is immediately destroyed and deallocated from heap memory." },
+                { "id": "B", "text": "The reference variable ceases to point to any heap object; the object becomes eligible for garbage collection if no other references exist." },
+                { "id": "C", "text": "The JVM process terminates with exit code 1." },
+                { "id": "D", "text": "A NullPointerException is thrown at the assignment statement." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Assigning null disconnects the reference from the heap object. It becomes eligible for garbage collection once unreachable."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "oop-code-1",
+              "title": "Bank Account Invariant Guard (Easy)",
+              "difficulty": "easy",
+              "description": "Implement a BankAccount class with encapsulation. The class must maintain a non-negative balance, accept positive deposits and valid withdrawals, and reject invalid transactions.",
+              "constraints": "Deposit and withdrawal amounts must be > 0. Withdrawal cannot exceed balance.",
+              "starterCode": {
+                "java": "public class Solution {\n    public static void main(String[] args) {\n        // Read stdin: operations e.g. DEPOSIT 100, WITHDRAW 50\n    }\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "DEPOSIT 100\nWITHDRAW 40", "expectedOutput": "60.0", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "DEPOSIT 200\nWITHDRAW 250", "expectedOutput": "ERROR: INSUFFICIENT FUNDS", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "DEPOSIT -50", "expectedOutput": "ERROR: INVALID AMOUNT", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "oop-code-2",
+              "title": "Immutable Matrix & Deep Copy Invariant (Medium)",
+              "difficulty": "intermediate",
+              "description": "Construct an encapsulated Matrix class that receives a 2D integer array. Ensure deep-copy protection so external array modifications cannot mutate the internal state of the matrix.",
+              "constraints": "Dimensions up to 100x100. Values fit within 32-bit signed integers.",
+              "starterCode": {
+                "java": "public class Solution {\n    public static void main(String[] args) {\n        // Read matrix dimensions and perform deep copy check\n    }\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "2 2\n1 2\n3 4", "expectedOutput": "VALID DEEP COPY", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "1 3\n5 10 15", "expectedOutput": "VALID DEEP COPY", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "3 3\n1 0 0\n0 1 0\n0 0 1", "expectedOutput": "VALID DEEP COPY", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "oop-inheritance",
+          "orderIndex": 2,
+          "name": "Inheritance and Dynamic Dispatch",
+          "prerequisites": ["oop-classes-objects"],
+          "learningObjectives": [
+            "Model 'is-a' relationships through single inheritance class hierarchies",
+            "Understand method overriding and late-binding dynamic method dispatch",
+            "Use the super keyword to invoke parent constructor initialization and method overrides"
+          ],
+          "content": {
+            "title": "Inheritance, Polymorphism & Virtual Method Dispatch",
+            "summary": "Inheritance enables code reuse and substitutability through the Liskov Substitution Principle and vtable dispatch.",
+            "sections": [
+              {
+                "heading": "1. Hierarchical Inheritance",
+                "content": "Inheritance allows a subclass to acquire fields and methods from a superclass using 'extends'. Subclasses may extend or specialize superclass behavior."
+              },
+              {
+                "heading": "2. Dynamic Method Dispatch",
+                "content": "When a superclass reference points to a subclass object, the JVM resolves method calls at runtime according to the actual object type via vtable lookup."
+              },
+              {
+                "heading": "3. Method Overriding Rules",
+                "content": "An overriding method must have the identical signature and return type (or covariant return type) and cannot have more restrictive access modifiers."
+              }
+            ],
+            "keyTakeaways": [
+              "Subclasses inherit accessible members of the superclass and can specialize behavior via @Override",
+              "Dynamic dispatch determines which method executes based on runtime instance type, not reference type",
+              "Constructor chaining executes superclass constructors before subclass initialization bodies"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "oop-mcq-6",
+              "stem": "Which of the following correctly describes dynamic method dispatch in Java?",
+              "options": [
+                { "id": "A", "text": "Overloaded methods are chosen at runtime based on arguments." },
+                { "id": "B", "text": "Overridden methods are resolved at runtime based on the actual object type rather than the reference type." },
+                { "id": "C", "text": "Private methods are dispatched using virtual method tables." },
+                { "id": "D", "text": "Static methods are dispatched based on runtime instance type." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Dynamic method dispatch is runtime polymorphism where the call to an overridden method is resolved at runtime based on the heap instance type."
+            },
+            {
+              "id": "oop-mcq-7",
+              "stem": "Can a subclass in Java reduce the visibility of an inherited method from 'public' to 'protected'?",
+              "options": [
+                { "id": "A", "text": "Yes, subclasses can restrict visibility as needed." },
+                { "id": "B", "text": "No, an overriding method cannot assign weaker access privileges than the overridden method." },
+                { "id": "C", "text": "Yes, but only if marked with @SuppressWarnings." },
+                { "id": "D", "text": "Yes, if the superclass method is not final." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "In Java, an overriding method cannot reduce visibility (e.g. from public to protected) as that would violate polymorphism and Liskov Substitution."
+            },
+            {
+              "id": "oop-mcq-8",
+              "stem": "What is the function of the 'super' keyword when used inside a subclass constructor?",
+              "options": [
+                { "id": "A", "text": "It invokes the garbage collector on parent objects." },
+                { "id": "B", "text": "It explicitly invokes a constructor of the immediate superclass and must be the first statement." },
+                { "id": "C", "text": "It converts the subclass into an abstract class." },
+                { "id": "D", "text": "It prevents the method from being overridden further." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "super() calls the matching superclass constructor and must appear as the very first line of a subclass constructor."
+            },
+            {
+              "id": "oop-mcq-9",
+              "stem": "What is the effect of declaring a class as 'final' in Java?",
+              "options": [
+                { "id": "A", "text": "All its methods become static." },
+                { "id": "B", "text": "It cannot be subclassed or extended by any other class." },
+                { "id": "C", "text": "All instance variables become constants automatically." },
+                { "id": "D", "text": "It can only be instantiated once per JVM process." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "A final class cannot be extended, preventing any subclassing."
+            },
+            {
+              "id": "oop-mcq-10",
+              "stem": "Given class Dog extends Animal. If Animal has a method makeSound() and Dog overrides it, what does Animal a = new Dog(); a.makeSound(); execute?",
+              "options": [
+                { "id": "A", "text": "Animal's implementation of makeSound()." },
+                { "id": "B", "text": "Dog's implementation of makeSound()." },
+                { "id": "C", "text": "Throws a ClassCastException at runtime." },
+                { "id": "D", "text": "Causes a compile-time ambiguous method error." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Because the runtime instance is Dog, dynamic method dispatch invokes Dog's overridden makeSound() method."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "oop-code-3",
+              "title": "Polymorphic Shape Area Calculator (Easy)",
+              "difficulty": "easy",
+              "description": "Design a Shape base class and Rectangle / Circle subclasses. Demonstrate runtime polymorphism by calculating the total area of a mixed array of Shape references.",
+              "constraints": "Dimensions > 0. Output rounded to 2 decimal places.",
+              "starterCode": {
+                "java": "public class Solution {\n    public static void main(String[] args) {\n        // Process shape commands\n    }\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "RECT 4 5\nCIRCLE 3", "expectedOutput": "48.27", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "RECT 10 10", "expectedOutput": "100.00", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "CIRCLE 1\nRECT 2 3", "expectedOutput": "9.14", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "oop-code-4",
+              "title": "Employee Bonus & Hierarchy Dispatch (Medium)",
+              "difficulty": "intermediate",
+              "description": "Construct an Employee hierarchy with SalariedEmployee and CommissionEmployee. Calculate the net compensation including tiered bonus rules polymorphically.",
+              "constraints": "Base salaries non-negative. Commission rates between 0.0 and 1.0.",
+              "starterCode": {
+                "java": "public class Solution {\n    public static void main(String[] args) {\n        // Calculate employee compensation polymorphically\n    }\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "SALARIED 50000 10\nCOMMISSION 30000 0.15 100000", "expectedOutput": "55000 45000", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "SALARIED 80000 5", "expectedOutput": "84000", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "COMMISSION 20000 0.20 50000", "expectedOutput": "30000", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "oop-abstraction-di",
+          "orderIndex": 3,
+          "name": "Abstraction and Interfaces",
+          "prerequisites": ["oop-inheritance"],
+          "learningObjectives": [
+            "Differentiate abstract classes from pure interfaces",
+            "Design software against contracts using dependency inversion",
+            "Implement loose coupling with pluggable service providers"
+          ],
+          "content": {
+            "title": "Abstraction, Interfaces & Dependency Injection",
+            "summary": "Interfaces define pure contracts, decoupling high-level policy from low-level implementation details.",
+            "sections": [
+              {
+                "heading": "1. Abstract Classes vs Interfaces",
+                "content": "An abstract class may hold state and concrete methods, whereas interfaces represent pure behavior specifications that allow multiple interface inheritance in Java."
+              },
+              {
+                "heading": "2. Dependency Inversion Principle",
+                "content": "High-level modules should not depend on low-level modules; both should depend on abstractions. Interfaces enable dependency injection and decoupled architectures."
+              }
+            ],
+            "keyTakeaways": [
+              "Interfaces provide behavioral contracts enabling multiple inheritance of types",
+              "Dependency injection passes dependencies from callers rather than instantiating them directly",
+              "Coding to interfaces reduces coupling and dramatically improves testability"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "oop-mcq-11",
+              "stem": "Can an abstract class in Java be directly instantiated using the 'new' operator?",
+              "options": [
+                { "id": "A", "text": "Yes, if all its methods have default implementations." },
+                { "id": "B", "text": "No, abstract classes cannot be instantiated directly; they must be extended by a concrete class." },
+                { "id": "C", "text": "Yes, if it has a public constructor." },
+                { "id": "D", "text": "Yes, in the same package only." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Abstract classes cannot be instantiated directly with 'new'; only concrete subclasses can be instantiated."
+            },
+            {
+              "id": "oop-mcq-12",
+              "stem": "Which of the following is a key difference between an interface and an abstract class in Java 8+?",
+              "options": [
+                { "id": "A", "text": "An interface can have instance fields with mutable state." },
+                { "id": "B", "text": "A class can implement multiple interfaces, but can extend only one abstract class." },
+                { "id": "C", "text": "Interfaces cannot have default method implementations." },
+                { "id": "D", "text": "Abstract classes cannot have constructors." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Java supports single inheritance of implementation (one abstract/concrete class) but multiple inheritance of type (multiple interfaces)."
+            },
+            {
+              "id": "oop-mcq-13",
+              "stem": "What does the Dependency Inversion Principle (DIP) state?",
+              "options": [
+                { "id": "A", "text": "Low-level modules should control high-level business rules." },
+                { "id": "B", "text": "High-level modules should not depend on low-level modules; both should depend on abstractions." },
+                { "id": "C", "text": "All dependencies must be declared as static singletons." },
+                { "id": "D", "text": "Constructors must instantiate concrete dependencies directly." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "DIP states that high-level policies should not depend upon low-level details; both should depend on abstractions/interfaces."
+            },
+            {
+              "id": "oop-mcq-14",
+              "stem": "What is the access level of fields declared inside a Java interface by default?",
+              "options": [
+                { "id": "A", "text": "private final" },
+                { "id": "B", "text": "public static final" },
+                { "id": "C", "text": "protected" },
+                { "id": "D", "text": "package-private" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "All fields defined in a Java interface are implicitly public, static, and final."
+            },
+            {
+              "id": "oop-mcq-15",
+              "stem": "What is the primary architectural benefit of Dependency Injection?",
+              "options": [
+                { "id": "A", "text": "Increases execution speed by eliminating function calls." },
+                { "id": "B", "text": "Decouples component creation from usage, facilitating mock testing and swap-in implementations." },
+                { "id": "C", "text": "Forces classes to be singleton instances." },
+                { "id": "D", "text": "Automatically optimizes heap garbage collection." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Dependency injection decouples object creation from consumption, allowing test doubles and alternate implementations to be injected cleanly."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "oop-code-5",
+              "title": "Payment Processor Interface (Easy)",
+              "difficulty": "easy",
+              "description": "Define a PaymentGateway interface with a processPayment(double amount) method. Implement CreditCardProcessor and CryptoProcessor and demonstrate polymorphic charging.",
+              "constraints": "Amounts must be strictly positive. Credit cards charge 2% fee; Crypto charges flat 5.0 fee.",
+              "starterCode": {
+                "java": "public class Solution {\n    public static void main(String[] args) {\n        // Process payment requests\n    }\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "CARD 100", "expectedOutput": "PROCESSED: 102.00", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "CRYPTO 200", "expectedOutput": "PROCESSED: 205.00", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "CARD 500", "expectedOutput": "PROCESSED: 510.00", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "oop-code-6",
+              "title": "Notification Dispatcher with Dependency Injection (Medium)",
+              "difficulty": "intermediate",
+              "description": "Construct an OrderService that accepts a MessageSender interface via constructor injection. Support EmailSender and SmsSender. Trigger notifications on order completion.",
+              "constraints": "Message payload strings up to 256 characters. Order IDs positive integers.",
+              "starterCode": {
+                "java": "public class Solution {\n    public static void main(String[] args) {\n        // Constructor injection of notification service\n    }\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "EMAIL 101 user@example.com", "expectedOutput": "EMAIL SENT to user@example.com: Order #101 confirmed", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "SMS 202 +123456789", "expectedOutput": "SMS SENT to +123456789: Order #202 confirmed", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "EMAIL 999 support@corp.com", "expectedOutput": "EMAIL SENT to support@corp.com: Order #999 confirmed", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subject-dsa",
+      "code": "CS201",
+      "title": "Data Structures & Algorithms",
+      "description": "Rigorous investigation of continuous sequence memory, pointer manipulation, monotonic buffers, and logarithmic search tree invariants.",
+      "language": "python",
+      "topics": [
+        {
+          "id": "dsa-arrays-strings",
+          "orderIndex": 1,
+          "name": "Arrays and String Buffers",
+          "prerequisites": [],
+          "learningObjectives": [
+            "Analyze cache locality and O(1) random memory indexing",
+            "Implement two-pointer and sliding window algorithmic paradigms",
+            "Manage string buffer immutability and amortized geometric array doubling"
+          ],
+          "content": {
+            "title": "Arrays & Strings: Memory Contiguity and In-Place Pointers",
+            "summary": "Arrays store homogeneous elements in contiguous memory chunks, enabling constant-time random address arithmetic.",
+            "sections": [
+              {
+                "heading": "1. Memory Layout & Cache Locality",
+                "content": "An array index calculation Address(A[i]) = Base + (i * size) executes in O(1) CPU instructions. Contiguous layout ensures maximal CPU cache line utilization."
+              },
+              {
+                "heading": "2. Two-Pointer & Sliding Window Techniques",
+                "content": "Instead of nested O(n^2) brute force loops, two pointers advancing monotonically reduce search intervals to linear O(n) amortized time."
+              }
+            ],
+            "keyTakeaways": [
+              "Contiguous memory layout provides O(1) direct address arithmetic",
+              "Geometric resizing achieves O(1) amortized append complexity",
+              "Sliding window transforms quadratic search intervals into linear time passes"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "dsa-mcq-1",
+              "stem": "What is the time complexity to access an element at index i in an array of size n?",
+              "options": [
+                { "id": "A", "text": "O(n)" },
+                { "id": "B", "text": "O(log n)" },
+                { "id": "C", "text": "O(1)" },
+                { "id": "D", "text": "O(n log n)" }
+              ],
+              "correctOptionIds": ["C"],
+              "explanation": "Because array elements are stored in contiguous memory, indexing calculates the exact byte offset in O(1) time."
+            },
+            {
+              "id": "dsa-mcq-2",
+              "stem": "When a dynamic array (e.g. ArrayList, Python list) doubles its capacity upon reaching fullness, what is the amortized cost per append operation?",
+              "options": [
+                { "id": "A", "text": "O(n)" },
+                { "id": "B", "text": "O(1)" },
+                { "id": "C", "text": "O(log n)" },
+                { "id": "D", "text": "O(n^2)" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Geometric doubling amortizes the occasional O(n) copy cost over n/2 previous operations, resulting in O(1) amortized cost per append."
+            },
+            {
+              "id": "dsa-mcq-3",
+              "stem": "Which algorithmic technique is most optimal for finding a contiguous subarray of size k with maximum sum in an array?",
+              "options": [
+                { "id": "A", "text": "Binary Search" },
+                { "id": "B", "text": "Sliding Window" },
+                { "id": "C", "text": "Depth-First Search" },
+                { "id": "D", "text": "Breadth-First Search" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "A sliding window maintains a running sum by adding the incoming element and subtracting the outgoing element in O(n) total time."
+            },
+            {
+              "id": "dsa-mcq-4",
+              "stem": "Why does iterating through a 2D array row-by-row typically execute faster than column-by-column in row-major languages like C and Java?",
+              "options": [
+                { "id": "A", "text": "Row iteration bypasses CPU instruction decoding." },
+                { "id": "B", "text": "Row iteration exhibits high spatial cache locality, loading contiguous cache lines." },
+                { "id": "C", "text": "Column iteration causes stack overflow exceptions." },
+                { "id": "D", "text": "Row iteration uses fewer registers." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Row-major storage places consecutive row elements together in memory, maximizing CPU cache hits."
+            },
+            {
+              "id": "dsa-mcq-5",
+              "stem": "What is the worst-case space complexity of string reversal in languages with immutable strings like Python or Java without mutable builders?",
+              "options": [
+                { "id": "A", "text": "O(1)" },
+                { "id": "B", "text": "O(n)" },
+                { "id": "C", "text": "O(n^2)" },
+                { "id": "D", "text": "O(log n)" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Immutable strings require allocating a new character buffer or string object of size n to hold the reversed characters."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "dsa-code-1",
+              "title": "Two Sum Optimal Hash Invariant (Easy)",
+              "difficulty": "easy",
+              "description": "Given an array of integers and a target integer, return the 0-based indices of the two numbers that sum up to target in O(n) time.",
+              "constraints": "2 <= nums.length <= 10^5. Exactly one valid solution exists.",
+              "starterCode": {
+                "python": "import sys\n\ndef solve():\n    lines = sys.stdin.read().strip().split()\n    if not lines: return\n    target = int(lines[0])\n    nums = [int(x) for x in lines[1:]]\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            print(f\"{seen[complement]} {i}\")\n            return\n        seen[num] = i\n\nif __name__ == '__main__':\n    solve()\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "9 2 7 11 15", "expectedOutput": "0 1", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "6 3 2 4", "expectedOutput": "1 2", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "10 1 3 5 5 9", "expectedOutput": "2 3", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "dsa-code-2",
+              "title": "Longest Non-Repeating Substring (Medium)",
+              "difficulty": "intermediate",
+              "description": "Given a string, compute the length of the longest contiguous substring without duplicate characters using a sliding window.",
+              "constraints": "String length up to 10^5. Printable ASCII characters.",
+              "starterCode": {
+                "python": "import sys\n\ndef solve():\n    s = sys.stdin.read().strip()\n    char_index = {}\n    left = 0\n    max_len = 0\n    for right, ch in enumerate(s):\n        if ch in char_index and char_index[ch] >= left:\n            left = char_index[ch] + 1\n        char_index[ch] = right\n        max_len = max(max_len, right - left + 1)\n    print(max_len)\n\nif __name__ == '__main__':\n    solve()\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "abcabcbb", "expectedOutput": "3", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "bbbbb", "expectedOutput": "1", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "pwwkew", "expectedOutput": "3", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "dsa-stacks-queues",
+          "orderIndex": 2,
+          "name": "Stacks and Monotonic Buffers",
+          "prerequisites": ["dsa-arrays-strings"],
+          "learningObjectives": [
+            "Implement Last-In-First-Out (LIFO) and First-In-First-Out (FIFO) buffer disciplines",
+            "Maintain monotonic stack invariants for O(n) nearest greater element discovery",
+            "Evaluate arithmetic expressions and validate nested parentheses brackets"
+          ],
+          "content": {
+            "title": "Stacks, Queues & Monotonic Buffers",
+            "summary": "Stacks manage execution activation frames and parse nested syntax; monotonic stacks track ordered extremes in linear time.",
+            "sections": [
+              {
+                "heading": "1. LIFO Stack Semantics",
+                "content": "Stacks enforce push and pop operations strictly at the top element in O(1) time. They mirror compiler call frames and recursive activation."
+              },
+              {
+                "heading": "2. Monotonic Stack Invariant",
+                "content": "A monotonic stack maintains elements in strictly increasing or decreasing order. Elements violating the invariant are popped, ensuring each element enters and leaves the stack at most once for an overall O(n) runtime."
+              }
+            ],
+            "keyTakeaways": [
+              "Stacks provide O(1) push and pop and model nested hierarchical structures",
+              "Monotonic stacks resolve 'next greater element' problems in amortized O(n) time",
+              "Queues provide FIFO ordering essential for breadth-first graph explorations"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "dsa-mcq-6",
+              "stem": "Which data structure follows the Last-In, First-Out (LIFO) operational discipline?",
+              "options": [
+                { "id": "A", "text": "Queue" },
+                { "id": "B", "text": "Stack" },
+                { "id": "C", "text": "Binary Heap" },
+                { "id": "D", "text": "Doubly Linked List" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "A stack is defined by LIFO behavior: the most recently pushed element is the first element popped."
+            },
+            {
+              "id": "dsa-mcq-7",
+              "stem": "What is the aggregate time complexity of processing an array of size n using a monotonic stack where each element is pushed and popped at most once?",
+              "options": [
+                { "id": "A", "text": "O(n^2)" },
+                { "id": "B", "text": "O(n log n)" },
+                { "id": "C", "text": "O(n)" },
+                { "id": "D", "text": "O(2^n)" }
+              ],
+              "correctOptionIds": ["C"],
+              "explanation": "Even though inner while loops pop elements, each item is pushed once and popped at most once, making the amortized total runtime O(n)."
+            },
+            {
+              "id": "dsa-mcq-8",
+              "stem": "Which data structure is primarily utilized by the operating system and language runtimes to track function calls and local variables?",
+              "options": [
+                { "id": "A", "text": "Call Stack" },
+                { "id": "B", "text": "Circular Queue" },
+                { "id": "C", "text": "B-Tree" },
+                { "id": "D", "text": "Skip List" }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "The runtime call stack manages activation frames for nested function invocations and returns."
+            },
+            {
+              "id": "dsa-mcq-9",
+              "stem": "What is the outcome of attempting to pop from an empty stack?",
+              "options": [
+                { "id": "A", "text": "Stack Overflow" },
+                { "id": "B", "text": "Stack Underflow" },
+                { "id": "C", "text": "Memory Leak" },
+                { "id": "D", "text": "Segmentation Fault in all languages" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Popping from an empty stack condition is known as stack underflow."
+            },
+            {
+              "id": "dsa-mcq-10",
+              "stem": "How can a FIFO Queue be efficiently implemented using two LIFO Stacks with O(1) amortized dequeue?",
+              "options": [
+                { "id": "A", "text": "Push to InStack; on pop, if OutStack is empty, pop all InStack elements into OutStack and pop from OutStack." },
+                { "id": "B", "text": "Alternate pushing between Stack 1 and Stack 2." },
+                { "id": "C", "text": "Reverse the array on every enqueue." },
+                { "id": "D", "text": "It is mathematically impossible to implement a FIFO queue with two stacks." }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "By pouring InStack into OutStack only when OutStack is empty, the order reverses twice, yielding FIFO with O(1) amortized cost."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "dsa-code-3",
+              "title": "Valid Bracket Sequence Verifier (Easy)",
+              "difficulty": "easy",
+              "description": "Given a string containing only '()[]{}', determine if the bracket sequences are valid, closed in correct order, and properly nested.",
+              "constraints": "String length 1 to 10^5.",
+              "starterCode": {
+                "python": "import sys\n\ndef solve():\n    s = sys.stdin.read().strip()\n    stack = []\n    mapping = {')': '(', '}': '{', ']': '['}\n    for char in s:\n        if char in mapping.values():\n            stack.append(char)\n        elif char in mapping:\n            if not stack or stack.pop() != mapping[char]:\n                print(\"false\")\n                return\n        else:\n            print(\"false\")\n            return\n    print(\"true\" if not stack else \"false\")\n\nif __name__ == '__main__':\n    solve()\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "()[]{}", "expectedOutput": "true", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "(]", "expectedOutput": "false", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "([{}])", "expectedOutput": "true", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "dsa-code-4",
+              "title": "Daily Temperatures Monotonic Stack (Medium)",
+              "difficulty": "intermediate",
+              "description": "Given an array of daily temperatures, compute an array of days you would have to wait until a warmer temperature occurs. If no warmer day occurs, output 0.",
+              "constraints": "1 <= temperatures.length <= 10^5. Temps between 30 and 100.",
+              "starterCode": {
+                "python": "import sys\n\ndef solve():\n    nums = [int(x) for x in sys.stdin.read().strip().split()]\n    res = [0] * len(nums)\n    stack = [] # indices of decreasing temperatures\n    for i, t in enumerate(nums):\n        while stack and nums[stack[-1]] < t:\n            prev = stack.pop()\n            res[prev] = i - prev\n        stack.append(i)\n    print(' '.join(map(str, res)))\n\nif __name__ == '__main__':\n    solve()\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "73 74 75 71 69 72 76 73", "expectedOutput": "1 1 4 2 1 1 0 0", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "30 40 50 60", "expectedOutput": "1 1 1 0", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "90 80 70", "expectedOutput": "0 0 0", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "dsa-trees-graphs",
+          "orderIndex": 3,
+          "name": "Trees and Binary Search Trees",
+          "prerequisites": ["dsa-stacks-queues"],
+          "learningObjectives": [
+            "Verify binary tree invariant properties and balanced height depth",
+            "Perform in-order, pre-order, and post-order recursive tree traversals",
+            "Implement logarithmic O(log n) lookups and lowest common ancestor queries"
+          ],
+          "content": {
+            "title": "Binary Search Trees: Logarithmic Ordering Invariants",
+            "summary": "Binary Search Trees maintain dynamic sorted order, enabling logarithmic search, insert, and delete operations.",
+            "sections": [
+              {
+                "heading": "1. The BST Ordering Invariant",
+                "content": "For every node N in a BST: all keys in N's left subtree are strictly less than N.key, and all keys in N's right subtree are strictly greater than N.key."
+              },
+              {
+                "heading": "2. In-Order Traversal Property",
+                "content": "An in-order traversal (Left, Root, Right) of a valid Binary Search Tree visits keys in strictly non-decreasing sorted order."
+              }
+            ],
+            "keyTakeaways": [
+              "BST invariant requires every left descendant < node < every right descendant",
+              "In-order traversal yields keys in strictly sorted order in O(n) time",
+              "Balanced height ensures O(log n) lookup, whereas degenerate trees degrade to O(n)"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "dsa-mcq-11",
+              "stem": "Which tree traversal order visits node keys of a valid Binary Search Tree in strictly ascending order?",
+              "options": [
+                { "id": "A", "text": "Pre-order (Root, Left, Right)" },
+                { "id": "B", "text": "In-order (Left, Root, Right)" },
+                { "id": "C", "text": "Post-order (Left, Right, Root)" },
+                { "id": "D", "text": "Level-order (Breadth-First)" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "In-order traversal visits the left subtree, current node, and right subtree, which matches sorted order for any valid BST."
+            },
+            {
+              "id": "dsa-mcq-12",
+              "stem": "What is the worst-case time complexity of searching in an unbalanced, degenerate Binary Search Tree of n nodes?",
+              "options": [
+                { "id": "A", "text": "O(1)" },
+                { "id": "B", "text": "O(log n)" },
+                { "id": "C", "text": "O(n)" },
+                { "id": "D", "text": "O(n log n)" }
+              ],
+              "correctOptionIds": ["C"],
+              "explanation": "If nodes are inserted in sorted order, the BST degenerates into a singly linked list with O(n) height and search time."
+            },
+            {
+              "id": "dsa-mcq-13",
+              "stem": "In a balanced Binary Search Tree (such as an AVL or Red-Black tree), what is the maximum tree height for n nodes?",
+              "options": [
+                { "id": "A", "text": "O(n)" },
+                { "id": "B", "text": "O(log n)" },
+                { "id": "C", "text": "O(sqrt(n))" },
+                { "id": "D", "text": "O(1)" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Self-balancing binary trees maintain height bounded by O(log n), guaranteeing logarithmic worst-case search times."
+            },
+            {
+              "id": "dsa-mcq-14",
+              "stem": "What is the minimum number of nodes in a complete binary tree of height h (where a root-only tree has height 0)?",
+              "options": [
+                { "id": "A", "text": "2^h" },
+                { "id": "B", "text": "2^(h+1) - 1" },
+                { "id": "C", "text": "h + 1" },
+                { "id": "D", "text": "2^(h-1)" }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "A complete binary tree of height h has all levels up to h-1 full (2^h - 1 nodes) plus at least 1 node at level h, totaling 2^h minimum nodes."
+            },
+            {
+              "id": "dsa-mcq-15",
+              "stem": "Which operation is used in self-balancing search trees (AVL/Red-Black) to restore balance invariants after an insertion without violating sorted order?",
+              "options": [
+                { "id": "A", "text": "Tree Rotation (Left/Right)" },
+                { "id": "B", "text": "Graph Topological Sort" },
+                { "id": "C", "text": "Depth Inversion" },
+                { "id": "D", "text": "Subtree Pruning" }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "Tree rotations (single and double left/right rotations) alter local tree height while strictly preserving the BST in-order key invariant."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "dsa-code-5",
+              "title": "Validate Binary Search Tree Invariant (Easy)",
+              "difficulty": "easy",
+              "description": "Given serialized level-order nodes of a binary tree, verify whether it satisfies the strict BST property: left < root < right for all descendant nodes.",
+              "constraints": "Tree contains between 1 and 10^4 nodes. Node values fit in 32-bit integers.",
+              "starterCode": {
+                "python": "import sys\n\ndef solve():\n    # Reads level order tree and validates (low, high) bounds\n    pass\n\nif __name__ == '__main__':\n    solve()\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "2 1 3", "expectedOutput": "VALID", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "5 1 4 null null 3 6", "expectedOutput": "INVALID", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "10 5 15 null null 6 20", "expectedOutput": "INVALID", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "dsa-code-6",
+              "title": "Lowest Common Ancestor in BST (Medium)",
+              "difficulty": "intermediate",
+              "description": "Given a valid Binary Search Tree and two node values p and q, find the value of their Lowest Common Ancestor (LCA) leveraging the BST invariant in O(h) time.",
+              "constraints": "All node values are unique. p and q exist in the BST.",
+              "starterCode": {
+                "python": "import sys\n\ndef solve():\n    # Finds LCA by branching when p and q diverge\n    pass\n\nif __name__ == '__main__':\n    solve()\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "6 2 8 0 4 7 9\n2 8", "expectedOutput": "6", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "6 2 8 0 4 7 9\n2 4", "expectedOutput": "2", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "6 2 8 0 4 7 9\n7 9", "expectedOutput": "8", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subject-os",
+      "code": "CS301",
+      "title": "Operating Systems",
+      "description": "In-depth exploration of kernel architectures, process scheduling control blocks, synchronization semaphores, and virtual memory address translation.",
+      "language": "c",
+      "topics": [
+        {
+          "id": "os-process-threads",
+          "orderIndex": 1,
+          "name": "Processes and Concurrency",
+          "prerequisites": [],
+          "learningObjectives": [
+            "Distinguish address space isolation in processes from shared memory in threads",
+            "Trace Process Control Block (PCB) state transitions across Ready, Running, and Blocked",
+            "Analyze context switching overhead and CPU scheduling quantum constraints"
+          ],
+          "content": {
+            "title": "Processes, Threads & Execution Contexts",
+            "summary": "Operating systems virtualize the CPU by scheduling isolated process address spaces and lightweight thread contexts.",
+            "sections": [
+              {
+                "heading": "1. Process Isolation vs Threads",
+                "content": "A process owns isolated virtual address space (text, data, heap, stack). Threads within the same process share code, global data, and open file descriptors, but each thread retains its own private register context and stack."
+              },
+              {
+                "heading": "2. Context Switching Mechanics",
+                "content": "On timer interrupts or I/O waits, the kernel saves the running process's CPU register state into its PCB, flushes or switches MMU page table registers, and restores the next scheduled process's registers."
+              }
+            ],
+            "keyTakeaways": [
+              "Processes have isolated virtual address spaces; threads share the heap and data segments",
+              "Context switches incur direct register saving costs and indirect cache invalidation overhead",
+              "PCBs store process state, program counter, CPU registers, memory limits, and file tables"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "os-mcq-1",
+              "stem": "Which component of an execution context is uniquely private to each thread within a multithreaded process?",
+              "options": [
+                { "id": "A", "text": "Virtual Address Space" },
+                { "id": "B", "text": "Program Counter and Call Stack" },
+                { "id": "C", "text": "Global Data Segment" },
+                { "id": "D", "text": "Open File Descriptor Table" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Threads share process-wide heap, global data, and file tables, but each thread possesses its own register state and call stack."
+            },
+            {
+              "id": "os-mcq-2",
+              "stem": "What state does a running process transition into when it executes a blocking I/O system call (e.g. reading from disk)?",
+              "options": [
+                { "id": "A", "text": "Ready" },
+                { "id": "B", "text": "Terminated" },
+                { "id": "C", "text": "Waiting / Blocked" },
+                { "id": "D", "text": "Zombie" }
+              ],
+              "correctOptionIds": ["C"],
+              "explanation": "A process requesting I/O cannot utilize the CPU until the peripheral transfer finishes, transitioning it to the Waiting/Blocked state."
+            },
+            {
+              "id": "os-mcq-3",
+              "stem": "What is a 'Zombie Process' in Unix-like operating systems?",
+              "options": [
+                { "id": "A", "text": "A process that has finished execution but whose entry remains in the process table because its parent has not read its exit status with wait()." },
+                { "id": "B", "text": "A process stuck in an infinite CPU loop." },
+                { "id": "C", "text": "A process whose memory has been entirely swapped out to disk." },
+                { "id": "D", "text": "A daemon process with no controlling terminal." }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "A zombie has completed execution but retains a process table entry with its exit status until its parent invokes wait()."
+            },
+            {
+              "id": "os-mcq-4",
+              "stem": "What does a CPU timer interrupt directly accomplish in a preemptive multitasking operating system?",
+              "options": [
+                { "id": "A", "text": "Resets the motherboard clock." },
+                { "id": "B", "text": "Prevents any single process from monopolizing the CPU indefinitely, triggering kernel scheduler evaluations." },
+                { "id": "C", "text": "Clears all memory caches." },
+                { "id": "D", "text": "Terminates background daemon processes." }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Periodic timer interrupts return execution control to the OS kernel scheduler to enforce timeslice preemption."
+            },
+            {
+              "id": "os-mcq-5",
+              "stem": "What system call in Unix duplicates the calling process to create an almost identical child process?",
+              "options": [
+                { "id": "A", "text": "execve()" },
+                { "id": "B", "text": "fork()" },
+                { "id": "C", "text": "spawn()" },
+                { "id": "D", "text": "clone_process()" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "fork() creates an exact child process copy with duplicate address space (optimized via copy-on-write)."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "os-code-1",
+              "title": "Process State Machine Transition Simulator (Easy)",
+              "difficulty": "easy",
+              "description": "Write a program that processes a sequence of process events (CREATE, SCHEDULE, IO_REQ, IO_DONE, EXIT) and outputs the final state of each process ID.",
+              "constraints": "Process IDs from 1 to 1000. Valid states: NEW, READY, RUNNING, WAITING, TERMINATED.",
+              "starterCode": {
+                "c": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    // Simulate process lifecycle transitions\n    return 0;\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "CREATE 1\nSCHEDULE 1\nEXIT 1", "expectedOutput": "1: TERMINATED", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "CREATE 2\nSCHEDULE 2\nIO_REQ 2", "expectedOutput": "2: WAITING", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "CREATE 3\nSCHEDULE 3\nIO_REQ 3\nIO_DONE 3", "expectedOutput": "3: READY", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "os-code-2",
+              "title": "Thread Worker Pool Invariant (Medium)",
+              "difficulty": "intermediate",
+              "description": "Simulate a thread task dispatcher with fixed concurrency limit N. Process task arrival and execution duration, computing total completion time.",
+              "constraints": "Concurrency 1 <= N <= 16. Task durations positive integers.",
+              "starterCode": {
+                "c": "#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    // Thread pool scheduler simulation\n    return 0;\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "2\n10 10 10 10", "expectedOutput": "20", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "1\n5 5 5", "expectedOutput": "15", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "4\n8 2 4 6 10", "expectedOutput": "12", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "os-synchronization",
+          "orderIndex": 2,
+          "name": "Synchronization and Deadlocks",
+          "prerequisites": ["os-process-threads"],
+          "learningObjectives": [
+            "Enforce mutual exclusion in critical sections using semaphores and mutexes",
+            "Identify the four Coffman conditions necessary for deadlock formation",
+            "Implement deadlock detection and banker's resource allocation safety algorithms"
+          ],
+          "content": {
+            "title": "Synchronization, Mutex Locks & Deadlock Conditions",
+            "summary": "Concurrent shared memory access requires atomic synchronization primitives to prevent race conditions and deadlocks.",
+            "sections": [
+              {
+                "heading": "1. Critical Section Problem",
+                "content": "Any solution must satisfy Mutual Exclusion (only one process in critical section), Progress (selection cannot be postponed indefinitely), and Bounded Waiting (limits on turns before entry)."
+              },
+              {
+                "heading": "2. The Four Coffman Deadlock Conditions",
+                "content": "Deadlock can occur if and only if four conditions hold simultaneously: 1. Mutual Exclusion, 2. Hold and Wait, 3. No Preemption, 4. Circular Wait."
+              }
+            ],
+            "keyTakeaways": [
+              "Mutexes enforce mutual exclusion; counting semaphores coordinate shared resource pools",
+              "Race conditions occur when output depends on non-deterministic thread interleavings",
+              "Breaking any one of the four Coffman conditions provably prevents deadlock"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "os-mcq-6",
+              "stem": "Which of the following is NOT one of the four Coffman conditions required for deadlock?",
+              "options": [
+                { "id": "A", "text": "Mutual Exclusion" },
+                { "id": "B", "text": "Hold and Wait" },
+                { "id": "C", "text": "Preemption of Resources" },
+                { "id": "D", "text": "Circular Wait" }
+              ],
+              "correctOptionIds": ["C"],
+              "explanation": "The condition is NO preemption (resources cannot be forcibly reclaimed). If preemption is allowed, deadlock cannot occur."
+            },
+            {
+              "id": "os-mcq-7",
+              "stem": "What is the primary difference between a binary semaphore and a mutex in operating systems?",
+              "options": [
+                { "id": "A", "text": "A mutex includes ownership semantics: only the thread that locked the mutex may unlock it." },
+                { "id": "B", "text": "A binary semaphore can hold integer values up to 100." },
+                { "id": "C", "text": "Mutexes cannot be used in multithreaded programs." },
+                { "id": "D", "text": "Semaphores cannot signal across processes." }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "A mutex has strict ownership: only the thread that acquired the lock may release it. Semaphores can be signaled by any thread."
+            },
+            {
+              "id": "os-mcq-8",
+              "stem": "What is 'Priority Inversion' in real-time concurrent scheduling?",
+              "options": [
+                { "id": "A", "text": "A low-priority task holds a shared lock required by a high-priority task, while medium-priority tasks prevent the low-priority task from finishing." },
+                { "id": "B", "text": "All tasks are assigned identical CPU priorities." },
+                { "id": "C", "text": "The scheduler terminates the highest priority process." },
+                { "id": "D", "text": "High priority tasks execute out-of-order." }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "Priority inversion happens when a high-priority thread is indirectly preempted by a medium-priority thread because a low-priority thread holds a shared lock."
+            },
+            {
+              "id": "os-mcq-9",
+              "stem": "How can the Circular Wait condition for deadlocks be eliminated by design?",
+              "options": [
+                { "id": "A", "text": "Require processes to acquire locks in a globally ordered, linear hierarchy." },
+                { "id": "B", "text": "Allow threads to hold unlimited locks simultaneously." },
+                { "id": "C", "text": "Increase CPU clock speed." },
+                { "id": "D", "text": "Disable all multi-core processing." }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "Enforcing a global total ordering on all resource acquisitions mathematically guarantees no circular wait cycles can form."
+            },
+            {
+              "id": "os-mcq-10",
+              "stem": "What algorithm is used by operating systems for deadlock avoidance by verifying a safe resource allocation state?",
+              "options": [
+                { "id": "A", "text": "Dijkstra's Banker's Algorithm" },
+                { "id": "B", "text": "Kruskal's Algorithm" },
+                { "id": "C", "text": "Round Robin" },
+                { "id": "D", "text": "LRU Approximation" }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "Banker's Algorithm simulates resource allocation for maximum possible claims to ensure the system remains in a safe state."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "os-code-3",
+              "title": "Dining Philosophers Deadlock Prevention (Easy)",
+              "difficulty": "easy",
+              "description": "Simulate 5 philosophers attempting to acquire adjacent left and right chopsticks. Prevent deadlock by having odd philosophers pick up left first and even philosophers pick up right first.",
+              "constraints": "5 philosophers, numbered 0 to 4. Chopsticks 0 to 4.",
+              "starterCode": {
+                "c": "#include <stdio.h>\n\nint main() {\n    // Resource acquisition order simulation\n    return 0;\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "ACQUIRE_ALL", "expectedOutput": "DEADLOCK_FREE", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "PHIL 0 EAT", "expectedOutput": "PHIL 0 ATE", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "PARALLEL_RUN 100", "expectedOutput": "COMPLETED 100 WITHOUT DEADLOCK", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "os-code-4",
+              "title": "Producer-Consumer Bounded Buffer Invariant (Medium)",
+              "difficulty": "intermediate",
+              "description": "Simulate a bounded FIFO buffer of size K. Handle concurrent producer and consumer operations, ensuring producers block when full and consumers block when empty.",
+              "constraints": "Buffer capacity 1 <= K <= 100. Commands: PRODUCE item, CONSUME.",
+              "starterCode": {
+                "c": "#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    // Bounded buffer semaphore simulation\n    return 0;\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "2\nPRODUCE 10\nPRODUCE 20\nCONSUME", "expectedOutput": "CONSUMED 10", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "1\nCONSUME", "expectedOutput": "BLOCKED: EMPTY", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "1\nPRODUCE 5\nPRODUCE 15", "expectedOutput": "BLOCKED: FULL", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "os-memory-management",
+          "orderIndex": 3,
+          "name": "Virtual Memory and Paging",
+          "prerequisites": ["os-synchronization"],
+          "learningObjectives": [
+            "Translate virtual addresses to physical addresses via multi-level page tables",
+            "Understand Translation Lookaside Buffer (TLB) hits, misses, and flush costs",
+            "Evaluate page replacement algorithms including FIFO, Optimal, and LRU"
+          ],
+          "content": {
+            "title": "Virtual Memory, Paging & Address Translation",
+            "summary": "Virtual memory decouples process logical addresses from physical RAM, providing protection, isolation, and page fault demand paging.",
+            "sections": [
+              {
+                "heading": "1. Paging Architecture",
+                "content": "A virtual address is split into a Page Number (VPN) and an Offset. The Memory Management Unit (MMU) consults page tables to translate VPN to Physical Frame Number (PFN)."
+              },
+              {
+                "heading": "2. Page Fault Handling",
+                "content": "When a page table entry has its valid bit set to 0, accessing it generates a Page Fault hardware trap. The OS kernel retrieves the page from secondary storage, swaps it into an available frame, updates the PTE, and restarts the instruction."
+              }
+            ],
+            "keyTakeaways": [
+              "Virtual addresses split into page number and offset; offset remains invariant during translation",
+              "TLB caches recent address translations to avoid multiple memory lookups per access",
+              "Page faults trigger kernel traps to retrieve missing pages from backing store"
+            ]
+          },
+          "mcqs": [
+            {
+              "id": "os-mcq-11",
+              "stem": "In a paged virtual memory system with 4KB (4096 bytes) page size, how many bits of a virtual address are used for the page offset?",
+              "options": [
+                { "id": "A", "text": "10 bits" },
+                { "id": "B", "text": "12 bits" },
+                { "id": "C", "text": "14 bits" },
+                { "id": "D", "text": "16 bits" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "Because 2^12 = 4096 bytes, exactly 12 bits are required for the intra-page byte offset."
+            },
+            {
+              "id": "os-mcq-12",
+              "stem": "What hardware component caches recent virtual-to-physical address translations to accelerate memory access?",
+              "options": [
+                { "id": "A", "text": "Translation Lookaside Buffer (TLB)" },
+                { "id": "B", "text": "Instruction Register" },
+                { "id": "C", "text": "Direct Memory Access (DMA) Controller" },
+                { "id": "D", "text": "Arithmetic Logic Unit (ALU)" }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "The TLB is a high-speed associative hardware cache in the MMU that stores recent VPN-to-PFN mappings."
+            },
+            {
+              "id": "os-mcq-13",
+              "stem": "What occurs when a process attempts to access a valid virtual memory address whose corresponding physical frame is currently swapped out to disk?",
+              "options": [
+                { "id": "A", "text": "Segmentation Fault and crash" },
+                { "id": "B", "text": "Page Fault exception handled by the kernel" },
+                { "id": "C", "text": "Silent memory corruption" },
+                { "id": "D", "text": "Bus Error" }
+              ],
+              "correctOptionIds": ["B"],
+              "explanation": "A non-resident page triggers a page fault hardware trap, causing the kernel page fault handler to swap in the page from disk."
+            },
+            {
+              "id": "os-mcq-14",
+              "stem": "Which page replacement algorithm theoretically achieves the lowest possible page fault rate by replacing the page that will not be used for the longest period in the future?",
+              "options": [
+                { "id": "A", "text": "First-In, First-Out (FIFO)" },
+                { "id": "B", "text": "Least Recently Used (LRU)" },
+                { "id": "C", "text": "Bélády's Optimal Page Replacement (OPT)" },
+                { "id": "D", "text": "Clock Algorithm" }
+              ],
+              "correctOptionIds": ["C"],
+              "explanation": "Bélády's OPT algorithm replaces the page whose next access is furthest in the future, providing an optimal baseline (unimplementable online without clairvoyance)."
+            },
+            {
+              "id": "os-mcq-15",
+              "stem": "What phenomenon occurs when a system spends more time servicing page faults and swapping pages than executing useful application instructions?",
+              "options": [
+                { "id": "A", "text": "Thrashing" },
+                { "id": "B", "text": "Deadlock" },
+                { "id": "C", "text": "Starvation" },
+                { "id": "D", "text": "Fragmentation" }
+              ],
+              "correctOptionIds": ["A"],
+              "explanation": "Thrashing happens when processes' working sets exceed physical memory, forcing continuous page faulting and disk I/O."
+            }
+          ],
+          "codingAssessments": [
+            {
+              "id": "os-code-5",
+              "title": "Page Replacement LRU Simulator (Easy)",
+              "difficulty": "easy",
+              "description": "Given page capacity C and a reference string of page numbers, calculate the total number of page faults using the Least Recently Used (LRU) algorithm.",
+              "constraints": "1 <= C <= 20. Reference string length up to 1000.",
+              "starterCode": {
+                "c": "#include <stdio.h>\n\nint main() {\n    // LRU page fault simulator\n    return 0;\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "3\n7 0 1 2 0 3 0 4 2 3", "expectedOutput": "7", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "4\n1 2 3 4 1 2 5 1 2 3 4 5", "expectedOutput": "10", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "2\n1 2 1 2 1 2", "expectedOutput": "2", "isHidden": true, "weight": 2 }
+              ]
+            },
+            {
+              "id": "os-code-6",
+              "title": "Virtual to Physical Address Translator (Medium)",
+              "difficulty": "intermediate",
+              "description": "Simulate single-level page table translation. Given page size 256 bytes (8-bit offset), a page table mapping page number to frame number, translate a given 16-bit virtual address into physical address.",
+              "constraints": "All addresses 16-bit unsigned integers. Output physical address in decimal.",
+              "starterCode": {
+                "c": "#include <stdio.h>\n\nint main() {\n    // Address translation: PFN * 256 + Offset\n    return 0;\n}\n"
+              },
+              "testCases": [
+                { "id": "tc1", "input": "0 5\n1 9\n258", "expectedOutput": "2306", "isHidden": false, "weight": 1 },
+                { "id": "tc2", "input": "0 2\n1 7\n10", "expectedOutput": "522", "isHidden": false, "weight": 1 },
+                { "id": "tc3", "input": "3 12\n770", "expectedOutput": "3074", "isHidden": true, "weight": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

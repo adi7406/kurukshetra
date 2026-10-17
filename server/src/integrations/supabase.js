@@ -341,6 +341,58 @@ export function createMockSupabase() {
           };
         },
 
+        upsert(rows, options = {}) {
+          const arr = Array.isArray(rows) ? rows : [rows];
+          const onConflict = options.onConflict ? options.onConflict.split(',').map((f) => f.trim()) : null;
+          const upsertedItems = [];
+
+          for (const r of arr) {
+            let existingKey = null;
+            if (onConflict) {
+              for (const [key, item] of store.entries()) {
+                const match = onConflict.every((field) => item[field] === r[field]);
+                if (match) {
+                  existingKey = key;
+                  break;
+                }
+              }
+            } else if (r.id && store.has(r.id)) {
+              existingKey = r.id;
+            }
+
+            const id = existingKey || r.id || `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            const existingItem = existingKey ? store.get(existingKey) : {};
+            const merged = {
+              ...existingItem,
+              ...r,
+              id,
+              created_at: existingItem.created_at || r.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            store.set(id, merged);
+            upsertedItems.push(merged);
+          }
+
+          return {
+            select() {
+              return {
+                async single() {
+                  return { data: upsertedItems[0], error: null };
+                },
+                async maybeSingle() {
+                  return { data: upsertedItems[0] || null, error: null };
+                },
+                then(resolve, reject) {
+                  return Promise.resolve({ data: upsertedItems, error: null }).then(resolve, reject);
+                },
+              };
+            },
+            then(resolve, reject) {
+              return Promise.resolve({ data: upsertedItems, error: null }).then(resolve, reject);
+            },
+          };
+        },
+
         update(updates) {
           let filterFn = () => false;
 

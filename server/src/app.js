@@ -24,6 +24,7 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import monitoringRoutes from './routes/monitoring.routes.js';
 import aiGenerationRoutes from './routes/aiGeneration.routes.js';
+import diagnosticRoutes from './routes/diagnostic.routes.js';
 import { metricsMiddleware } from './middleware/metrics.js';
 
 const app = express();
@@ -74,6 +75,7 @@ app.use(env.API_PREFIX, dashboardRoutes);
 app.use(env.API_PREFIX, reportsRoutes);
 app.use(env.API_PREFIX, monitoringRoutes);
 app.use(env.API_PREFIX, aiGenerationRoutes);
+app.use(env.API_PREFIX, diagnosticRoutes);
 
 if (env.API_PREFIX !== '/api') {
   app.use('/api', healthRoutes);
@@ -95,6 +97,7 @@ if (env.API_PREFIX !== '/api') {
   app.use('/api', reportsRoutes);
   app.use('/api', monitoringRoutes);
   app.use('/api', aiGenerationRoutes);
+  app.use('/api', diagnosticRoutes);
 }
 
 
