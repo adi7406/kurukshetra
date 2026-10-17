@@ -271,4 +271,50 @@ export const conceptsController = {
       next(error);
     }
   },
+
+  /**
+   * List all concepts
+   */
+  async listAllConcepts(req, res, next) {
+    try {
+      const supabase = getSupabase();
+      const { data: concepts = [] } = await supabase.from('concepts').select('*');
+      res.status(200).json({
+        data: concepts || [],
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get single concept by ID
+   */
+  async getConceptById(req, res, next) {
+    try {
+      const { conceptId } = req.params;
+      const supabase = getSupabase();
+      const { data: concept } = await supabase
+        .from('concepts')
+        .select('*')
+        .eq('id', conceptId)
+        .maybeSingle();
+
+      if (!concept) {
+        throw new NotFoundError('Concept not found.');
+      }
+
+      res.status(200).json({
+        data: concept,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

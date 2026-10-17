@@ -182,52 +182,12 @@ export const learningService = {
 
   async submitQuizAttempt(quizId, answers) {
     try {
-      const response = await apiClient.post(`/quizzes/${quizId}/attempts`, { answers });
-      if (response?.data || response?.score !== undefined) {
-        return response.data || response;
-      }
+      const response = await apiClient.post(`/quizzes/${quizId}/submit`, { answers });
+      return response?.data || response;
     } catch {
-      // Fallback to local evaluation
+      const response = await apiClient.post(`/quizzes/${quizId}/attempts`, { answers });
+      return response?.data || response;
     }
-
-    const quizzes = await this.getQuizzes();
-    const quiz = quizzes.find((q) => q.id === quizId);
-    if (!quiz) throw new Error('Quiz not found');
-
-    const questions = quiz.questions || [];
-    let correctCount = 0;
-    questions.forEach((q) => {
-      if (answers[q.id] === q.correctIndex) {
-        correctCount += 1;
-      }
-    });
-
-    const totalCount = questions.length || 1;
-    const score = Math.round((correctCount / totalCount) * 100);
-    quiz.status = 'completed';
-    quiz.lastAttemptScore = score;
-    quiz.lastAttemptDate = 'Just now';
-
-    setCached(QUIZZES_KEY, quizzes);
-
-    if (quiz.conceptId) {
-      await this.recordLearningAttempt(quiz.conceptId, score >= (quiz.passingScore || 70));
-    }
-
-    return {
-      score,
-      correctCount,
-      totalCount,
-      passed: score >= (quiz.passingScore || 70),
-      details: questions.map((q) => ({
-        questionId: q.id,
-        prompt: q.prompt,
-        selectedOption: answers[q.id],
-        correctOption: q.correctIndex,
-        isCorrect: answers[q.id] === q.correctIndex,
-        explanation: q.explanation || 'Evaluated conceptual invariant.',
-      })),
-    };
   },
 
   // =========================================================================
@@ -243,7 +203,7 @@ export const learningService = {
         return assessments;
       }
     } catch {
-      // Backend not yet running or route pending
+      // Route pending or empty collection
     }
     const cached = getCached(ASSESSMENTS_KEY, []);
     return cached.map(normalizeCodingAssessment).filter(Boolean);
@@ -255,115 +215,45 @@ export const learningService = {
       const item = response?.data || response;
       if (item && item.id) return normalizeCodingAssessment(item);
     } catch {
-      // Backend not yet running or route pending
+      // Route pending or empty collection
     }
     const list = await this.getAssessments();
     return list.find((a) => a.id === id) || null;
   },
 
   async runCode(assessmentId, code, language, customInput = null) {
-    try {
-      const response = await apiClient.post(`/assessments/${assessmentId}/run`, {
-        code,
-        language,
-        customInput,
-      });
-      if (response?.output || response?.status) {
-        return response;
-      }
-    } catch {
-      // Isolated runner fallback
-    }
-
-    await new Promise((res) => setTimeout(res, 600));
-
-    if (!code || code.trim().length === 0) {
-      return {
-        status: 'Compilation Error',
-        success: false,
-        output: 'Error: Empty source code submitted. Please implement solution.',
-        executionTimeMs: 0,
-        memoryKb: 0,
-      };
-    }
-
-    return {
-      status: 'Sample Tests Passed',
-      success: true,
-      output: `[Execution complete in 38ms | Memory: 8.2MB]\nRunning sample test suite: Passed\nAll sample assertions succeeded. Note: Run Code only executes public test cases. Official score requires Submission.`,
-      executionTimeMs: 38,
-      memoryKb: 8200,
-    };
+    const response = await apiClient.post(`/assessments/${assessmentId}/run`, {
+      code,
+      language,
+      customInput,
+    });
+    return response?.data || response;
   },
 
   async submitSolution(assessmentId, code, language) {
-    try {
-      const response = await apiClient.post(`/assessments/${assessmentId}/submit`, { code, language });
-      if (response?.status || response?.testsPassed !== undefined) {
-        return {
-          ...response,
-          submissionId: response.submissionId || `sub_${Date.now()}`,
-          vivaQuestions: response.vivaQuestions || [
-            { prompt: 'Explain the invariant guarantees and computational time complexity of your approach.' },
-          ],
-        };
-      }
-    } catch {
-      // Fallback
-    }
-
-    await new Promise((res) => setTimeout(res, 800));
-
-    const assessments = await this.getAssessments();
-    const item = assessments.find((a) => a.id === assessmentId);
-    if (item) {
-      item.status = 'completed';
-      setCached(ASSESSMENTS_KEY, assessments);
-    }
-
-    if (item?.conceptId) {
-      await this.recordLearningAttempt(item.conceptId, true);
-    }
-
+    const response = await apiClient.post(`/assessments/${assessmentId}/submit`, { code, language });
+    const result = response?.data || response;
     return {
-      submissionId: `sub_demo_${Date.now()}`,
-      status: 'Accepted',
-      success: true,
-      testsPassed: 18,
-      totalTests: 18,
-      runtimeMs: 52,
-      memoryMb: 12.8,
-      vivaQuestions: item?.vivaQuestion ? [item.vivaQuestion] : [
+      ...result,
+      submissionId: result.submissionId || result.id || `sub_${Date.now()}`,
+      status: result.status || (result.success ? 'Accepted' : 'Tests Failed'),
+      testsPassed: result.testsPassed !== undefined ? result.testsPassed : (result.passedCount || 0),
+      totalTests: result.totalTests !== undefined ? result.totalTests : (result.totalCount || 0),
+      runtimeMs: result.runtimeMs || result.executionTimeMs || 0,
+      memoryMb: result.memoryMb || (result.memoryBytes ? Math.round((result.memoryBytes / (1024 * 1024)) * 10) / 10 : 0),
+      vivaQuestions: result.vivaQuestions || [
         { prompt: 'Explain the invariant guarantees and computational time complexity of your approach.' },
       ],
     };
   },
 
   async evaluateVivaAnswer(questionId, answer, submissionId = null) {
-    try {
-      const response = await apiClient.post('/assessments/viva/evaluate', {
-        questionId,
-        answer,
-        submissionId,
-      });
-      if (response?.score !== undefined || response?.data?.score !== undefined) {
-        return response?.data || response;
-      }
-    } catch {
-      // Fallback
-    }
-
-    await new Promise((res) => setTimeout(res, 500));
-    const wordCount = (answer || '').trim().split(/\s+/).filter(Boolean).length;
-    const isAdequate = wordCount >= 8;
-
-    return {
-      evaluated: true,
-      score: isAdequate ? 92 : 55,
-      feedback: isAdequate
-        ? 'Well articulated. Your explanation accurately reflects the algorithmic complexity and invariant guarantees of your solution.'
-        : 'Explanation is too brief. Please detail the specific invariant mechanics and pointer updates implemented in your code.',
-    };
+    const response = await apiClient.post('/assessments/viva/evaluate', {
+      questionId,
+      answer,
+      submissionId,
+    });
+    return response?.data || response;
   },
 
   // =========================================================================
@@ -371,65 +261,27 @@ export const learningService = {
   // =========================================================================
   async recordSessionEvents(sessionId, events, isFinal = false) {
     if (!sessionId || !events || events.length === 0) return { recordedCount: 0 };
-    try {
-      return await apiClient.post(`/coding-sessions/${sessionId}/events`, {
-        events,
-        isFinal,
-      });
-    } catch {
-      // Telemetry graceful fallback
-      return { recordedCount: events.length, offline: true };
-    }
+    return await apiClient.post(`/coding-sessions/${sessionId}/events`, {
+      events,
+      isFinal,
+    });
   },
 
   async getSessionReplay(sessionId) {
-    try {
-      const res = await apiClient.get(`/coding-sessions/${sessionId}/replay`);
-      if (res?.data || res?.events) return res?.data || res;
-    } catch {
-      // Fallback
-    }
-    return {
-      sessionId,
-      events: [
-        { time: 15, label: 'Session Started', type: 'info' },
-        { time: 45, label: 'Wrote Sentinel Node Class', type: 'info' },
-        { time: 134, label: 'Large Paste (+340 chars)', type: 'signal' },
-        { time: 210, label: 'Run Sample Tests (3/3 Passed)', type: 'test' },
-        { time: 295, label: 'Official Submit (18/18 Passed)', type: 'test' },
-      ],
-      totalSeconds: 320,
-    };
+    const res = await apiClient.get(`/coding-sessions/${sessionId}/replay`);
+    return res?.data || res || { sessionId, events: [], totalSeconds: 0 };
   },
 
   async getSessionSignals(sessionId) {
-    try {
-      const res = await apiClient.get(`/coding-sessions/${sessionId}/integrity-signals`);
-      if (res?.data || Array.isArray(res)) return res?.data || res;
-    } catch {
-      // Fallback
-    }
-    return [
-      {
-        id: 'sig_1',
-        signalType: 'paste_anomaly',
-        severity: 'medium',
-        confidenceScore: 0.78,
-        description: 'Single paste inserted 340 characters in under 80ms.',
-        observedAt: '02:14 into session',
-      },
-    ];
+    const res = await apiClient.get(`/coding-sessions/${sessionId}/integrity-signals`);
+    return res?.data || (Array.isArray(res) ? res : []);
   },
 
   async resolveIntegrityReview(reviewId, status = 'reviewed', notes = '') {
-    try {
-      return await apiClient.patch(`/integrity-reviews/${reviewId}`, {
-        reviewStatus: status,
-        reviewerNotes: notes,
-      });
-    } catch {
-      return { success: true, reviewId, status };
-    }
+    return await apiClient.patch(`/integrity-reviews/${reviewId}`, {
+      reviewStatus: status,
+      reviewerNotes: notes,
+    });
   },
 
   // =========================================================================

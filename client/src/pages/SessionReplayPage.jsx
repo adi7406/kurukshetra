@@ -27,7 +27,11 @@ export function SessionReplayPage() {
   const [events, setEvents] = useState([]);
   const [signals, setSignals] = useState([]);
   const [instructorNote, setInstructorNote] = useState('');
-  const [verifiedStatus, setVerifiedStatus] = useState(null);
+  const [sessionInfo, setSessionInfo] = useState({
+    title: 'Coding Session Replay',
+    studentName: 'Active Session',
+    submittedAt: 'Live',
+  });
 
   const playheadRef = useRef(null);
 
@@ -55,18 +59,17 @@ export function SessionReplayPage() {
           };
         });
 
-        const maxTime = replayData?.totalSeconds || Math.max(...mappedEvents.map((e) => e.time), 300);
+        const maxTime = replayData?.totalSeconds || Math.max(...mappedEvents.map((e) => e.time), 60);
         setTotalSeconds(maxTime);
-        setEvents(mappedEvents.length > 0 ? mappedEvents : [
-          { time: 10, label: 'Session Started', type: 'info' },
-          { time: 45, label: 'Wrote Initial Definition', type: 'info' },
-          { time: 134, label: 'Large Paste (+340 chars)', type: 'signal' },
-          { time: 210, label: 'Run Sample Tests (3/3 Passed)', type: 'test' },
-          { time: 295, label: 'Official Submit (18/18 Passed)', type: 'test' },
-        ]);
+        setEvents(mappedEvents);
+        setSessionInfo({
+          title: replayData?.title || replayData?.assessmentTitle || `Session Replay (${sessionId})`,
+          studentName: replayData?.studentName || replayData?.studentEmail || `Student ID: ${sessionId}`,
+          submittedAt: replayData?.createdAt || replayData?.submittedAt ? new Date(replayData.createdAt || replayData.submittedAt).toLocaleTimeString() : 'Recorded session',
+        });
 
         setSignals(Array.isArray(signalsData) ? signalsData : []);
-        setCurrentPlayheadSeconds(Math.min(134, maxTime));
+        setCurrentPlayheadSeconds(mappedEvents.length > 0 ? mappedEvents[0].time : 0);
       } catch (err) {
         console.error('Failed to load session replay data:', err);
       } finally {
@@ -99,14 +102,11 @@ export function SessionReplayPage() {
     };
   }, [isPlaying, totalSeconds]);
 
-  // Compute code reconstruction dynamically during render
-  const defaultStartCode = `class Node:\n    def __init__(self, key=0, val=0):\n        self.key = key\n        self.val = val\n        self.prev = None\n        self.next = None\n`;
-  const defaultPastedCode = `class Node:\n    def __init__(self, key=0, val=0):\n        self.key = key\n        self.val = val\n        self.prev = None\n        self.next = None\n\nclass LRUCache:\n    def __init__(self, capacity: int):\n        self.cap = capacity\n        self.cache = {}\n        self.head = Node()\n        self.tail = Node()\n        self.head.next = self.tail\n        self.tail.prev = self.head\n\n    def _remove(self, node: Node):\n        node.prev.next = node.next\n        node.next.prev = node.prev\n\n    def _add(self, node: Node):\n        node.prev = self.head\n        node.next = self.head.next\n        self.head.next.prev = node\n        self.head.next = node\n`;
-
+  // Compute code reconstruction dynamically from real events
   const pastEvents = events.filter((e) => e.time <= currentPlayheadSeconds && e.codeSnapshot);
   const currentCode = pastEvents.length > 0
     ? pastEvents[pastEvents.length - 1].codeSnapshot
-    : (currentPlayheadSeconds >= 134 ? defaultPastedCode : defaultStartCode);
+    : '// No code changes recorded at this timestamp.';
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60);
@@ -194,10 +194,10 @@ export function SessionReplayPage() {
             </Chip>
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
-            LRU Cache Design (Doubly-Linked Sentinel)
+            {sessionInfo.title}
           </h1>
           <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
-            Student: <strong>Rohan Mehra</strong> (CS201 · Roll: 2024-CS-042) &bull; Submitted Today at 01:14 PM
+            Student: <strong>{sessionInfo.studentName}</strong> &bull; {sessionInfo.submittedAt}
           </p>
         </div>
 

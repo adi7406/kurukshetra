@@ -57,4 +57,7 @@ router.put(
   conceptsController.setPrerequisites
 );
 
+router.get('/concepts', authenticate, conceptsController.listAllConcepts);
+router.get('/concepts/:conceptId', authenticate, conceptsController.getConceptById);
+
 export default router;
