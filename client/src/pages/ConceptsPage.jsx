@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -12,6 +12,8 @@ import {
   ArrowRight,
   Layers,
   X,
+  AlertCircle,
+  Lightbulb,
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
@@ -23,6 +25,7 @@ import { ConceptDiagram } from '../components/common/ConceptDiagram';
 
 export function ConceptsPage() {
   const navigate = useNavigate();
+  const { conceptId } = useParams();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,7 +37,21 @@ export function ConceptsPage() {
       try {
         setLoading(true);
         const data = await learningService.getCourses();
-        setCourses(data || []);
+        const courseList = data || [];
+        setCourses(courseList);
+
+        // If conceptId passed in route parameter, auto-open matching concept
+        if (conceptId) {
+          for (const c of courseList) {
+            for (const m of c.modules || []) {
+              const matched = (m.concepts || []).find((con) => con.id === conceptId);
+              if (matched) {
+                setSelectedConcept(matched);
+                break;
+              }
+            }
+          }
+        }
       } catch (err) {
         console.error('Failed to load courses:', err);
       } finally {
@@ -42,7 +59,7 @@ export function ConceptsPage() {
       }
     }
     loadConcepts();
-  }, []);
+  }, [conceptId]);
 
   if (loading) {
     return <LoadingState message="Loading syllabus concept graph..." />;
@@ -318,18 +335,56 @@ export function ConceptsPage() {
                 </div>
               )}
 
-              {/* 1. Deep Text Theory */}
-              {selectedConcept.theory && (
-                <div>
-                  <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
-                    1. Invariant Theory & Mechanics
+              {/* Typed Sections (text, heading, list, code, callout, diagram) */}
+              {Array.isArray(selectedConcept.sections) && selectedConcept.sections.length > 0 ? (
+                selectedConcept.sections.map((sec, idx) => (
+                  <div key={sec.id || idx}>
+                    {sec.title && (
+                      <div style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                        {sec.title}
+                      </div>
+                    )}
+                    {sec.type === 'text' && (
+                      <div style={{ padding: '14px 16px', background: 'var(--surface-muted)', borderRadius: '12px', border: '1px solid var(--border-hairline)', fontSize: '13px', lineHeight: '1.6' }}>
+                        <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text-main)' }}>
+                          {sec.content}
+                        </pre>
+                      </div>
+                    )}
+                    {sec.type === 'code' && (
+                      <div style={{ padding: '14px 16px', background: '#16161A', color: '#ECEAE8', borderRadius: '12px', fontFamily: 'var(--font-mono, monospace)', fontSize: '12px', lineHeight: '1.5', overflowX: 'auto' }}>
+                        <pre style={{ margin: 0, whiteSpace: 'pre' }}>{sec.content}</pre>
+                      </div>
+                    )}
+                    {sec.type === 'callout' && (
+                      <div style={{ padding: '12px 16px', background: sec.calloutVariant === 'warning' ? 'var(--mastery-developing-soft)' : 'var(--coral-soft)', border: '1px solid var(--border-hairline)', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <Lightbulb size={16} color="var(--coral)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span style={{ fontSize: '12.5px', color: 'var(--text-main)', lineHeight: '1.5' }}>{sec.content}</span>
+                      </div>
+                    )}
+                    {sec.type === 'list' && Array.isArray(sec.items) && (
+                      <ul style={{ paddingLeft: '18px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                        {sec.items.map((it, i) => (
+                          <li key={i}>{it}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '14px', border: '1px solid var(--border-hairline)', fontSize: '13px', lineHeight: '1.6' }}>
-                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text-main)' }}>
-                      {selectedConcept.theory}
-                    </pre>
+                ))
+              ) : (
+                /* Fallback 1. Deep Text Theory */
+                selectedConcept.theory && (
+                  <div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                      1. Invariant Theory & Mechanics
+                    </div>
+                    <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '14px', border: '1px solid var(--border-hairline)', fontSize: '13px', lineHeight: '1.6' }}>
+                      <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text-main)' }}>
+                        {selectedConcept.theory}
+                      </pre>
+                    </div>
                   </div>
-                </div>
+                )
               )}
 
               {/* 2. Visual Diagram */}
@@ -337,7 +392,7 @@ export function ConceptsPage() {
                 <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
                   2. Memory Layout & Architectural Diagram
                 </div>
-                <ConceptDiagram conceptName={selectedConcept.name} />
+                <ConceptDiagram conceptName={selectedConcept.name} diagram={selectedConcept.diagram} />
               </div>
 
               {/* 3. Executable Code Example */}
@@ -351,6 +406,37 @@ export function ConceptsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Key Takeaways */}
+              {Array.isArray(selectedConcept.keyTakeaways) && selectedConcept.keyTakeaways.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--mastery-solid)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                    Key Takeaways:
+                  </div>
+                  <ul style={{ paddingLeft: '18px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                    {selectedConcept.keyTakeaways.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Misconceptions & Pitfalls */}
+              {Array.isArray(selectedConcept.misconceptions) && selectedConcept.misconceptions.length > 0 && (
+                <div style={{ padding: '12px 14px', background: 'var(--mastery-developing-soft)', border: '1px solid var(--warning-border)', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <AlertCircle size={15} color="var(--warning-text)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--warning-text)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                      Common Pitfalls & Misconceptions:
+                    </div>
+                    <ul style={{ paddingLeft: '16px', fontSize: '12.5px', color: 'var(--text-main)', margin: 0, lineHeight: '1.45' }}>
+                      {selectedConcept.misconceptions.map((mis, i) => (
+                        <li key={i}>{mis}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ padding: '14px 22px', background: 'var(--surface-muted)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -358,8 +444,9 @@ export function ConceptsPage() {
                 type="button"
                 className="btn-ghost-pill btn-compact"
                 onClick={() => {
+                  const targetConceptId = selectedConcept.id;
                   setSelectedConcept(null);
-                  navigate('/content/quizzes');
+                  navigate(`/content/quizzes?conceptId=${targetConceptId}`);
                 }}
               >
                 <HelpCircle size={13} strokeWidth={1.5} />
@@ -369,8 +456,9 @@ export function ConceptsPage() {
                 type="button"
                 className="btn-coral-pill btn-compact"
                 onClick={() => {
+                  const targetConceptId = selectedConcept.id;
                   setSelectedConcept(null);
-                  navigate('/content/coding');
+                  navigate(`/content/coding?conceptId=${targetConceptId}`);
                 }}
               >
                 <Code2 size={13} strokeWidth={1.5} />

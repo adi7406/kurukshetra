@@ -13,6 +13,11 @@ import {
   INITIAL_PROGRESS_DATA,
   INITIAL_TEACHER_DASHBOARD,
 } from './mockData';
+import {
+  normalizeConcept,
+  normalizeQuiz,
+  normalizeCodingAssessment,
+} from '../utils/contentContracts';
 
 const CACHE_VERSION_KEY = 'pathwise_cache_version';
 const CURRENT_CACHE_VERSION = 'v3_live_api';
@@ -97,7 +102,7 @@ export const learningService = {
       const response = await apiClient.get('/concepts');
       const concepts = Array.isArray(response) ? response : response?.data || response?.concepts || [];
       if (Array.isArray(concepts) && concepts.length > 0) {
-        return concepts;
+        return concepts.map(normalizeConcept).filter(Boolean);
       }
     } catch {
       // Backend not yet running or route pending
@@ -150,22 +155,24 @@ export const learningService = {
   async getQuizzes() {
     try {
       const response = await apiClient.get('/quizzes');
-      const quizzes = Array.isArray(response) ? response : response?.data || response?.quizzes || [];
-      if (Array.isArray(quizzes) && quizzes.length > 0) {
+      const rawList = Array.isArray(response) ? response : response?.data || response?.quizzes || [];
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        const quizzes = rawList.map(normalizeQuiz).filter(Boolean);
         setCached(QUIZZES_KEY, quizzes);
         return quizzes;
       }
     } catch {
       // Backend not yet running or route pending
     }
-    return getCached(QUIZZES_KEY, []);
+    const cached = getCached(QUIZZES_KEY, []);
+    return cached.map(normalizeQuiz).filter(Boolean);
   },
 
   async getQuizById(quizId) {
     try {
       const response = await apiClient.get(`/quizzes/${quizId}`);
-      const quiz = response?.data || response;
-      if (quiz && quiz.id) return quiz;
+      const raw = response?.data || response;
+      if (raw && raw.id) return normalizeQuiz(raw);
     } catch {
       // Backend not yet running or route pending
     }
@@ -180,7 +187,7 @@ export const learningService = {
         return response.data || response;
       }
     } catch {
-      // Backend not yet running or route pending
+      // Fallback to local evaluation
     }
 
     const quizzes = await this.getQuizzes();
@@ -218,7 +225,7 @@ export const learningService = {
         selectedOption: answers[q.id],
         correctOption: q.correctIndex,
         isCorrect: answers[q.id] === q.correctIndex,
-        explanation: q.explanation,
+        explanation: q.explanation || 'Evaluated conceptual invariant.',
       })),
     };
   },
@@ -229,22 +236,24 @@ export const learningService = {
   async getAssessments() {
     try {
       const response = await apiClient.get('/assessments');
-      const assessments = Array.isArray(response) ? response : response?.data || response?.assessments || [];
-      if (Array.isArray(assessments) && assessments.length > 0) {
+      const rawList = Array.isArray(response) ? response : response?.data || response?.assessments || [];
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        const assessments = rawList.map(normalizeCodingAssessment).filter(Boolean);
         setCached(ASSESSMENTS_KEY, assessments);
         return assessments;
       }
     } catch {
       // Backend not yet running or route pending
     }
-    return getCached(ASSESSMENTS_KEY, []);
+    const cached = getCached(ASSESSMENTS_KEY, []);
+    return cached.map(normalizeCodingAssessment).filter(Boolean);
   },
 
   async getAssessmentById(id) {
     try {
       const response = await apiClient.get(`/assessments/${id}`);
       const item = response?.data || response;
-      if (item && item.id) return item;
+      if (item && item.id) return normalizeCodingAssessment(item);
     } catch {
       // Backend not yet running or route pending
     }
@@ -252,14 +261,18 @@ export const learningService = {
     return list.find((a) => a.id === id) || null;
   },
 
-  async runCode(assessmentId, code, language) {
+  async runCode(assessmentId, code, language, customInput = null) {
     try {
-      const response = await apiClient.post(`/assessments/${assessmentId}/run`, { code, language });
+      const response = await apiClient.post(`/assessments/${assessmentId}/run`, {
+        code,
+        language,
+        customInput,
+      });
       if (response?.output || response?.status) {
         return response;
       }
     } catch {
-      // Backend not yet running: provide isolated runner evaluation
+      // Isolated runner fallback
     }
 
     await new Promise((res) => setTimeout(res, 600));
@@ -287,13 +300,19 @@ export const learningService = {
     try {
       const response = await apiClient.post(`/assessments/${assessmentId}/submit`, { code, language });
       if (response?.status || response?.testsPassed !== undefined) {
-        return response;
+        return {
+          ...response,
+          submissionId: response.submissionId || `sub_${Date.now()}`,
+          vivaQuestions: response.vivaQuestions || [
+            { prompt: 'Explain the invariant guarantees and computational time complexity of your approach.' },
+          ],
+        };
       }
     } catch {
       // Fallback
     }
 
-    await new Promise((res) => setTimeout(res, 900));
+    await new Promise((res) => setTimeout(res, 800));
 
     const assessments = await this.getAssessments();
     const item = assessments.find((a) => a.id === assessmentId);
@@ -307,28 +326,35 @@ export const learningService = {
     }
 
     return {
+      submissionId: `sub_demo_${Date.now()}`,
       status: 'Accepted',
       success: true,
       testsPassed: 18,
       totalTests: 18,
       runtimeMs: 52,
       memoryMb: 12.8,
-      vivaQuestions: item?.vivaQuestion ? [item.vivaQuestion] : [],
+      vivaQuestions: item?.vivaQuestion ? [item.vivaQuestion] : [
+        { prompt: 'Explain the invariant guarantees and computational time complexity of your approach.' },
+      ],
     };
   },
 
-  async evaluateVivaAnswer(questionId, answer) {
+  async evaluateVivaAnswer(questionId, answer, submissionId = null) {
     try {
-      const response = await apiClient.post('/assessments/viva/evaluate', { questionId, answer });
-      if (response?.score !== undefined) {
-        return response;
+      const response = await apiClient.post('/assessments/viva/evaluate', {
+        questionId,
+        answer,
+        submissionId,
+      });
+      if (response?.score !== undefined || response?.data?.score !== undefined) {
+        return response?.data || response;
       }
     } catch {
       // Fallback
     }
 
-    await new Promise((res) => setTimeout(res, 700));
-    const wordCount = answer.trim().split(/\s+/).length;
+    await new Promise((res) => setTimeout(res, 500));
+    const wordCount = (answer || '').trim().split(/\s+/).filter(Boolean).length;
     const isAdequate = wordCount >= 8;
 
     return {
@@ -338,6 +364,72 @@ export const learningService = {
         ? 'Well articulated. Your explanation accurately reflects the algorithmic complexity and invariant guarantees of your solution.'
         : 'Explanation is too brief. Please detail the specific invariant mechanics and pointer updates implemented in your code.',
     };
+  },
+
+  // =========================================================================
+  // TELEMETRY RECORDING & SESSION REPLAY
+  // =========================================================================
+  async recordSessionEvents(sessionId, events, isFinal = false) {
+    if (!sessionId || !events || events.length === 0) return { recordedCount: 0 };
+    try {
+      return await apiClient.post(`/coding-sessions/${sessionId}/events`, {
+        events,
+        isFinal,
+      });
+    } catch {
+      // Telemetry graceful fallback
+      return { recordedCount: events.length, offline: true };
+    }
+  },
+
+  async getSessionReplay(sessionId) {
+    try {
+      const res = await apiClient.get(`/coding-sessions/${sessionId}/replay`);
+      if (res?.data || res?.events) return res?.data || res;
+    } catch {
+      // Fallback
+    }
+    return {
+      sessionId,
+      events: [
+        { time: 15, label: 'Session Started', type: 'info' },
+        { time: 45, label: 'Wrote Sentinel Node Class', type: 'info' },
+        { time: 134, label: 'Large Paste (+340 chars)', type: 'signal' },
+        { time: 210, label: 'Run Sample Tests (3/3 Passed)', type: 'test' },
+        { time: 295, label: 'Official Submit (18/18 Passed)', type: 'test' },
+      ],
+      totalSeconds: 320,
+    };
+  },
+
+  async getSessionSignals(sessionId) {
+    try {
+      const res = await apiClient.get(`/coding-sessions/${sessionId}/integrity-signals`);
+      if (res?.data || Array.isArray(res)) return res?.data || res;
+    } catch {
+      // Fallback
+    }
+    return [
+      {
+        id: 'sig_1',
+        signalType: 'paste_anomaly',
+        severity: 'medium',
+        confidenceScore: 0.78,
+        description: 'Single paste inserted 340 characters in under 80ms.',
+        observedAt: '02:14 into session',
+      },
+    ];
+  },
+
+  async resolveIntegrityReview(reviewId, status = 'reviewed', notes = '') {
+    try {
+      return await apiClient.patch(`/integrity-reviews/${reviewId}`, {
+        reviewStatus: status,
+        reviewerNotes: notes,
+      });
+    } catch {
+      return { success: true, reviewId, status };
+    }
   },
 
   // =========================================================================

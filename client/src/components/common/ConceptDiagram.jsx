@@ -8,8 +8,143 @@ import { Layers, ArrowRight, ArrowDown, Database, Cpu } from 'lucide-react';
  * - Strings: Character sequence buffer with sliding window slice pointers
  * - Stack: Vertical LIFO container with Top pointer, push/pop vectors, and call frames
  */
-export function ConceptDiagram({ conceptType = 'array', title, conceptName = '' }) {
+export function ConceptDiagram({ conceptType = 'array', title, conceptName = '', diagram = null }) {
   const normalized = (conceptName || conceptType || '').toLowerCase();
+
+  // If structured node-edge diagram is provided in the content contract
+  if (diagram && Array.isArray(diagram.nodes) && diagram.nodes.length > 0) {
+    const isVertical = diagram.layout === 'vertical';
+    const nodes = diagram.nodes;
+    const edges = Array.isArray(diagram.edges) ? diagram.edges : [];
+
+    // Calculate layout positions if not explicitly given
+    const nodeWidth = 110;
+    const nodeHeight = 44;
+    const spacing = 60;
+    const width = isVertical ? 320 : Math.max(380, nodes.length * (nodeWidth + spacing) + 40);
+    const height = isVertical ? Math.max(260, nodes.length * (nodeHeight + spacing) + 40) : 160;
+
+    const positionedNodes = nodes.map((node, i) => {
+      const x = typeof node.x === 'number' ? node.x : isVertical ? 110 : 30 + i * (nodeWidth + spacing);
+      const y = typeof node.y === 'number' ? node.y : isVertical ? 25 + i * (nodeHeight + spacing) : 58;
+      const label = node.label || node.id || `Node ${i + 1}`;
+      return { ...node, x, y, label };
+    });
+
+    const nodeMap = new Map(positionedNodes.map((n) => [String(n.id), n]));
+
+    return (
+      <div
+        style={{
+          background: 'var(--surface-muted)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: '16px',
+          padding: '18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em' }}>
+            Structured Topological Diagram &bull; {diagram.type || 'Concept Graph'}
+          </div>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+            Nodes: {nodes.length} &bull; Transitions: {edges.length}
+          </span>
+        </div>
+
+        <div style={{ overflowX: 'auto', padding: '10px 0' }}>
+          <svg width={width} height={height} style={{ overflow: 'visible', margin: '0 auto', display: 'block' }}>
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="8"
+                markerHeight="6"
+                refX="7"
+                refY="3"
+                orient="auto"
+              >
+                <polygon points="0 0, 8 3, 0 6" fill="var(--coral)" />
+              </marker>
+            </defs>
+
+            {/* Edges */}
+            {edges.map((edge, idx) => {
+              const src = nodeMap.get(String(edge.from || edge.source));
+              const tgt = nodeMap.get(String(edge.to || edge.target));
+              if (!src || !tgt) return null;
+
+              const x1 = src.x + nodeWidth / 2;
+              const y1 = src.y + nodeHeight / 2;
+              const x2 = tgt.x + nodeWidth / 2;
+              const y2 = tgt.y + nodeHeight / 2;
+
+              return (
+                <g key={`edge_${idx}`}>
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="var(--coral)"
+                    strokeWidth="1.5"
+                    strokeDasharray={edge.dashed ? '4 3' : 'none'}
+                    markerEnd="url(#arrowhead)"
+                  />
+                  {edge.label && (
+                    <text
+                      x={(x1 + x2) / 2}
+                      y={(y1 + y2) / 2 - 8}
+                      fill="var(--text-secondary)"
+                      fontSize="10"
+                      textAnchor="middle"
+                      fontFamily="var(--font-mono)"
+                    >
+                      {edge.label}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Nodes */}
+            {positionedNodes.map((node) => (
+              <g key={`node_${node.id}`} transform={`translate(${node.x}, ${node.y})`}>
+                <rect
+                  width={nodeWidth}
+                  height={nodeHeight}
+                  rx="10"
+                  ry="10"
+                  fill="#FFFFFF"
+                  stroke={node.highlighted ? 'var(--coral)' : 'var(--border-hairline)'}
+                  strokeWidth={node.highlighted ? 2 : 1}
+                  filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.04))"
+                />
+                <text
+                  x={nodeWidth / 2}
+                  y={nodeHeight / 2 + 4}
+                  textAnchor="middle"
+                  fill="var(--text-main)"
+                  fontSize="12"
+                  fontWeight="600"
+                  fontFamily="var(--font-mono)"
+                >
+                  {node.label}
+                </text>
+              </g>
+            ))}
+          </svg>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--text-secondary)', paddingTop: '8px', borderTop: '1px solid var(--border-hairline)' }}>
+          <span>Deterministic State Transition Graph</span>
+          <span style={{ color: 'var(--coral)', fontWeight: 600 }}>Schema-Validated SVG Geometry</span>
+        </div>
+      </div>
+    );
+  }
+
 
   if (normalized.includes('string')) {
     return (

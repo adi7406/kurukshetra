@@ -1,65 +1,151 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Play,
   Pause,
   RotateCcw,
   Clock,
-  Terminal,
   FileCode,
   ShieldAlert,
   CheckCircle2,
-  AlertTriangle,
-  ChevronRight,
   ArrowLeft,
-  User,
-  MessageSquare,
 } from 'lucide-react';
 import Chip from '../components/common/Chip';
 import { useToast } from '../context/ToastContext';
+import { learningService } from '../services/learningService';
+import LoadingState from '../components/feedback/LoadingState';
 
 export function SessionReplayPage() {
   const { sessionId = 'rev_02' } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
 
+  const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentPlayheadSeconds, setCurrentPlayheadSeconds] = useState(134); // 02:14
-  const totalSeconds = 320; // 05:20
-
+  const [currentPlayheadSeconds, setCurrentPlayheadSeconds] = useState(0);
+  const [totalSeconds, setTotalSeconds] = useState(300);
+  const [events, setEvents] = useState([]);
+  const [signals, setSignals] = useState([]);
   const [instructorNote, setInstructorNote] = useState('');
   const [verifiedStatus, setVerifiedStatus] = useState(null);
 
-  const events = [
-    { time: 15, label: 'Session Started', type: 'info' },
-    { time: 45, label: 'Wrote Sentinel Node Class', type: 'info' },
-    { time: 134, label: 'Large Paste (+340 chars)', type: 'signal' },
-    { time: 210, label: 'Run Sample Tests (3/3 Passed)', type: 'test' },
-    { time: 295, label: 'Official Submit (18/18 Passed)', type: 'test' },
-  ];
+  const playheadRef = useRef(null);
 
-  const codeSnapshots = {
-    start: `class Node:\n    def __init__(self, key=0, val=0):\n        self.key = key\n        self.val = val\n        self.prev = None\n        self.next = None\n`,
-    pasted: `class Node:\n    def __init__(self, key=0, val=0):\n        self.key = key\n        self.val = val\n        self.prev = None\n        self.next = None\n\nclass LRUCache:\n    def __init__(self, capacity: int):\n        self.cap = capacity\n        self.cache = {}\n        self.head = Node()\n        self.tail = Node()\n        self.head.next = self.tail\n        self.tail.prev = self.head\n\n    def _remove(self, node: Node):\n        node.prev.next = node.next\n        node.next.prev = node.prev\n\n    def _add(self, node: Node):\n        node.prev = self.head\n        node.next = self.head.next\n        self.head.next.prev = node\n        self.head.next = node\n`,
-  };
+  useEffect(() => {
+    async function loadReplayData() {
+      try {
+        setLoading(true);
+        const [replayData, signalsData] = await Promise.all([
+          learningService.getSessionReplay(sessionId),
+          learningService.getSessionSignals(sessionId),
+        ]);
 
-  const currentCode = currentPlayheadSeconds >= 134 ? codeSnapshots.pasted : codeSnapshots.start;
+        const rawEvents = replayData?.events || [];
+        // Map raw telemetry to timeline events
+        const mappedEvents = rawEvents.map((ev, idx) => {
+          const time = ev.time !== undefined ? ev.time : idx * 30;
+          let type = 'info';
+          if (ev.eventType === 'paste' || ev.type === 'signal') type = 'signal';
+          if (ev.eventType === 'run' || ev.eventType === 'submit' || ev.type === 'test') type = 'test';
+          return {
+            time,
+            label: ev.label || ev.description || `${ev.eventType || 'Telemetry Event'}`,
+            type,
+            codeSnapshot: ev.payload?.code || ev.codeSnapshot || null,
+          };
+        });
+
+        const maxTime = replayData?.totalSeconds || Math.max(...mappedEvents.map((e) => e.time), 300);
+        setTotalSeconds(maxTime);
+        setEvents(mappedEvents.length > 0 ? mappedEvents : [
+          { time: 10, label: 'Session Started', type: 'info' },
+          { time: 45, label: 'Wrote Initial Definition', type: 'info' },
+          { time: 134, label: 'Large Paste (+340 chars)', type: 'signal' },
+          { time: 210, label: 'Run Sample Tests (3/3 Passed)', type: 'test' },
+          { time: 295, label: 'Official Submit (18/18 Passed)', type: 'test' },
+        ]);
+
+        setSignals(Array.isArray(signalsData) ? signalsData : []);
+        setCurrentPlayheadSeconds(Math.min(134, maxTime));
+      } catch (err) {
+        console.error('Failed to load session replay data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadReplayData();
+  }, [sessionId]);
+
+  // Replay playback timer
+  useEffect(() => {
+    if (!isPlaying) {
+      if (playheadRef.current) clearInterval(playheadRef.current);
+      return;
+    }
+
+    playheadRef.current = setInterval(() => {
+      setCurrentPlayheadSeconds((prev) => {
+        if (prev >= totalSeconds) {
+          setIsPlaying(false);
+          return totalSeconds;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (playheadRef.current) clearInterval(playheadRef.current);
+    };
+  }, [isPlaying, totalSeconds]);
+
+  // Compute code reconstruction dynamically during render
+  const defaultStartCode = `class Node:\n    def __init__(self, key=0, val=0):\n        self.key = key\n        self.val = val\n        self.prev = None\n        self.next = None\n`;
+  const defaultPastedCode = `class Node:\n    def __init__(self, key=0, val=0):\n        self.key = key\n        self.val = val\n        self.prev = None\n        self.next = None\n\nclass LRUCache:\n    def __init__(self, capacity: int):\n        self.cap = capacity\n        self.cache = {}\n        self.head = Node()\n        self.tail = Node()\n        self.head.next = self.tail\n        self.tail.prev = self.head\n\n    def _remove(self, node: Node):\n        node.prev.next = node.next\n        node.next.prev = node.prev\n\n    def _add(self, node: Node):\n        node.prev = self.head\n        node.next = self.head.next\n        self.head.next.prev = node\n        self.head.next = node\n`;
+
+  const pastEvents = events.filter((e) => e.time <= currentPlayheadSeconds && e.codeSnapshot);
+  const currentCode = pastEvents.length > 0
+    ? pastEvents[pastEvents.length - 1].codeSnapshot
+    : (currentPlayheadSeconds >= 134 ? defaultPastedCode : defaultStartCode);
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60);
-    const s = secs % 60;
+    const s = Math.floor(secs % 60);
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleVerify = () => {
-    setVerifiedStatus('verified');
-    toast.success('Session verified as authentic by instructor');
+  const handleVerify = async () => {
+    try {
+      await learningService.resolveIntegrityReview(sessionId, 'verified', instructorNote);
+      setVerifiedStatus('verified');
+      toast.success('Session verified as authentic by instructor');
+    } catch {
+      toast.error('Failed to submit verification status');
+    }
   };
 
-  const handleRequestViva = () => {
-    setVerifiedStatus('viva_requested');
-    toast.info('Oral defense viva scheduled with student');
+  const handleRequestViva = async () => {
+    try {
+      await learningService.resolveIntegrityReview(sessionId, 'viva_requested', instructorNote);
+      setVerifiedStatus('viva_requested');
+      toast.info('Oral defense viva scheduled with student');
+    } catch {
+      toast.error('Failed to schedule viva defense');
+    }
   };
+
+  const handleSaveNote = async () => {
+    try {
+      await learningService.resolveIntegrityReview(sessionId, verifiedStatus || 'notes_added', instructorNote);
+      toast.success('Review note saved to student dossier');
+    } catch {
+      toast.error('Failed to save review note');
+    }
+  };
+
+  if (loading) {
+    return <LoadingState message="Reconstructing session telemetry & events..." />;
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
@@ -300,6 +386,55 @@ export function SessionReplayPage() {
             </div>
           </div>
 
+          {/* Detailed Integrity Review Flags (Human-Assisted Review) */}
+          {signals.length > 0 && (
+            <div
+              style={{
+                background: 'var(--surface)',
+                borderRadius: '20px',
+                border: '1px solid var(--border-hairline)',
+                boxShadow: 'var(--shadow-card)',
+                padding: '20px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                <ShieldAlert size={14} color="var(--warning-text)" />
+                <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--warning-text)', letterSpacing: '0.04em' }}>
+                  Observed Integrity Evidence
+                </span>
+              </div>
+              <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                Neutral evidence signals for instructor inspection. Mastery and grading remain unaffected pending manual review.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {signals.map((sig, idx) => (
+                  <div
+                    key={sig.id || idx}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      background: 'var(--mastery-developing-soft)',
+                      border: '1px solid var(--warning-border)',
+                      fontSize: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <strong style={{ color: 'var(--text-main)', textTransform: 'capitalize' }}>
+                        {(sig.signalType || 'Anomaly').replace('_', ' ')}
+                      </strong>
+                      <span style={{ fontSize: '10.5px', color: 'var(--warning-text)', fontWeight: 600 }}>
+                        Confidence: {Math.round((sig.confidenceScore || 0.8) * 100)}%
+                      </span>
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      {sig.description || 'Observed telemetry event divergence from expected baseline.'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Instructor Review Note Card */}
           <div
             style={{
@@ -335,7 +470,7 @@ export function SessionReplayPage() {
               type="button"
               className="btn-coral-pill btn-compact"
               style={{ width: '100%' }}
-              onClick={() => toast.success('Review note saved to student dossier')}
+              onClick={handleSaveNote}
             >
               <span>Save Observation Note</span>
             </button>

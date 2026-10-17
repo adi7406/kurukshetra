@@ -89,15 +89,25 @@ function AppRoutes() {
         {/* Student Content Nested Routes */}
         <Route path="/content" element={<Navigate to="/content/concepts" replace />} />
         <Route path="/content/concepts" element={<ConceptsPage />} />
+        <Route path="/content/concepts/:conceptId" element={<ConceptsPage />} />
         <Route path="/content/quizzes" element={<QuizPage />} />
+        <Route path="/content/quizzes/:quizId" element={<QuizPage />} />
         <Route path="/content/coding" element={<CodeAssessmentsPage />} />
+        <Route path="/content/coding/:assessmentId" element={<CodeAssessmentsPage />} />
 
         {/* Backward Compatibility & Convenience Route Aliases */}
+        <Route path="/concepts/:conceptId" element={<ConceptsPage />} />
         <Route path="/quiz" element={<QuizPage />} />
+        <Route path="/quiz/:quizId" element={<QuizPage />} />
         <Route path="/quizzes" element={<Navigate to="/content/quizzes" replace />} />
+        <Route path="/quizzes/:quizId" element={<QuizPage />} />
         <Route path="/code-assessments" element={<CodeAssessmentsPage />} />
+        <Route path="/code-assessments/:assessmentId" element={<CodeAssessmentsPage />} />
         <Route path="/coding" element={<Navigate to="/content/coding" replace />} />
+        <Route path="/coding/:assessmentId" element={<CodeAssessmentsPage />} />
         <Route path="/concepts" element={<Navigate to="/content/concepts" replace />} />
+        <Route path="/replay/:sessionId" element={<SessionReplayPage />} />
+        <Route path="/sessions/:sessionId/replay" element={<SessionReplayPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/profile" element={<ProfilePage />} />
 
