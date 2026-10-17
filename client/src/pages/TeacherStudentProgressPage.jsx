@@ -248,6 +248,11 @@ export function TeacherStudentProgressPage() {
                   <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>
                     Overall BKT Mastery
                   </div>
+                  {selectedStudent.recentScore !== null && selectedStudent.recentScore !== undefined && (
+                    <div style={{ fontSize: '12px', color: 'var(--coral)', fontWeight: 600, marginTop: '4px' }}>
+                      Recent Score: {selectedStudent.recentScore}% ({selectedStudent.completedAssessmentsCount || 1} task{selectedStudent.completedAssessmentsCount === 1 ? '' : 's'} done)
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -213,12 +213,40 @@ export function normalizeCodingAssessment(raw) {
   const id = raw.id || raw.assessmentId || `code_task_${Date.now()}`;
   const courseId = raw.courseId || raw.course_id || 'course_default';
   const topicId = raw.topicId || raw.topic_id || raw.conceptId || id;
-  const title = raw.title || 'Algorithmic Coding Challenge';
-  const description = raw.description || raw.problemStatement || '';
-  const difficulty = raw.difficulty || 'Medium';
-  const constraints = raw.constraints || 'Time Limit: 2000ms | Memory Limit: 256MB';
-  const inputFormat = raw.inputFormat || raw.input_format || 'Standard input format via stdin';
-  const outputFormat = raw.outputFormat || raw.output_format || 'Return the expected result';
+  const title = typeof raw.title === 'string' ? raw.title : 'Algorithmic Coding Challenge';
+
+  // Safely extract description / problem statement / prompt
+  let description = '';
+  if (typeof raw.description === 'string') {
+    description = raw.description;
+  } else if (typeof raw.problemStatement === 'string') {
+    description = raw.problemStatement;
+  } else if (typeof raw.prompt === 'string') {
+    description = raw.prompt;
+  } else if (raw.prompt && typeof raw.prompt === 'object') {
+    description = raw.prompt.prompt || raw.prompt.description || raw.prompt.text || '';
+  } else if (raw.description && typeof raw.description === 'object') {
+    description = raw.description.prompt || raw.description.description || '';
+  }
+
+  // Safely extract rubric
+  let rubric = null;
+  if (typeof raw.rubric === 'string') {
+    rubric = raw.rubric;
+  } else if (raw.rubric && typeof raw.rubric === 'object') {
+    rubric = raw.rubric;
+  } else if (raw.prompt && typeof raw.prompt === 'object' && raw.prompt.rubric) {
+    rubric = raw.prompt.rubric;
+  }
+
+  const difficulty = typeof raw.difficulty === 'string' ? raw.difficulty : 'Medium';
+  const constraints = typeof raw.constraints === 'string'
+    ? raw.constraints
+    : Array.isArray(raw.constraints)
+    ? raw.constraints.join('\n')
+    : 'Time Limit: 2000ms | Memory Limit: 256MB';
+  const inputFormat = typeof raw.inputFormat === 'string' ? raw.inputFormat : (raw.input_format || 'Standard input format via stdin');
+  const outputFormat = typeof raw.outputFormat === 'string' ? raw.outputFormat : (raw.output_format || 'Return the expected result');
   const supportedLanguages = Array.isArray(raw.supportedLanguages)
     ? raw.supportedLanguages
     : Array.isArray(raw.allowedLanguages)
@@ -240,16 +268,33 @@ export function normalizeCodingAssessment(raw) {
     : Array.isArray(raw.sampleTests)
     ? raw.sampleTests.map((st, i) => ({
         id: `ex_${i + 1}`,
-        input: st.input || '',
-        output: st.expectedOutput || st.output || '',
+        input: typeof st.input === 'object' ? JSON.stringify(st.input) : String(st.input || ''),
+        output: typeof (st.expectedOutput || st.output) === 'object' ? JSON.stringify(st.expectedOutput || st.output) : String(st.expectedOutput || st.output || ''),
         explanation: st.explanation || `Sample case ${i + 1}`,
       }))
     : [];
 
-  const vivaQuestion = raw.vivaQuestion || {
+  // Normalize vivaQuestion ensuring it never renders raw objects directly
+  let vivaQuestion = {
     prompt: 'Explain the invariant guarantees, computational time complexity O(N), and space trade-offs of your approach.',
     rubric: 'Evaluates algorithm comprehension, runtime invariants, and edge case resilience.',
   };
+
+  if (typeof raw.vivaQuestion === 'string') {
+    vivaQuestion = {
+      prompt: raw.vivaQuestion,
+      rubric: rubric || 'Evaluates algorithm comprehension, runtime invariants, and edge case resilience.',
+    };
+  } else if (raw.vivaQuestion && typeof raw.vivaQuestion === 'object') {
+    vivaQuestion = {
+      prompt: typeof raw.vivaQuestion.prompt === 'string'
+        ? raw.vivaQuestion.prompt
+        : 'Explain the runtime invariants and space/time complexity.',
+      rubric: typeof raw.vivaQuestion.rubric === 'string'
+        ? raw.vivaQuestion.rubric
+        : rubric || 'Evaluates algorithm comprehension, runtime invariants, and edge case resilience.',
+    };
+  }
 
   return {
     id,
@@ -258,8 +303,10 @@ export function normalizeCodingAssessment(raw) {
     conceptId: raw.conceptId || topicId,
     concept: raw.concept || raw.conceptName || title,
     title,
-    description,
-    problemStatement: description,
+    description: description || 'Implement the algorithmic solution satisfying boundary invariants and asymptotic bounds.',
+    problemStatement: description || 'Implement the algorithmic solution satisfying boundary invariants and asymptotic bounds.',
+    prompt: description,
+    rubric,
     difficulty,
     constraints,
     inputFormat,

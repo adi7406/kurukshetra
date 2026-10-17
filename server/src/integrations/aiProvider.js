@@ -4,10 +4,10 @@ import { ValidationError } from '../utils/errors.js';
 
 export const NVIDIA_CONFIG = {
   get PRIMARY_MODEL() {
-    return process.env.NVIDIA_PRIMARY_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b';
+    return process.env.NVIDIA_PRIMARY_MODEL || 'meta/llama-3.2-11b-vision-instruct';
   },
   get SECONDARY_MODEL() {
-    return process.env.NVIDIA_SECONDARY_MODEL || 'openai/gpt-oss-20b';
+    return process.env.NVIDIA_SECONDARY_MODEL || 'meta/llama-3.2-11b-vision-instruct';
   },
   get BASE_URL() {
     return process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
@@ -15,6 +15,7 @@ export const NVIDIA_CONFIG = {
 };
 
 export const NVIDIA_MODELS = [
+  'meta/llama-3.2-11b-vision-instruct',
   'nvidia/nemotron-3-ultra-550b-a55b',
   'openai/gpt-oss-20b',
 ];
@@ -197,21 +198,22 @@ export const aiProvider = {
   /**
    * Internal call with bounded exponential backoff retries for transient errors
    */
-  async _callWithRetries({ client, model, messages, maxTokens = 3000, temperature = 0.7, timeoutMs = 25000, maxRetries = 2 }) {
+  async _callWithRetries({ client, model, messages, maxTokens = 3000, temperature = 0.7, timeoutMs = 15000, maxRetries = 1, responseFormat = { type: 'json_object' } }) {
     let lastError = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        const response = await client.chat.completions.create(
-          {
-            model,
-            messages,
-            response_format: { type: 'json_object' },
-            temperature,
-            max_tokens: maxTokens,
-          },
-          { timeout: timeoutMs }
-        );
+        const payload = {
+          model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+        };
+        if (responseFormat) {
+          payload.response_format = responseFormat;
+        }
+
+        const response = await client.chat.completions.create(payload, { timeout: timeoutMs });
 
         const choice = response.choices?.[0];
         const rawContent = choice?.message?.content || '';
@@ -258,13 +260,14 @@ export const aiProvider = {
     userPrompt,
     schema,
     model = null,
-    allowFallback = false,
+    allowFallback = true,
     fallbackModel = null,
     userId = null,
     courseId = null,
     operation = 'ai_question_generation',
-    maxRetries = 2,
-    timeoutMs = 25000,
+    maxRetries = 1,
+    timeoutMs = 15000,
+    maxTokens = 2500,
     mockMode = null,
   }) {
     // 1. Budget enforcement
@@ -333,8 +336,9 @@ export const aiProvider = {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
+        maxTokens,
         timeoutMs,
-        maxRetries,
+        maxRetries: allowFallback ? 0 : maxRetries,
       });
     } catch (err) {
       primaryError = err;
@@ -351,6 +355,7 @@ export const aiProvider = {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
+          maxTokens,
           timeoutMs,
           maxRetries,
         });
@@ -384,8 +389,9 @@ export const aiProvider = {
               content: `The previous response failed schema validation: ${parseOrValErr.message}. Please correct the errors and re-output ONLY valid JSON adhering strictly to the schema.`,
             },
           ],
+          maxTokens,
           timeoutMs,
-          maxRetries: 1,
+          maxRetries: 0,
         });
 
         const repairedParsed = JSON.parse(repairResponse.content);
@@ -447,8 +453,9 @@ export const aiProvider = {
         messages: [{ role: 'user', content: 'Respond with the single word: OPERATIONAL' }],
         maxTokens: 64,
         temperature: 0.1,
-        timeoutMs: 30000,
-        maxRetries: 2,
+        timeoutMs: 15000,
+        maxRetries: 1,
+        responseFormat: null,
       });
 
       const latencyMs = Date.now() - startTime;
@@ -578,6 +585,43 @@ export const aiProvider = {
           'Classes act as blueprints while objects are runtime heap allocations',
           'Encapsulation hides internal state through access modifiers',
           'Constructors guarantee invariant initialization upon instantiation',
+        ],
+      });
+    }
+
+    if (systemPrompt.includes('curriculum architect') || systemPrompt.includes('curriculum synthesizer') || userPrompt.includes('<syllabus>')) {
+      return JSON.stringify({
+        courseTitle: 'Object-Oriented Programming (OOP)',
+        moduleName: 'Module 1: Encapsulation & Polymorphic Architectures',
+        isProgrammingSubject: true,
+        topics: [
+          {
+            id: 'topic_oop_1',
+            name: 'Classes, Objects & Encapsulation Invariants',
+            module: 'Module 1: Encapsulation & Polymorphic Architectures',
+            prerequisite: 'Foundational Programming & Memory Pointers',
+            prerequisiteReview: 'Stack vs heap memory layout, pointer references, and primitive variable storage.',
+            description: 'Classes as immutable contracts, state encapsulation, mutator guards, and heap instance allocation.',
+            isProgrammingTopic: true,
+          },
+          {
+            id: 'topic_oop_2',
+            name: 'Inheritance, Class Hierarchies & Abstract Bases',
+            module: 'Module 1: Encapsulation & Polymorphic Architectures',
+            prerequisite: 'Classes & Objects Instantiation',
+            prerequisiteReview: 'Class blueprints, instance construction, and protected scope.',
+            description: 'Subtyping, code reuse, super calls, abstract base classes, and Template Method patterns.',
+            isProgrammingTopic: true,
+          },
+          {
+            id: 'topic_oop_3',
+            name: 'Polymorphism, Virtual Method Tables & Dynamic Dispatch',
+            module: 'Module 1: Encapsulation & Polymorphic Architectures',
+            prerequisite: 'Inheritance & Subtyping',
+            prerequisiteReview: 'Base class references and derived class pointers.',
+            description: 'Virtual functions, VTables, late binding, runtime type resolution, and interface contracts.',
+            isProgrammingTopic: true,
+          },
         ],
       });
     }

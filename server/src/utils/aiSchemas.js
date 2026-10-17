@@ -74,6 +74,50 @@ export const generatedCodingAssessmentSchema = z.object({
     .optional(),
 });
 
+export const structuredLessonSchema = z.object({
+  title: z.string().min(2),
+  summary: z.string().min(10),
+  learningObjectives: z.array(z.string().min(3)).optional().default([]),
+  prerequisiteReview: z.string().optional().default(''),
+  definitions: z
+    .array(
+      z.object({
+        term: z.string(),
+        definition: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
+  coreExplanation: z.string().min(20),
+  workedExamples: z.string().optional().default(''),
+  asciiDiagram: z.string().optional().default(''),
+  misconceptions: z.array(z.string().min(3)).optional().default([]),
+  keyTakeaways: z.array(z.string().min(3)).optional().default([]),
+  syllabusReference: z.string().optional().default(''),
+  sections: z.array(generatedContentSectionSchema).optional().default([]),
+});
+
+export const codingAssessmentsArraySchema = z.object({
+  assessments: z.array(generatedCodingAssessmentSchema).min(1),
+});
+
+export const syllabusTopicItemSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2),
+  module: z.string().optional().default('Module 1: Core Fundamentals'),
+  prerequisite: z.string().optional().default('Foundational Programming'),
+  prerequisiteReview: z.string().optional().default(''),
+  description: z.string().optional().default(''),
+  isProgrammingTopic: z.boolean().optional().default(true),
+});
+
+export const syllabusTopicsListSchema = z.object({
+  courseTitle: z.string().min(2),
+  moduleName: z.string().optional().default('Module 1: Core Fundamentals'),
+  isProgrammingSubject: z.boolean().optional().default(true),
+  topics: z.array(syllabusTopicItemSchema).min(1),
+});
+
 export const generatedCurriculumSchema = z.object({
   courseTitle: z.string().min(3),
   moduleName: z.string().optional(),

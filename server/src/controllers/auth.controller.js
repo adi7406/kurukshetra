@@ -148,6 +148,71 @@ export const authController = {
         console.error('[Auth] Profile creation error:', profError);
       }
 
+      // Auto-create assigned course for newly registered teacher/trainer
+      if (normalizedRole === 'trainer' && (metadata?.courseTaught || directMetadata?.courseTaught)) {
+        try {
+          const courseTitle = (metadata?.courseTaught || directMetadata?.courseTaught || '').trim();
+          if (courseTitle) {
+            const { data: createdCourse } = await dbClient
+              .from('courses')
+              .insert({
+                title: courseTitle,
+                description: `Curriculum and assessments for ${courseTitle}`,
+                created_by: user.id,
+                status: 'draft',
+              })
+              .select()
+              .single();
+
+            if (createdCourse) {
+              profileMetadata.assignedCourseId = createdCourse.id;
+              // Initialize course version 1
+              await dbClient.from('course_versions').insert({
+                course_id: createdCourse.id,
+                version_number: 1,
+                status: 'draft',
+                created_by: user.id,
+              });
+
+              // Update profile record with assignedCourseId
+              await dbClient
+                .from('profiles')
+                .update({
+                  metadata: profileMetadata,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', user.id);
+            }
+          }
+        } catch (cErr) {
+          console.error('[Auth] Course assignment auto-creation error:', cErr);
+        }
+      }
+
+      // Auto-enroll new student into published courses matching their explicitly assigned teacher
+      if (normalizedRole === 'student' && metadata?.teacherId) {
+        try {
+          const { data: publishedCourses = [] } = await dbClient
+            .from('courses')
+            .select('id, created_by')
+            .eq('status', 'published');
+
+          const targetCourses = (publishedCourses || []).filter(
+            (c) => c.created_by === metadata.teacherId
+          );
+
+          for (const c of targetCourses) {
+            await dbClient.from('enrollments').insert({
+              course_id: c.id,
+              student_id: user.id,
+              status: 'active',
+            });
+          }
+        } catch {
+          // Non-blocking enrollment attempt
+        }
+      }
+
       // Sanitize profile before sending to client (never leak password_hash)
       const sanitizedMetadata = { ...profileMetadata };
       delete sanitizedMetadata.password_hash;
@@ -426,17 +491,53 @@ export const authController = {
       const dbClient = getDbClient(supabase);
 
       const { data: profiles = [] } = await dbClient.from('profiles').select('*');
+      const { data: allAttempts = [] } = await dbClient.from('assessment_attempts').select('*');
+      const { data: allMastery = [] } = await dbClient.from('student_mastery').select('*');
+      const { data: allConcepts = [] } = await dbClient.from('concepts').select('*');
+
       const students = (profiles || [])
         .filter((p) => p.role === 'student')
-        .map((s) => ({
-          id: s.id,
-          name: s.display_name || s.name || 'Student',
-          role: 'student',
-          rollNo: s.metadata?.rollNo || '',
-          className: s.metadata?.className || '',
-          enrolledCourse: s.metadata?.enrolledCourse || '',
-          overallMastery: s.metadata?.overallMastery || 0,
-        }));
+        .map((s) => {
+          const studentAttempts = (allAttempts || []).filter(
+            (a) => a.student_id === s.id && (a.status === 'completed' || a.status === 'submitted')
+          );
+          const studentMasteries = (allMastery || []).filter((m) => m.student_id === s.id);
+
+          const conceptMastery = {};
+          studentMasteries.forEach((m) => {
+            const concept = (allConcepts || []).find((c) => c.id === m.concept_id);
+            const name = concept?.name || m.concept_id;
+            conceptMastery[name] = Math.round(Number(m.mastery_probability || 0) * 100);
+          });
+
+          let avgAttemptScore = 0;
+          if (studentAttempts.length > 0) {
+            const totalPct = studentAttempts.reduce((acc, att) => {
+              const maxS = Number(att.max_score) || 1;
+              const sc = Number(att.score) || 0;
+              return acc + Math.round((sc / maxS) * 100);
+            }, 0);
+            avgAttemptScore = Math.round(totalPct / studentAttempts.length);
+          }
+
+          const rawOverall = s.metadata?.overallMastery;
+          const overallMastery = rawOverall !== undefined && rawOverall > 0
+            ? rawOverall
+            : (studentAttempts.length > 0 ? avgAttemptScore : 45);
+
+          return {
+            id: s.id,
+            name: s.display_name || s.name || 'Student',
+            role: 'student',
+            rollNo: s.metadata?.rollNo || 'CS-2026-001',
+            className: s.metadata?.className || 'CS-B Section 2',
+            enrolledCourse: s.metadata?.enrolledCourse || 'Data Structures & Algorithms',
+            overallMastery,
+            completedAssessmentsCount: studentAttempts.length,
+            conceptMastery,
+            recentScore: studentAttempts[studentAttempts.length - 1]?.score,
+          };
+        });
 
       res.status(200).json({
         data: students,

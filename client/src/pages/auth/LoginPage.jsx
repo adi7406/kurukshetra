@@ -76,6 +76,10 @@ export function LoginPage() {
         navigate('/home');
       } else {
         // Sign up mode
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters long.');
+        }
+
         if (role === 'teacher') {
           if (!name || !className || !rollNo || !phone || !email || !password) {
             throw new Error('Please fill out all required teacher fields.');
@@ -112,7 +116,15 @@ export function LoginPage() {
         }
       }
     } catch (err) {
-      setErrorMessage(err.message || 'Authentication error.');
+      let msg = 'Authentication error. Please check your credentials.';
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err?.message && typeof err.message === 'string') {
+        msg = err.message;
+      } else if (err?.error && typeof err.error === 'string') {
+        msg = err.error;
+      }
+      setErrorMessage(msg);
     } finally {
       setLoading(false);
     }
@@ -570,9 +582,10 @@ export function LoginPage() {
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder={mode === 'signup' ? 'Create a password (min. 6 characters)' : 'Enter your password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  minLength={mode === 'signup' ? 6 : 1}
                   required
                   className="auth-input"
                   style={{ paddingRight: '36px' }}
@@ -598,6 +611,11 @@ export function LoginPage() {
                   {showPassword ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
                 </button>
               </div>
+              {mode === 'signup' && (
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Password must be at least 6 characters
+                </span>
+              )}
             </div>
 
             {/* Submit Button */}

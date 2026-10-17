@@ -54,15 +54,36 @@ router.post(
   coursesController.publishCourse
 );
 
-// Publish full extracted curriculum
+// Curriculum retrieval, authoring, and publication
+router.get(
+  '/courses/:courseId/curriculum',
+  authenticate,
+  coursesController.getCourseCurriculum
+);
+
+router.patch(
+  '/courses/:courseId/curriculum',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  coursesController.updateCourseCurriculum
+);
+
 router.post(
   '/courses/curriculum',
   authenticate,
   requireRole('trainer', 'admin'),
   coursesController.publishCurriculum
 );
+
 router.post(
   '/courses/:courseId/curriculum',
+  authenticate,
+  requireRole('trainer', 'admin'),
+  coursesController.publishCurriculum
+);
+
+router.post(
+  '/courses/:courseId/curriculum/publish',
   authenticate,
   requireRole('trainer', 'admin'),
   coursesController.publishCurriculum

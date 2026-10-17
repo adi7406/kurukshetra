@@ -29,16 +29,156 @@ export const assessmentsController = {
           .eq('status', 'active');
         const enrolledCourseIds = (enrollments || []).map((e) => e.course_id);
 
-        filtered = filtered.filter((a) => a.status === 'published' && enrolledCourseIds.includes(a.course_id));
+        // Fetch published courses
+        const { data: pubCourses = [] } = await supabase
+          .from('courses')
+          .select('id')
+          .eq('status', 'published');
+        const publishedCourseIds = (pubCourses || []).map((c) => c.id);
+
+        filtered = filtered.filter(
+          (a) =>
+            a.status === 'published' &&
+            (enrolledCourseIds.includes(a.course_id) || publishedCourseIds.includes(a.course_id))
+        );
       } else if (user.role === 'trainer') {
         filtered = filtered.filter((a) => a.created_by === user.id || a.status === 'published');
       }
 
+      // Hydrate assessments with questions, options, test cases, and starter code
+      const { data: allAq = [] } = await supabase.from('assessment_questions').select('*');
+      const { data: allVersions = [] } = await supabase.from('question_versions').select('*');
+      const { data: allOptions = [] } = await supabase.from('question_options').select('*');
+      const { data: allTestCases = [] } = await supabase.from('coding_test_cases').select('*');
+      const { data: allMappings = [] } = await supabase.from('question_concepts').select('*');
+      const { data: allConcepts = [] } = await supabase.from('concepts').select('*');
+
+      const isPrivileged = user.role === 'trainer' || user.role === 'admin';
+
+      const hydrated = filtered.map((a) => {
+        const aqItems = (allAq || [])
+          .filter((aq) => aq.assessment_id === a.id)
+          .sort((x, y) => (x.position || 0) - (y.position || 0));
+
+        const questions = aqItems
+          .map((item) => {
+            const v = (allVersions || []).find((ver) => ver.id === item.question_version_id);
+            if (!v) return null;
+
+            const opts = (allOptions || [])
+              .filter((o) => o.question_version_id === v.id)
+              .sort((x, y) => (x.order_index || 0) - (y.order_index || 0));
+
+            const mapping = (allMappings || []).find((m) => m.question_version_id === v.id);
+            const concept = (allConcepts || []).find((c) => c.id === mapping?.concept_id);
+
+            const safeOptions = opts.map((o) => {
+              if (!isPrivileged) {
+                const { is_correct: _removed, ...safe } = o;
+                return safe;
+              }
+              return o;
+            });
+
+            const tcs = (allTestCases || []).filter((tc) => tc.question_version_id === v.id);
+            const safeTestCases = tcs
+              .filter((tc) => isPrivileged || !tc.is_hidden)
+              .map((tc) => ({
+                id: tc.id,
+                input: tc.input_payload,
+                expectedOutput: tc.expected_output,
+                isHidden: isPrivileged ? tc.is_hidden : false,
+                orderIndex: tc.order_index,
+              }));
+
+            return {
+              id: v.id,
+              questionVersionId: v.id,
+              questionId: v.question_id,
+              questionType: v.question_type,
+              prompt: v.prompt,
+              stem: v.prompt,
+              difficulty: v.difficulty,
+              marks: item.marks_override !== null ? item.marks_override : v.marks,
+              points: item.marks_override !== null ? item.marks_override : v.marks,
+              conceptId: mapping?.concept_id || null,
+              conceptName: concept?.name || a.title,
+              options: safeOptions,
+              explanation: isPrivileged ? v.explanation : undefined,
+              metadata: v.metadata || {},
+              sampleTestCases: safeTestCases,
+            };
+          })
+          .filter(Boolean);
+
+        // Coding metadata extraction
+        const codingQuestion = questions.find((q) => q.questionType === 'coding');
+        let starterCode = {
+          python: `# Implementation for ${a.title}\ndef solve(input_data):\n    # Write your solution here\n    pass\n`,
+          javascript: `// Implementation for ${a.title}\nfunction solve(inputData) {\n  // Write your solution here\n}\n`,
+          java: `// Implementation for ${a.title}\npublic class Solution {\n    public static void main(String[] args) {\n    }\n}\n`,
+        };
+        let constraints = 'Time Limit: 2000ms | Memory Limit: 256MB';
+        let vivaQuestion = {
+          prompt: 'Explain the runtime invariants, time complexity, and auxiliary space efficiency of your approach.',
+          rubric: 'Evaluates algorithm comprehension and edge case resilience.',
+        };
+        let sampleTests = [];
+
+        if (codingQuestion) {
+          const meta = codingQuestion.metadata || {};
+          if (meta.starterCodeObject && typeof meta.starterCodeObject === 'object') {
+            starterCode = meta.starterCodeObject;
+          } else if (meta.starterCode && typeof meta.starterCode === 'string') {
+            starterCode = {
+              python: meta.starterCode,
+              javascript: `// Implementation for ${a.title}\nfunction solve(inputData) {\n  return 0;\n}\n`,
+              java: `public class Solution {\n    public static void main(String[] args) {\n    }\n}\n`,
+            };
+          }
+          if (meta.constraints) constraints = meta.constraints;
+          if (meta.vivaQuestion) vivaQuestion = meta.vivaQuestion;
+          sampleTests = codingQuestion.sampleTestCases || [];
+        }
+
+        const isCoding = Boolean(codingQuestion) || a.title?.toLowerCase().includes('coding') || a.title?.toLowerCase().includes('challenge');
+
+        return {
+          ...a,
+          questions,
+          questionsCount: questions.length,
+          concept: questions[0]?.conceptName || a.title,
+          conceptName: questions[0]?.conceptName || a.title,
+          starterCode,
+          constraints,
+          supportedLanguages: ['python', 'javascript', 'java'],
+          sampleTests,
+          examples: sampleTests.map((st, i) => ({
+            id: `ex_${i + 1}`,
+            input: st.input,
+            output: st.expectedOutput,
+            explanation: `Sample test case ${i + 1}`,
+          })),
+          vivaQuestion,
+          isCodingAssessment: isCoding,
+        };
+      });
+
+      let finalResult = hydrated;
+      if (req.originalUrl?.includes('/quizzes')) {
+        finalResult = hydrated.filter((a) => !a.isCodingAssessment || a.questions.some((q) => q.questionType.startsWith('mcq')));
+      } else if (req.originalUrl?.includes('/assessments')) {
+        const codingOnly = hydrated.filter((a) => a.isCodingAssessment || a.questions.some((q) => q.questionType === 'coding'));
+        if (codingOnly.length > 0) {
+          finalResult = codingOnly;
+        }
+      }
+
       res.status(200).json({
-        data: filtered,
+        data: finalResult,
         meta: {
           requestId: req.requestId,
-          count: filtered.length,
+          count: finalResult.length,
         },
       });
     } catch (error) {

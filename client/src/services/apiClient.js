@@ -22,9 +22,15 @@ export async function request(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   
   const headers = {
-    'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  } else {
+    delete headers['Content-Type'];
+    delete headers['content-type'];
+  }
 
   if (!headers.Authorization && !headers.authorization && typeof window !== 'undefined') {
     try {
@@ -69,7 +75,24 @@ export async function request(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-      const errorMessage = data?.message || data?.error || `Request failed with status ${response.status}`;
+      let errorMessage = `Request failed with status ${response.status}`;
+      if (data) {
+        if (typeof data === 'string') {
+          errorMessage = data;
+        } else if (typeof data.message === 'string' && data.message) {
+          errorMessage = data.message;
+        } else if (typeof data.error === 'string' && data.error) {
+          errorMessage = data.error;
+        } else if (data.error && typeof data.error === 'object') {
+          if (Array.isArray(data.error.details) && data.error.details.length > 0) {
+            errorMessage = data.error.details
+              .map((d) => (d.issue || d.message ? `${d.field ? `${d.field}: ` : ''}${d.issue || d.message}` : JSON.stringify(d)))
+              .join(', ');
+          } else if (typeof data.error.message === 'string' && data.error.message) {
+            errorMessage = data.error.message;
+          }
+        }
+      }
       throw new ApiError(errorMessage, response.status, data);
     }
 

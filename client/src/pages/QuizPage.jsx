@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   HelpCircle,
   CheckCircle2,
@@ -12,6 +12,7 @@ import {
   Check,
   Bookmark,
   Flag,
+  Filter,
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
@@ -21,10 +22,16 @@ import MasteryChip from '../components/common/MasteryChip';
 
 export function QuizPage() {
   const { quizId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const conceptParam = searchParams.get('conceptId') || searchParams.get('topicId');
+  const targetQuizId = quizId || searchParams.get('quizId');
+
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState([]);
   const [activeQuiz, setActiveQuiz] = useState(null);
+  const [topicFilter, setTopicFilter] = useState('all');
 
   // Active quiz attempt state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -40,16 +47,28 @@ export function QuizPage() {
 
   useEffect(() => {
     loadQuizzes();
-  }, [quizId]);
+  }, [quizId, conceptParam, targetQuizId]);
 
   async function loadQuizzes() {
     try {
       setLoading(true);
       const data = await learningService.getQuizzes();
-      setQuizzes(data || []);
+      const quizList = data || [];
+      setQuizzes(quizList);
 
-      if (quizId && data && data.length > 0) {
-        const target = data.find((q) => q.id === quizId);
+      if (quizList.length > 0) {
+        let target = null;
+        if (targetQuizId) {
+          target = quizList.find((q) => q.id === targetQuizId);
+        } else if (conceptParam) {
+          target = quizList.find(
+            (q) =>
+              q.conceptId === conceptParam ||
+              q.topicId === conceptParam ||
+              (q.conceptName && q.conceptName.toLowerCase().includes(conceptParam.toLowerCase())) ||
+              (q.title && q.title.toLowerCase().includes(conceptParam.toLowerCase()))
+          );
+        }
         if (target) {
           startQuiz(target);
         }
@@ -206,11 +225,17 @@ export function QuizPage() {
               </div>
             </div>
 
-            <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '14px', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+            <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '14px', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', textAlign: 'center', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Correct Answers</div>
                 <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
                   {attemptResult.correctCount} / {attemptResult.totalCount}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Score by Marks</div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--coral)' }}>
+                  {attemptResult.marksEarned !== undefined ? attemptResult.marksEarned : (attemptResult.correctCount * 10)} / {attemptResult.totalMarks || (attemptResult.totalCount * 10)} marks
                 </div>
               </div>
               <div>
@@ -563,6 +588,29 @@ export function QuizPage() {
         </p>
       </div>
 
+      {/* Topic Filter Bar */}
+      {quizzes.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button
+            type="button"
+            className={topicFilter === 'all' ? 'btn-coral-pill btn-compact' : 'btn-ghost-pill btn-compact'}
+            onClick={() => setTopicFilter('all')}
+          >
+            All Topics ({quizzes.length})
+          </button>
+          {Array.from(new Set(quizzes.map((q) => q.conceptName).filter(Boolean))).map((t) => (
+            <button
+              key={t}
+              type="button"
+              className={topicFilter === t ? 'btn-coral-pill btn-compact' : 'btn-ghost-pill btn-compact'}
+              onClick={() => setTopicFilter(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
+
       {quizzes.length === 0 ? (
         <EmptyState
           title="No Quizzes Available"
@@ -572,7 +620,7 @@ export function QuizPage() {
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '18px' }}>
-          {quizzes.map((quiz) => (
+          {quizzes.filter((q) => topicFilter === 'all' || q.conceptName === topicFilter || q.conceptId === topicFilter).map((quiz) => (
             <div
               key={quiz.id}
               style={{

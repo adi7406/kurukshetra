@@ -14,6 +14,8 @@ import {
   X,
   AlertCircle,
   Lightbulb,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
@@ -22,15 +24,18 @@ import MasteryChip from '../components/common/MasteryChip';
 import Chip from '../components/common/Chip';
 import { normalizeMastery } from '../utils/mastery';
 import { ConceptDiagram } from '../components/common/ConceptDiagram';
+import MiniConceptMap from '../components/home/MiniConceptMap';
 
 export function ConceptsPage() {
   const navigate = useNavigate();
   const { conceptId } = useParams();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState([]);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedConcept, setSelectedConcept] = useState(null);
+  const [expandedConceptId, setExpandedConceptId] = useState(null);
 
   useEffect(() => {
     async function loadConcepts() {
@@ -40,6 +45,14 @@ export function ConceptsPage() {
         const courseList = data || [];
         setCourses(courseList);
 
+        // Auto-select course that has concepts, or fallback to first course
+        const courseWithConcepts = courseList.find((c) => (c.modules || []).some((m) => (m.concepts || []).length > 0));
+        if (courseWithConcepts && !selectedCourseId) {
+          setSelectedCourseId(courseWithConcepts.id);
+        } else if (courseList.length > 0 && !selectedCourseId) {
+          setSelectedCourseId(courseList[0].id);
+        }
+
         // If conceptId passed in route parameter, auto-open matching concept
         if (conceptId) {
           for (const c of courseList) {
@@ -47,6 +60,7 @@ export function ConceptsPage() {
               const matched = (m.concepts || []).find((con) => con.id === conceptId);
               if (matched) {
                 setSelectedConcept(matched);
+                setSelectedCourseId(c.id);
                 break;
               }
             }
@@ -59,13 +73,27 @@ export function ConceptsPage() {
       }
     }
     loadConcepts();
+
+    const handleSync = () => loadConcepts();
+    window.addEventListener('pathwise_curriculum_updated', handleSync);
+    return () => window.removeEventListener('pathwise_curriculum_updated', handleSync);
   }, [conceptId]);
 
   if (loading) {
     return <LoadingState message="Loading syllabus concept graph..." />;
   }
 
-  const primaryCourse = courses[0];
+  const primaryCourse =
+    courses.find((c) => c.id === selectedCourseId) ||
+    courses.find((c) => (c.modules || []).some((m) => (m.concepts || []).length > 0)) ||
+    courses[0];
+
+  const allCourseConcepts = [];
+  (primaryCourse?.modules || []).forEach((m) => {
+    (m.concepts || []).forEach((c) => {
+      allCourseConcepts.push({ ...c, moduleTitle: m.title });
+    });
+  });
 
   const filterConcept = (concept) => {
     const matchesSearch =
@@ -128,30 +156,63 @@ export function ConceptsPage() {
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={14} strokeWidth={1.5} color="var(--text-secondary)" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid var(--border-hairline)',
-              backgroundColor: 'var(--surface)',
-              color: 'var(--text-main)',
-              fontSize: '12.5px',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="all">All Statuses</option>
-            <option value="mastered">Solid (&gt;70%)</option>
-            <option value="developing">Developing (40-70%)</option>
-            <option value="needs_practice">Weak (&lt;40%)</option>
-            <option value="locked">Locked (Prerequisites Unmet)</option>
-          </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {courses.length > 1 && (
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--border-hairline)',
+                backgroundColor: 'var(--surface)',
+                color: 'var(--text-main)',
+                fontSize: '12.5px',
+                fontWeight: 500,
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code ? `${c.code}: ${c.title}` : c.title}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Filter size={14} strokeWidth={1.5} color="var(--text-secondary)" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--border-hairline)',
+                backgroundColor: 'var(--surface)',
+                color: 'var(--text-main)',
+                fontSize: '12.5px',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="all">All Statuses</option>
+              <option value="mastered">Solid (&gt;70%)</option>
+              <option value="developing">Developing (40-70%)</option>
+              <option value="needs_practice">Weak (&lt;40%)</option>
+              <option value="locked">Locked (Prerequisites Unmet)</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      {/* Concept Map Progression View */}
+      {allCourseConcepts.length > 0 && (
+        <div style={{ marginBottom: '8px' }}>
+          <MiniConceptMap concepts={allCourseConcepts} activeConceptId={selectedConcept?.id} />
+        </div>
+      )}
 
       {/* Modules & Concepts Grid */}
       {!primaryCourse || !primaryCourse.modules || primaryCourse.modules.length === 0 ? (
@@ -253,32 +314,155 @@ export function ConceptsPage() {
                         )}
                       </div>
 
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
                         {isLocked ? (
                           <button type="button" className="btn-ghost-pill btn-compact" style={{ width: '100%', opacity: 0.6 }} disabled>
                             Prerequisite Unmet
                           </button>
                         ) : (
                           <>
-                            <button
-                              type="button"
-                              className="btn-coral-pill btn-compact"
-                              style={{ flex: 1 }}
-                              onClick={() => setSelectedConcept(concept)}
-                            >
-                              <span>Learn Theory</span>
-                              <BookOpen size={13} strokeWidth={1.5} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                type="button"
+                                className="btn-coral-pill btn-compact"
+                                style={{ flex: 1 }}
+                                onClick={() => setSelectedConcept(concept)}
+                              >
+                                <span>Learn Theory</span>
+                                <BookOpen size={13} strokeWidth={1.5} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-ghost-pill btn-compact"
+                                onClick={() => navigate(`/content/quizzes?conceptId=${concept.id}`)}
+                              >
+                                <HelpCircle size={13} strokeWidth={1.5} />
+                                <span>Quiz</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-ghost-pill btn-compact"
+                                onClick={() => navigate(`/content/coding?conceptId=${concept.id}`)}
+                              >
+                                <Code2 size={13} strokeWidth={1.5} />
+                                <span>Code</span>
+                              </button>
+                            </div>
+
                             <button
                               type="button"
                               className="btn-ghost-pill btn-compact"
-                              onClick={() => navigate('/content/quizzes')}
+                              style={{ width: '100%', fontSize: '11.5px', justifyContent: 'center' }}
+                              onClick={() => setExpandedConceptId(expandedConceptId === concept.id ? null : concept.id)}
                             >
-                              <span>Quiz</span>
+                              <span>{expandedConceptId === concept.id ? 'Collapse Structured Syllabus' : 'Inspect Structured Syllabus'}</span>
+                              {expandedConceptId === concept.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                             </button>
                           </>
                         )}
                       </div>
+
+                      {/* Inline Structured Syllabus Container */}
+                      {!isLocked && expandedConceptId === concept.id && (
+                        <div
+                          style={{
+                            marginTop: '10px',
+                            padding: '16px',
+                            background: 'var(--surface-muted)',
+                            borderRadius: '14px',
+                            border: '1px solid var(--border-hairline)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '14px',
+                          }}
+                        >
+                          {/* 1. Learning Objectives */}
+                          {concept.learningObjectives?.length > 0 && (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                1. Learning Objectives (Bloom Invariants)
+                              </div>
+                              <ul style={{ paddingLeft: '18px', fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                                {concept.learningObjectives.map((obj, i) => (
+                                  <li key={i}>{obj}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* 2. Prerequisite Foundations */}
+                          {(concept.prerequisiteReview || concept.prerequisite) && (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                2. Prerequisite Foundations & Review
+                              </div>
+                              <div style={{ fontSize: '12.5px', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                                {concept.prerequisiteReview || concept.prerequisite}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. Core Technical Invariants & Mechanics */}
+                          {(concept.theory || concept.coreExplanation) && (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                3. Core Technical Invariants & Mechanics
+                              </div>
+                              <div style={{ fontSize: '12.5px', color: 'var(--text-main)', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                                {concept.theory || concept.coreExplanation}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 4. Architectural Diagram (Interactive Visual Model) */}
+                          <div>
+                            <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                              4. Architectural Diagram (Interactive Visual Model)
+                            </div>
+                            <ConceptDiagram conceptName={concept.name} diagram={concept.diagram} />
+                          </div>
+
+                          {/* 5. Worked Implementation Example */}
+                          {(concept.example || concept.workedExamples) && (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                5. Worked Implementation Example (Concrete Code)
+                              </div>
+                              <div style={{ padding: '12px', background: '#16161A', color: '#ECEAE8', borderRadius: '10px', fontFamily: 'var(--font-mono, monospace)', fontSize: '11px', overflowX: 'auto', maxHeight: '180px', overflowY: 'auto' }}>
+                                <pre style={{ margin: 0, whiteSpace: 'pre' }}>{concept.example || concept.workedExamples}</pre>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 6. Misconceptions & Traps */}
+                          {concept.misconceptions?.length > 0 && (
+                            <div style={{ padding: '10px 12px', background: 'var(--mastery-developing-soft)', border: '1px solid var(--warning-border)', borderRadius: '10px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--warning-text)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                6. Common Misconceptions & Traps
+                              </div>
+                              <ul style={{ paddingLeft: '16px', fontSize: '12px', color: 'var(--text-main)', margin: 0, lineHeight: '1.45' }}>
+                                {concept.misconceptions.map((mis, i) => (
+                                  <li key={i}>{mis}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Key Takeaways */}
+                          {concept.keyTakeaways?.length > 0 && (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--mastery-solid)', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                Key Takeaways & Conceptual Anchor
+                              </div>
+                              <ul style={{ paddingLeft: '16px', fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                                {concept.keyTakeaways.map((item, i) => (
+                                  <li key={i}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

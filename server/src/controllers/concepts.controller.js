@@ -19,7 +19,9 @@ export const conceptsController = {
 
       // Fetch modules for this course
       const { data: allModules = [] } = await supabase.from('modules').select('*');
-      const courseModules = (allModules || []).filter((m) => m.course_id === courseId || m.course_version_id);
+      const courseModules = (allModules || []).filter(
+        (m) => m.course_id === courseId || m.course_version_id === courseId
+      );
       const moduleIds = courseModules.map((m) => m.id);
 
       // Fetch concepts

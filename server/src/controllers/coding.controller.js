@@ -381,13 +381,25 @@ export const codingController = {
         });
       }
 
-      // Find question version for this assessment
+      // Find question version for this assessment (by assessment_id or direct question_version_id)
+      let qVersionId = null;
       const { data: aqList = [] } = await supabase
         .from('assessment_questions')
         .select('*')
         .eq('assessment_id', assessmentId);
 
-      const qVersionId = aqList[0]?.question_version_id;
+      if (aqList && aqList.length > 0) {
+        qVersionId = aqList[0]?.question_version_id;
+      } else {
+        const { data: ver } = await supabase
+          .from('question_versions')
+          .select('id')
+          .eq('id', assessmentId)
+          .maybeSingle();
+        if (ver) {
+          qVersionId = ver.id;
+        }
+      }
 
       let result;
       if (qVersionId) {
@@ -435,12 +447,24 @@ export const codingController = {
       const user = req.user;
       const supabase = getSupabase();
 
+      let qVersionId = null;
       const { data: aqList = [] } = await supabase
         .from('assessment_questions')
         .select('*')
         .eq('assessment_id', assessmentId);
 
-      const qVersionId = aqList[0]?.question_version_id;
+      if (aqList && aqList.length > 0) {
+        qVersionId = aqList[0]?.question_version_id;
+      } else {
+        const { data: ver } = await supabase
+          .from('question_versions')
+          .select('id')
+          .eq('id', assessmentId)
+          .maybeSingle();
+        if (ver) {
+          qVersionId = ver.id;
+        }
+      }
       let questionVersion = null;
       if (qVersionId) {
         const { data: qv } = await supabase
@@ -493,6 +517,41 @@ export const codingController = {
       const vivaQuestion = questionVersion?.metadata?.vivaQuestion || {
         prompt: 'Explain the invariant conditions and computational complexity of your approach.',
       };
+
+      // Persist attempt to assessment_attempts so teacher dashboard immediately reflects student score
+      await supabase
+        .from('assessment_attempts')
+        .insert({
+          assessment_id: assessmentId,
+          student_id: user.id,
+          status: 'completed',
+          score: execResult.score,
+          max_score: execResult.maxScore || 10,
+          passed: isAccepted,
+          is_passing: isAccepted,
+          started_at: new Date(Date.now() - 300000).toISOString(),
+          submitted_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+        });
+
+      // Update student profile overallMastery in metadata
+      const { data: currentProfile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      if (currentProfile) {
+        const prevMastery = currentProfile.metadata?.overallMastery || 40;
+        const codingBonus = isAccepted ? 15 : 5;
+        const newOverall = Math.min(100, Math.round(prevMastery + codingBonus));
+        await supabase
+          .from('profiles')
+          .update({
+            metadata: {
+              ...(currentProfile.metadata || {}),
+              overallMastery: newOverall,
+              lastCodingStatus: isAccepted ? 'Accepted' : 'Wrong Answer',
+              lastCodingDate: new Date().toISOString(),
+            },
+          })
+          .eq('id', user.id);
+      }
 
       res.status(200).json({
         success: isAccepted,

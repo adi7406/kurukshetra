@@ -99,15 +99,33 @@ export const aiGenerationController = {
    */
   async extractCurriculum(req, res, next) {
     try {
-      const { syllabusText, courseTitle } = req.body;
+      const {
+        syllabusText,
+        courseTitle,
+        courseId: bodyCourseId,
+        fileData,
+        fileName,
+        fileType,
+        async: isAsync,
+      } = req.body || {};
+      const courseId = req.params?.courseId || bodyCourseId || null;
+      const idempotencyKey = req.headers['idempotency-key'] || null;
 
       const result = await aiGenerationService.extractCurriculum({
-        syllabusText: syllabusText || 'Data Structures & Algorithms',
-        courseTitle: courseTitle || 'CS201 Data Structures',
+        courseId,
+        courseTitle: courseTitle || 'CS201 Data Structures & Algorithms',
+        syllabusText: syllabusText || '',
+        fileData,
+        fileName,
+        fileType,
         trainerUser: req.user,
+        useAsyncJob: Boolean(isAsync),
+        idempotencyKey,
       });
 
-      res.status(200).json({
+      const statusCode = result?.async ? 202 : 200;
+
+      res.status(statusCode).json({
         data: result,
         ...result, // Frontend compatibility envelope
         meta: {

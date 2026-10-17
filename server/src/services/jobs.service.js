@@ -26,10 +26,18 @@ export const jobsService = {
       }
     }
 
+    const TYPE_MAPPINGS = {
+      curriculum_synthesis: 'syllabus_import',
+      syllabus_extraction: 'syllabus_import',
+      ai_question_generation: 'question_generation',
+      ai_content_generation: 'content_generation',
+    };
+    const resolvedType = TYPE_MAPPINGS[type] || type;
+
     const { data: job, error } = await supabase
       .from('jobs')
       .insert({
-        type,
+        type: resolvedType,
         status: 'queued',
         progress: { completed: 0, total: 100 },
         input_payload: inputPayload,
@@ -42,7 +50,7 @@ export const jobsService = {
       .single();
 
     if (error || !job) {
-      throw new Error('Failed to create background job.');
+      throw new Error(`Failed to create background job: ${error?.message || 'Database insert failed'}`);
     }
 
     // Launch execution asynchronously without blocking the caller
@@ -60,10 +68,10 @@ export const jobsService = {
 
           const result = await runnerFn({
             jobId: job.id,
-            updateProgress: async (completed, total = 100) => {
+            updateProgress: async (completed, total = 100, message = '') => {
               await supabase
                 .from('jobs')
-                .update({ progress: { completed, total } })
+                .update({ progress: { completed, total, message } })
                 .eq('id', job.id);
             },
           });

@@ -50,19 +50,79 @@ export function ProblemStatementPanel({ assessment }) {
         </div>
 
         <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.01em', margin: 0 }}>
-          {assessment.title}
+          {typeof assessment.title === 'string' ? assessment.title : 'Algorithmic Coding Challenge'}
         </h1>
       </div>
 
       {/* Description / Problem Statement */}
       <div>
         <div style={{ fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.04em', marginBottom: '6px' }}>
-          Problem Description
+          Problem Description & Objectives
         </div>
-        <p style={{ fontSize: '13.5px', color: 'var(--text-main)', lineHeight: '1.65', margin: 0, whiteSpace: 'pre-wrap' }}>
-          {assessment.problemStatement || assessment.description}
-        </p>
+        <div style={{ fontSize: '13.5px', color: 'var(--text-main)', lineHeight: '1.65', margin: 0, whiteSpace: 'pre-wrap' }}>
+          {(() => {
+            const desc = assessment.problemStatement || assessment.description || assessment.prompt;
+            if (!desc) return 'Implement the required algorithmic solution.';
+            if (typeof desc === 'string') return desc;
+            if (typeof desc === 'object') {
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {desc.prompt && <div>{String(desc.prompt)}</div>}
+                  {desc.description && <div>{String(desc.description)}</div>}
+                  {desc.objectives && (
+                    <div>
+                      <strong>Objectives:</strong> {Array.isArray(desc.objectives) ? desc.objectives.join(', ') : String(desc.objectives)}
+                    </div>
+                  )}
+                  {desc.instructions && <div>{String(desc.instructions)}</div>}
+                  {!desc.prompt && !desc.description && (
+                    <div>{Object.entries(desc).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' | ')}</div>
+                  )}
+                </div>
+              );
+            }
+            return String(desc);
+          })()}
+        </div>
       </div>
+
+      {/* Rubric Criteria if provided */}
+      {(assessment.rubric || (typeof assessment.prompt === 'object' && assessment.prompt?.rubric)) && (
+        <div style={{ background: 'var(--surface-muted)', borderRadius: '12px', padding: '12px 14px', border: '1px solid var(--border-hairline)' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--coral)', marginBottom: '6px' }}>
+            Grading Rubric & Invariant Criteria
+          </div>
+          <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+            {(() => {
+              const r = assessment.rubric || assessment.prompt?.rubric;
+              if (typeof r === 'string') return r;
+              if (Array.isArray(r)) {
+                return (
+                  <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                    {r.map((crit, idx) => (
+                      <li key={idx} style={{ marginBottom: '4px' }}>
+                        <strong>{crit.criterion || crit.name || `Criterion ${idx + 1}`}:</strong> {crit.description || crit.desc || ''} {crit.points ? `(${crit.points} pts)` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              if (typeof r === 'object' && r !== null) {
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {Object.entries(r).map(([k, v]) => (
+                      <div key={k}>
+                        <strong style={{ textTransform: 'capitalize' }}>{k}:</strong> {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+              return 'Evaluates invariant preservation, complexity bounds, and edge case resilience.';
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Input / Output Format */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
@@ -71,7 +131,7 @@ export function ProblemStatementPanel({ assessment }) {
             Input Format
           </div>
           <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-            {assessment.inputFormat || 'Read parameters from stdin or function signature.'}
+            {typeof assessment.inputFormat === 'string' ? assessment.inputFormat : 'Read parameters from stdin or function signature.'}
           </div>
         </div>
 
@@ -80,7 +140,7 @@ export function ProblemStatementPanel({ assessment }) {
             Output Format
           </div>
           <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-            {assessment.outputFormat || 'Return the computed result matching constraints.'}
+            {typeof assessment.outputFormat === 'string' ? assessment.outputFormat : 'Return the computed result matching constraints.'}
           </div>
         </div>
       </div>
@@ -103,7 +163,11 @@ export function ProblemStatementPanel({ assessment }) {
             whiteSpace: 'pre-wrap',
           }}
         >
-          {assessment.constraints || '1 <= N <= 10^5\nAll element values fit within standard signed 32-bit integer limits.'}
+          {typeof assessment.constraints === 'string'
+            ? assessment.constraints
+            : Array.isArray(assessment.constraints)
+            ? assessment.constraints.join('\n')
+            : '1 <= N <= 10^5\nAll element values fit within standard signed 32-bit integer limits.'}
         </div>
       </div>
 

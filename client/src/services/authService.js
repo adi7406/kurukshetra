@@ -215,6 +215,20 @@ export const authService = {
   },
 
   /**
+   * Check and restore active session on app startup
+   */
+  async checkSession() {
+    const user = this.getCurrentUser();
+    if (!user) return null;
+    try {
+      const refreshed = await this.getProfile();
+      return refreshed || user;
+    } catch {
+      return user;
+    }
+  },
+
+  /**
    * Refresh current user profile from backend
    */
   async getProfile() {
@@ -235,6 +249,23 @@ export const authService = {
       // If offline or token expired
     }
     return this.getCurrentUser();
+  },
+
+  /**
+   * Update current user profile fields (displayName, metadata)
+   */
+  async updateProfile(updates) {
+    const response = await apiClient.patch('/me', updates);
+    const profile = response?.data?.profile || response?.profile || response;
+    const current = this.getCurrentUser() || {};
+    const updated = {
+      ...current,
+      ...profile,
+      name: profile?.display_name || current.name,
+      role: profile?.role === 'trainer' ? 'teacher' : (profile?.role || current.role),
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+    return updated;
   },
 };
 

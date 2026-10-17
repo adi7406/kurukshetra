@@ -1,72 +1,122 @@
 /**
  * Syllabus AI Service
- * Handles ingestion of PDF or textual course syllabi.
- * Connects to future backend API endpoint (e.g. POST /api/ai/extract-curriculum).
- * Gracefully provides synthesized curriculum adhering to:
- * - Proper Content: Text + Visual Diagram + Executable Example
- * - At least 5 Quizzes to cover each topic
- * - Proper Coding Assessment for each topic
+ * Real end-to-end curriculum synthesis pipeline:
+ * 1. Syllabus text / PDF ingestion
+ * 2. Asynchronous backend AI generation job (NVIDIA dual-model failover)
+ * 3. Polling real job status & progress updates across every required stage
+ * 4. Structured topic lessons (all 12 required sections), 10 MCQs/topic, 2 Coding Assessments/topic
+ * 5. Full database persistence and verification
+ * 
+ * NEVER returns fake setTimeout success or fabricated topics.
  */
 
 import { request } from './apiClient';
-import { synthesizeCurriculumFromSyllabus } from './curriculumGenerator';
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function pollJob(jobId, onProgress) {
+  const startTime = Date.now();
+  const timeoutMs = 180000; // 3 minutes max
+
+  while (Date.now() - startTime < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      const res = await request(`/jobs/${jobId}`);
+      const job = res?.data || res;
+      if (!job) continue;
+
+      const progressPct = job.progress?.completed || 10;
+      const progressMsg =
+        job.progress?.message ||
+        (job.status === 'running' ? 'Synthesizing curriculum artifacts with AI model...' : 'Queued in processing pipeline...');
+      
+      onProgress(progressPct, progressMsg);
+
+      if (job.status === 'succeeded') {
+        onProgress(100, 'Curriculum synthesized successfully. Ready for teacher review.');
+        return job.result;
+      }
+
+      if (job.status === 'failed') {
+        const errMsg = job.error?.message || 'Curriculum generation encountered a failure.';
+        throw new Error(errMsg);
+      }
+
+      if (job.status === 'cancelled') {
+        throw new Error('Curriculum generation was cancelled.');
+      }
+    } catch (pollErr) {
+      if (pollErr.message && !pollErr.message.includes('Network') && !pollErr.message.includes('404')) {
+        throw pollErr;
+      }
+      // Transient network blip during polling, continue
+    }
+  }
+
+  throw new Error('Curriculum generation timed out. Please retry with a shorter syllabus or check server logs.');
+}
 
 export const syllabusAiService = {
   /**
-   * Run AI model extraction on syllabus text or file
+   * Run real AI model curriculum generation on syllabus text or file
    */
-  async extractCurriculum({ syllabusText, file = null, courseTitle = '', onProgress = () => {} }) {
-    onProgress(15, 'Ingesting syllabus stream buffer...');
+  async extractCurriculum({
+    syllabusText = '',
+    file = null,
+    courseId = null,
+    courseTitle = '',
+    onProgress = () => {},
+  }) {
+    onProgress(10, 'Ingesting syllabus and preparing synthesis pipeline...');
 
-    // Attempt to invoke the API model if configured
-    try {
-      if (file) {
-        const formData = new FormData();
-        formData.append('syllabusFile', file);
-        formData.append('courseTitle', courseTitle);
-        const apiResult = await request('/ai/extract-curriculum', {
-          method: 'POST',
-          body: formData,
-        });
-        if (apiResult && apiResult.concepts) {
-          onProgress(100, 'API Model extraction succeeded.');
-          return apiResult;
-        }
-      } else if (syllabusText && syllabusText.trim().length > 0) {
-        const apiResult = await request('/ai/extract-curriculum', {
-          method: 'POST',
-          body: { syllabusText, courseTitle },
-        });
-        const extracted = apiResult?.data || apiResult;
-        if (extracted && extracted.concepts) {
-          onProgress(100, 'API Model extraction succeeded.');
-          return extracted;
-        }
-      }
-    } catch {
-      // Backend API model endpoint will be implemented afterwards as noted by user
-      // Gracefully continue with client-side synthesis engine
+    const payload = {
+      syllabusText: syllabusText || '',
+      courseId: courseId || null,
+      courseTitle: courseTitle || '',
+      async: true,
+    };
+
+    if (file) {
+      onProgress(15, `Extracting file payload (${file.name})...`);
+      payload.fileName = file.name;
+      payload.fileType = file.type;
+      payload.fileData = await readFileAsBase64(file);
     }
 
-    // Step 1: Document stream parsing
-    await new Promise((r) => setTimeout(r, 600));
-    onProgress(35, 'Parsing candidate topic entities (Arrays, Strings, Stack)...');
+    const endpoint = courseId
+      ? `/courses/${courseId}/curriculum/generate`
+      : '/ai/extract-curriculum';
 
-    // Step 2: Prerequisite graph validation
-    await new Promise((r) => setTimeout(r, 700));
-    onProgress(65, 'Building Directed Acyclic Graph (DAG) & concept dependency edges...');
+    onProgress(20, 'Dispatching generation request to AI pipeline...');
 
-    // Step 3: Quizzes synthesis
-    await new Promise((r) => setTimeout(r, 650));
-    onProgress(85, 'Formulating at least 5 diagnostic quizzes per topic with Bloom rationales...');
+    const response = await request(endpoint, {
+      method: 'POST',
+      body: payload,
+    });
 
-    // Step 4: Coding challenges & test suites
-    await new Promise((r) => setTimeout(r, 600));
-    onProgress(100, 'Synthesizing coding assessments, test cases, and AI viva prompts...');
+    const data = response?.data || response;
 
-    // Synthesize full curriculum
-    const curriculum = synthesizeCurriculumFromSyllabus(syllabusText, courseTitle);
-    return curriculum;
+    // If job was dispatched asynchronously, poll real job status until completion
+    if (data?.async && data?.jobId) {
+      onProgress(25, 'Generation job queued. Tracking execution...');
+      const completedCurriculum = await pollJob(data.jobId, onProgress);
+      return completedCurriculum;
+    }
+
+    // Direct synchronous response
+    if (data && (data.concepts || data.quizzes || data.codingAssessments)) {
+      onProgress(100, 'Curriculum synthesized successfully. Ready for teacher review.');
+      return data;
+    }
+
+    throw new Error('Unexpected response shape from curriculum generation service.');
   },
 };
 

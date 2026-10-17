@@ -1,3 +1,5 @@
+import { OS_TOPICS_DATABASE, OOP_TOPICS_DATABASE } from './subjectCurricula';
+
 /**
  * Comprehensive Curriculum Synthesis Engine for Pathwise
  * Implements authoritative data structure curricula with:
@@ -111,6 +113,17 @@ console.log("Compacted unique size:", arr.size); // 3 (values: [10, 20, 30])`,
       'Explain CPU cache line spatial locality benefits in contiguous array buffers',
       'Implement in-place two-pointer traversal avoiding secondary allocations',
       'Analyze index boundary safety and off-by-one prevention invariants',
+    ],
+    prerequisiteReview: 'Foundational programming, pointer arithmetic, memory indexing, and variable scopes.',
+    misconceptions: [
+      'Assuming dynamic array resizing takes O(N) on every append (geometric doubling amortizes to O(1)).',
+      'Confusing physical memory addresses with abstract array indices.',
+      'Assuming deleting an element at index 0 is O(1) like in a linked list (it is O(N) due to leftward compaction shifting).',
+    ],
+    keyTakeaways: [
+      'Contiguous physical memory layout allows O(1) direct address arithmetic: Base + (index * size).',
+      'Geometric doubling (factor of 2) achieves O(1) amortized append complexity.',
+      'Two-pointer in-place compaction operates in O(N) time without allocating secondary memory.',
     ],
 
     quizzes: [
@@ -296,6 +309,15 @@ console.log(lengthOfLongestSubstring("pwwkew"));   // Returns 3 ("wke")`,
       'Implement the sliding window invariant with character frequency trackers in O(N) time',
       'Handle variable-length UTF-8 multi-byte code point offsets and boundary edge cases',
       'Compare linear substring matching with prefix function algorithms',
+    ],
+    prerequisiteReview: 'Contiguous array buffers, ASCII/Unicode character encoding, and immutable vs mutable reference semantics.',
+    misconceptions: [
+      'Assuming repeated string concatenation in a loop (s += c) is O(N) (it is O(N^2) due to re-allocating new immutable strings).',
+      'Thinking sliding window requires re-scanning every character in the current window from scratch.',
+    ],
+    keyTakeaways: [
+      'Strings are immutable sequences in high-level runtimes; use StringBuilder/join to prevent quadratic copies.',
+      'Sliding window with hash lookup achieves optimal O(N) substring exploration.',
     ],
 
     quizzes: [
@@ -499,6 +521,16 @@ console.log("Min after pop:", minStack.getMin()); // Returns -2`,
       'Apply monotonic stacks to solve Next Greater Element problems in linear O(N) time',
       'Implement nested delimiter validation for compilers and syntax parsers',
     ],
+    prerequisiteReview: 'Linear arrays, dynamic buffers, and pointer/index manipulation.',
+    misconceptions: [
+      'Believing Min-Stack can be achieved in O(1) with a single integer tracking min (it fails when the min element is popped).',
+      'Confusing program stack memory (call frames) with abstract stack data structures.',
+    ],
+    keyTakeaways: [
+      'LIFO principle enforces push, pop, and peek operations at the TOP boundary in strict O(1) time.',
+      'Parallel auxiliary stack preserves the historical minimum across all push/pop transitions in O(1).',
+      'Monotonic stack enables optimal O(N) Next Greater Element discovery.',
+    ],
 
     quizzes: [
       {
@@ -620,51 +652,166 @@ Constraints:
 };
 
 /**
- * Extracts and synthesizes a full curriculum for any syllabus text.
- * Automatically identifies topics (Arrays, Strings, Stack) or synthesizes robust modules.
+ * Extracts and synthesizes a full curriculum for any syllabus text or structured JSON.
+ * Automatically identifies subject domain (DSA, Operating Systems, OOP) and topics.
+ * Returns authoritative technical content with all 6 required sections:
+ * 1. learning_objectives
+ * 2. prerequisite_review
+ * 3. core_explanation
+ * 4. worked_examples
+ * 5. common_misconceptions
+ * 6. key_takeaways
+ * Plus at least 5 Bloom-aligned Quizzes per topic and Monaco-ready Coding Assessments.
  */
-export function synthesizeCurriculumFromSyllabus(syllabusText = '', courseTitle = 'Data Structures & Algorithms (DSA)') {
-  const lower = syllabusText.toLowerCase();
+export function synthesizeCurriculumFromSyllabus(syllabusInput = '', courseTitle = '') {
+  let rawText = '';
+  let parsedJson = null;
 
-  const selectedTopics = [];
-
-  // Detect which topics are included
-  if (lower.includes('array') || (!lower.includes('string') && !lower.includes('stack'))) {
-    selectedTopics.push(DSA_TOPICS_DATABASE.arrays);
-  }
-  if (lower.includes('string') || lower.includes('substring') || lower.includes('pattern')) {
-    selectedTopics.push(DSA_TOPICS_DATABASE.strings);
-  }
-  if (lower.includes('stack') || lower.includes('lifo') || lower.includes('bracket')) {
-    selectedTopics.push(DSA_TOPICS_DATABASE.stack);
-  }
-
-  // If none matched specifically, provide all three foundational topics
-  if (selectedTopics.length === 0) {
-    selectedTopics.push(DSA_TOPICS_DATABASE.arrays, DSA_TOPICS_DATABASE.strings, DSA_TOPICS_DATABASE.stack);
+  if (typeof syllabusInput === 'string') {
+    rawText = syllabusInput;
+    const trimmed = syllabusInput.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        parsedJson = JSON.parse(trimmed);
+      } catch {
+        // Not JSON, continue with text analysis
+      }
+    }
+  } else if (typeof syllabusInput === 'object' && syllabusInput !== null) {
+    parsedJson = syllabusInput;
+    rawText = JSON.stringify(syllabusInput);
   }
 
-  // Collect concepts
-  const concepts = selectedTopics.map((topic, idx) => ({
-    id: topic.id,
-    name: topic.name,
-    module: topic.module,
-    prerequisite: topic.prerequisite,
-    diagramType: topic.diagramType,
-    description: topic.text.split('\n\n')[0], // First paragraph as summary
-    theory: topic.text,
-    asciiDiagram: topic.asciiDiagram,
-    example: topic.example,
-    complexities: topic.complexities,
-    learningObjectives: topic.objectives,
-    mastery: 50 + idx * 15,
-    status: idx === 0 ? 'developing' : 'needs_practice',
-  }));
+  const combinedSearch = (
+    rawText + ' ' + (courseTitle || '') + ' ' + (parsedJson?.subject_name || '') + ' ' + (parsedJson?.subject_id || '')
+  ).toLowerCase();
 
-  // Collect all 5+ quizzes per topic
+  // Determine subject database
+  let subjectMode = 'dsa';
+  let defaultCourseTitle = 'Data Structures & Algorithmic Problem Solving (DSA)';
+  let defaultModuleName = 'Module 1: Linear & Key-Value Structures';
+  let selectedTopics = [];
+
+  if (
+    parsedJson?.subject_id === 'os' ||
+    combinedSearch.includes('operating system') ||
+    combinedSearch.includes('os fundamentals') ||
+    combinedSearch.includes('cpu scheduling') ||
+    combinedSearch.includes('virtual memory') ||
+    combinedSearch.includes('paging') ||
+    combinedSearch.includes('kernel architecture')
+  ) {
+    subjectMode = 'os';
+    defaultCourseTitle = parsedJson?.subject_name || 'Operating Systems (OS)';
+    defaultModuleName = 'Module 1: Kernel Architecture & Memory Subsystems';
+    selectedTopics = Object.values(OS_TOPICS_DATABASE);
+  } else if (
+    parsedJson?.subject_id === 'oop' ||
+    combinedSearch.includes('object-oriented') ||
+    combinedSearch.includes('oop') ||
+    combinedSearch.includes('classes and objects') ||
+    combinedSearch.includes('inheritance') ||
+    combinedSearch.includes('polymorphism') ||
+    combinedSearch.includes('encapsulation')
+  ) {
+    subjectMode = 'oop';
+    defaultCourseTitle = parsedJson?.subject_name || 'Object-Oriented Programming (OOP)';
+    defaultModuleName = 'Module 1: Encapsulation & Polymorphic Architectures';
+    selectedTopics = Object.values(OOP_TOPICS_DATABASE);
+  } else {
+    // Default to DSA
+    subjectMode = 'dsa';
+    defaultCourseTitle = parsedJson?.subject_name || courseTitle || 'Data Structures & Algorithmic Problem Solving (DSA)';
+    defaultModuleName = 'Module 1: Linear & Key-Value Structures';
+    
+    // Filter DSA topics if specific ones mentioned, else provide all 3
+    const dsaSelected = [];
+    if (combinedSearch.includes('array')) dsaSelected.push(DSA_TOPICS_DATABASE.arrays);
+    if (combinedSearch.includes('string') || combinedSearch.includes('substring')) dsaSelected.push(DSA_TOPICS_DATABASE.strings);
+    if (combinedSearch.includes('stack') || combinedSearch.includes('lifo')) dsaSelected.push(DSA_TOPICS_DATABASE.stack);
+
+    selectedTopics = dsaSelected.length > 0
+      ? dsaSelected
+      : [DSA_TOPICS_DATABASE.arrays, DSA_TOPICS_DATABASE.strings, DSA_TOPICS_DATABASE.stack];
+  }
+
+  // Build Concepts containing all 6 required sections
+  const concepts = selectedTopics.map((topic, idx) => {
+    const objectives = topic.objectives || topic.learningObjectives || [];
+    const prereqReview = topic.prerequisiteReview || topic.prerequisite || 'Foundational programming prerequisites.';
+    const coreExplanation = topic.text || topic.coreExplanation || '';
+    const workedExample = topic.example || topic.workedExamples || '';
+    const misconceptionsList = topic.misconceptions || topic.commonMisconceptions || [];
+    const takeawaysList = topic.keyTakeaways || topic.takeaways || [];
+
+    const typedSections = [
+      {
+        id: `sec_${topic.id}_1`,
+        title: '1. Learning Objectives',
+        type: 'list',
+        items: objectives,
+      },
+      {
+        id: `sec_${topic.id}_2`,
+        title: '2. Prerequisite Review',
+        type: 'text',
+        content: prereqReview,
+      },
+      {
+        id: `sec_${topic.id}_3`,
+        title: '3. Core Technical Invariant & Mechanics',
+        type: 'text',
+        content: coreExplanation,
+      },
+      {
+        id: `sec_${topic.id}_4`,
+        title: '4. Worked Implementation Example',
+        type: 'code',
+        content: workedExample,
+      },
+      {
+        id: `sec_${topic.id}_5`,
+        title: '5. Common Misconceptions & Pitfalls',
+        type: 'callout',
+        calloutVariant: 'warning',
+        content: misconceptionsList.length > 0 ? misconceptionsList.join('\n\n• ') : 'Always verify boundary conditions.',
+      },
+      {
+        id: `sec_${topic.id}_6`,
+        title: '6. Key Takeaways',
+        type: 'list',
+        items: takeawaysList,
+      },
+    ];
+
+    return {
+      id: topic.id,
+      name: topic.name,
+      module: topic.module || defaultModuleName,
+      prerequisite: topic.prerequisite,
+      prerequisiteReview: prereqReview,
+      diagramType: topic.diagramType || 'tree',
+      description: coreExplanation.split('\n\n')[0] || topic.name,
+      theory: coreExplanation,
+      coreExplanation,
+      asciiDiagram: topic.asciiDiagram,
+      example: workedExample,
+      workedExamples: workedExample,
+      complexities: topic.complexities,
+      learningObjectives: objectives,
+      misconceptions: misconceptionsList,
+      commonMisconceptions: misconceptionsList,
+      keyTakeaways: takeawaysList,
+      sections: typedSections,
+      mastery: 50 + idx * 15,
+      status: idx === 0 ? 'developing' : 'needs_practice',
+    };
+  });
+
+  // Collect all 5+ quizzes per topic (15 total)
   const quizzes = [];
   selectedTopics.forEach((topic) => {
-    topic.quizzes.forEach((q) => {
+    (topic.quizzes || []).forEach((q) => {
       quizzes.push({
         id: q.id,
         conceptId: topic.id,
@@ -672,7 +819,7 @@ export function synthesizeCurriculumFromSyllabus(syllabusText = '', courseTitle 
         title: q.title,
         prompt: q.prompt,
         options: q.options,
-        correctIndex: q.correct,
+        correctIndex: q.correct !== undefined ? q.correct : q.correctIndex,
         explanation: q.explanation,
         status: 'pending',
       });
@@ -680,24 +827,28 @@ export function synthesizeCurriculumFromSyllabus(syllabusText = '', courseTitle 
   });
 
   // Collect coding assessments (1 per topic)
-  const codingAssessments = selectedTopics.map((topic) => ({
-    id: topic.codingAssessment.id,
-    conceptId: topic.id,
-    conceptName: topic.name,
-    title: topic.codingAssessment.title,
-    difficulty: topic.codingAssessment.difficulty,
-    description: topic.codingAssessment.description,
-    constraints: topic.codingAssessment.constraints,
-    starterCode: topic.codingAssessment.starterCode,
-    sampleTests: topic.codingAssessment.sampleTests,
-    hiddenTestsCount: topic.codingAssessment.hiddenTestsCount,
-    vivaQuestion: topic.codingAssessment.vivaQuestion,
-    status: 'pending',
-  }));
+  const codingAssessments = selectedTopics.map((topic) => {
+    const ca = topic.codingAssessment || {};
+    return {
+      id: ca.id || `ca_${topic.id}`,
+      conceptId: topic.id,
+      conceptName: topic.name,
+      title: ca.title || `${topic.name} Implementation Assessment`,
+      difficulty: ca.difficulty || 'Medium',
+      description: ca.description || `Implement standard solutions and verify invariants for ${topic.name}.`,
+      constraints: ca.constraints || 'Optimal Time & Auxiliary Space Bounds',
+      starterCode: ca.starterCode || '# Write your solution here\n',
+      sampleTests: ca.sampleTests || [],
+      hiddenTestsCount: ca.hiddenTestsCount || 15,
+      vivaQuestion: ca.vivaQuestion || 'Explain the time complexity and memory overhead of your implementation.',
+      status: 'pending',
+    };
+  });
 
   return {
-    courseTitle: courseTitle || 'Data Structures & Algorithmic Problem Solving (DSA)',
-    moduleName: 'Module 1: Linear & Key-Value Structures',
+    subjectMode,
+    courseTitle: courseTitle || defaultCourseTitle,
+    moduleName: defaultModuleName,
     topicsCount: selectedTopics.length,
     totalQuizzesCount: quizzes.length,
     totalCodingCount: codingAssessments.length,
@@ -706,3 +857,4 @@ export function synthesizeCurriculumFromSyllabus(syllabusText = '', courseTitle 
     codingAssessments,
   };
 }
+

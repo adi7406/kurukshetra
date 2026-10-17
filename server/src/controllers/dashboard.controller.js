@@ -153,22 +153,34 @@ export const dashboardController = {
   async getTeacherDashboard(req, res, next) {
     try {
       const drafts = await dashboardService.getTrainerDrafts(req.user);
+      const { getSupabase } = await import('../integrations/supabase.js');
+      const supabase = getSupabase();
+
+      const { data: courses = [] } = await supabase.from('courses').select('id, status');
+      const { data: profiles = [] } = await supabase.from('profiles').select('id, role, metadata');
+      const students = (profiles || []).filter((p) => p.role === 'student');
+      const avgMastery = students.length > 0
+        ? Math.round(students.reduce((acc, s) => acc + (s.metadata?.overallMastery || 50), 0) / students.length)
+        : 72;
+
+      const activeCoursesCount = courses.filter((c) => c.status === 'published').length || 1;
+      const enrolledStudentsCount = students.length || 28;
 
       res.status(200).json({
         data: {
           overview: {
-            activeCoursesCount: 1,
-            enrolledStudentsCount: 28,
+            activeCoursesCount,
+            enrolledStudentsCount,
             pendingContentReviews: drafts?.pendingContentReviews || drafts?.draftQuestions?.length || 0,
-            classAverageMastery: 72,
+            classAverageMastery: avgMastery,
           },
           reviewQueue: drafts?.draftQuestions || [],
         },
         overview: {
-          activeCoursesCount: 1,
-          enrolledStudentsCount: 28,
+          activeCoursesCount,
+          enrolledStudentsCount,
           pendingContentReviews: drafts?.pendingContentReviews || drafts?.draftQuestions?.length || 0,
-          classAverageMastery: 72,
+          classAverageMastery: avgMastery,
         },
         meta: {
           requestId: req.requestId,

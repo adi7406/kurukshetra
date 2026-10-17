@@ -21,7 +21,7 @@ const saveAnswerSchema = {
 // Start attempt
 router.post('/assessments/:assessmentId/attempts', authenticate, attemptsController.startAttempt);
 router.post('/quizzes/:assessmentId/attempts', authenticate, attemptsController.startAttempt);
-router.post('/quizzes/:assessmentId/submit', authenticate, attemptsController.submitAttempt);
+router.post('/quizzes/:assessmentId/submit', authenticate, attemptsController.submitQuizDirect);
 
 // Attempt state & answer submission
 router.get('/attempts/:attemptId', authenticate, attemptsController.getAttempt);

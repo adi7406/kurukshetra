@@ -323,6 +323,24 @@ export function DashboardPage() {
                   <MasteryChip score={selectedStudentForModal.overallMastery || 40} size="md" />
                 </div>
 
+                {/* Performance Stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div style={{ background: 'var(--surface-muted)', padding: '10px 14px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Mastery</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>{selectedStudentForModal.overallMastery || 40}%</div>
+                  </div>
+                  <div style={{ background: 'var(--surface-muted)', padding: '10px 14px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Tasks Completed</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>{selectedStudentForModal.completedAssessmentsCount || 0}</div>
+                  </div>
+                  <div style={{ background: 'var(--surface-muted)', padding: '10px 14px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Recent Score</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--coral)' }}>
+                      {selectedStudentForModal.recentScore !== null && selectedStudentForModal.recentScore !== undefined ? `${selectedStudentForModal.recentScore}%` : 'Pending'}
+                    </div>
+                  </div>
+                </div>
+
                 {/* AI Adaptive Intervention */}
                 <div style={{ background: 'var(--coral-soft)', padding: '14px 16px', borderRadius: '14px', border: '1px solid var(--coral-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--coral)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>

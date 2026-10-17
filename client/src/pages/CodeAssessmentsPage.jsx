@@ -167,7 +167,7 @@ export function CodeAssessmentsPage() {
         setLoading(true);
         setTopicMissingAssessment(false);
         const list = await learningService.getAssessments();
-        const publishedAssessments = (list || []).filter((a) => a.status === 'published' || !a.status);
+        const publishedAssessments = (list || []).filter((a) => !a.status || a.status === 'published' || a.status === 'pending' || a.status === 'draft' || a.status === 'active');
         setAssessments(publishedAssessments);
 
         if (publishedAssessments.length > 0) {
@@ -178,7 +178,8 @@ export function CodeAssessmentsPage() {
                 a.conceptId === topicParam ||
                 a.topicId === topicParam ||
                 a.id === topicParam ||
-                (a.title && a.title.toLowerCase().includes(topicParam.toLowerCase()))
+                (a.concept && typeof a.concept === 'string' && (a.concept.toLowerCase().includes(topicParam.toLowerCase()) || topicParam.toLowerCase().includes(a.concept.toLowerCase()))) ||
+                (a.title && typeof a.title === 'string' && (a.title.toLowerCase().includes(topicParam.toLowerCase()) || topicParam.toLowerCase().includes(a.title.toLowerCase())))
             );
             if (matchedTopic) {
               selectAssessment(matchedTopic);
@@ -261,17 +262,17 @@ export function CodeAssessmentsPage() {
 
   // Run Code against sample tests or public assertions
   const handleRunCode = async () => {
-    if (!activeAssessment) return;
     try {
       setIsRunning(true);
       setRunStatus(null);
-      setOutputLog(`[Piston Sandbox: Isolated Execution Initialized]\nLanguage: ${selectedLanguage.toUpperCase()}\nExecuting against sample test cases...`);
-      recordEvent('run', { language: selectedLanguage, mode: 'sample' });
+      setOutputLog(`[Piston Sandbox: Isolated Execution Initialized]\nLanguage: ${selectedLanguage.toUpperCase()}\nExecuting...`);
+      recordEvent('run', { language: selectedLanguage, mode: activeAssessment ? 'sample' : 'sandbox' });
 
-      const res = await learningService.runCode(activeAssessment.id, code, selectedLanguage);
-      setRunStatus(res.status || (res.success ? 'Sample Tests Passed' : 'Test Failure'));
+      const assessmentId = activeAssessment?.id || 'sandbox';
+      const res = await learningService.runCode(assessmentId, code, selectedLanguage);
+      setRunStatus(res.status || (res.success ? 'Executed Successfully' : 'Execution Complete'));
       setOutputLog(res.output || JSON.stringify(res.data || res, null, 2));
-      toast.success('Sample tests execution completed');
+      toast.success('Code executed successfully');
     } catch (err) {
       setRunStatus('Execution Error');
       setOutputLog(err.message || 'Execution error');
@@ -283,13 +284,13 @@ export function CodeAssessmentsPage() {
 
   // Run with custom stdin input
   const handleRunCustom = async () => {
-    if (!activeAssessment) return;
     try {
       setIsRunningCustom(true);
       setOutputLog(`[Piston Sandbox: Running Custom stdin input]\nInput Size: ${(customInput || '').length} bytes\nExecuting...`);
       recordEvent('run', { language: selectedLanguage, mode: 'custom', inputSize: (customInput || '').length });
 
-      const res = await learningService.runCode(activeAssessment.id, code, selectedLanguage, customInput);
+      const assessmentId = activeAssessment?.id || 'sandbox';
+      const res = await learningService.runCode(assessmentId, code, selectedLanguage, customInput);
       setOutputLog(res.output || JSON.stringify(res.data || res, null, 2));
       toast.success('Custom input execution completed');
     } catch (err) {
@@ -309,6 +310,11 @@ export function CodeAssessmentsPage() {
       setOutputLog('[Piston Sandbox: Official Submission in progress]\nAuthenticating attempt and evaluating against protected server-side hidden test suite...');
       recordEvent('submit', { language: selectedLanguage, codeLength: code.length });
 
+      if (!activeAssessment) {
+        toast.info('No assessment selected. Select a coding challenge to submit a solution.');
+        setIsSubmitting(false);
+        return;
+      }
       const res = await learningService.submitSolution(activeAssessment.id, code, selectedLanguage);
       setSubmissionResult(res);
       setRunStatus(res.status);
@@ -379,30 +385,25 @@ export function CodeAssessmentsPage() {
     );
   }
 
-  // If no assessments exist in system
-  if (!activeAssessment) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>Home</span>
-          <span>/</span>
-          <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>Coding Assessments</span>
-        </div>
-
-        <EmptyState
-          title="No Coding Challenges Available"
-          description="Assessments will appear once published by an instructor or created through syllabus ingestion."
-          actionLabel="Return Home"
-          onAction={() => navigate('/home')}
-        />
-      </div>
-    );
-  }
-
-  // Determine effective supported languages (prefer backend-verified languages if matched)
+  // Determine effective supported languages (prefer backend-verified languages)
   const effectiveLanguages = backendLanguages.length > 0
     ? backendLanguages
-    : (activeAssessment.supportedLanguages || ['python', 'javascript']);
+    : (activeAssessment?.supportedLanguages || ['python', 'javascript', 'cpp', 'java']);
+
+  // Placeholder assessment shown when editor is open but no problem assigned yet
+  const PLACEHOLDER_ASSESSMENT = {
+    id: 'sandbox_placeholder',
+    title: 'Free Coding Sandbox',
+    difficulty: 'Open',
+    description: 'The Monaco + Piston sandbox is ready. Generate a curriculum from the Syllabus Studio to auto-populate coding challenges here, or explore freely below.',
+    constraints: [],
+    sampleTests: [],
+    starterCode: { python: '# Write your solution here\n', javascript: '// Write your solution here\n', cpp: '// Write your solution here\n', java: '// Write your solution here\n' },
+    supportedLanguages: effectiveLanguages,
+    vivaQuestion: null,
+  };
+
+  const currentAssessment = activeAssessment || PLACEHOLDER_ASSESSMENT;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', height: 'calc(100vh - 100px)' }}>
@@ -413,36 +414,51 @@ export function CodeAssessmentsPage() {
           <span>/</span>
           <span style={{ cursor: 'pointer' }} onClick={() => navigate('/content/concepts')}>Concepts</span>
           <span>/</span>
-          <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{activeAssessment.title}</span>
+          <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{currentAssessment.title}</span>
         </div>
 
-        {/* Problem Switcher Dropdown */}
+        {/* Problem Switcher Dropdown — only when real problems exist */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Switch Problem:</span>
-          <select
-            value={activeAssessment.id}
-            onChange={(e) => {
-              const selected = assessments.find((a) => a.id === e.target.value);
-              if (selected) selectAssessment(selected);
-            }}
-            aria-label="Switch coding assessment problem"
-            style={{
-              background: 'var(--surface)',
-              color: 'var(--text-main)',
-              border: '1px solid var(--border-hairline)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '4px 12px',
-              fontSize: '12.5px',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {assessments.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.title} ({a.difficulty})
-              </option>
-            ))}
-          </select>
+          {assessments.length > 0 && (
+            <>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Switch Problem:</span>
+              <select
+                value={activeAssessment?.id || ''}
+                onChange={(e) => {
+                  const selected = assessments.find((a) => a.id === e.target.value);
+                  if (selected) selectAssessment(selected);
+                }}
+                aria-label="Switch coding assessment problem"
+                style={{
+                  background: 'var(--surface)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--border-hairline)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '4px 12px',
+                  fontSize: '12.5px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {assessments.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.title} ({a.difficulty})
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          {/* Piston status badge always visible */}
+          <span style={{
+            fontSize: '11px',
+            padding: '3px 10px',
+            borderRadius: 'var(--radius-pill)',
+            background: pistonStatus === 'ready' ? '#dcfce7' : '#fef9c3',
+            color: pistonStatus === 'ready' ? '#15803d' : '#a16207',
+            fontWeight: 600,
+          }}>
+            Piston: {pistonStatus === 'ready' ? 'Ready' : 'Degraded'}
+          </span>
         </div>
       </div>
 
@@ -459,10 +475,10 @@ export function CodeAssessmentsPage() {
       >
         {/* Left Panel: Problem Statement, Constraints, Sample Cases */}
         <div style={{ height: '100%', overflowY: 'auto' }}>
-          <ProblemStatementPanel assessment={activeAssessment} />
+          <ProblemStatementPanel assessment={currentAssessment} />
         </div>
 
-        {/* Right Panel: Monaco Editor & Test Results */}
+        {/* Right Panel: Monaco Editor & Test Results — ALWAYS VISIBLE */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', height: '100%', overflowY: 'auto' }}>
           {/* Top Monaco Editor Panel */}
           <div style={{ flex: '1 1 55%', minHeight: '340px' }}>
@@ -487,7 +503,7 @@ export function CodeAssessmentsPage() {
             <TestResultsPanel
               runStatus={runStatus}
               outputLog={outputLog}
-              sampleTests={activeAssessment.sampleTests || []}
+              sampleTests={currentAssessment.sampleTests || []}
               submissionResult={submissionResult}
               customInput={customInput}
               onCustomInputChange={setCustomInput}
@@ -504,7 +520,7 @@ export function CodeAssessmentsPage() {
         isOpen={isReasoningOpen}
         onClose={() => setIsReasoningOpen(false)}
         submissionId={submissionResult?.submissionId || 'sub_active'}
-        vivaQuestion={activeAssessment.vivaQuestion}
+        vivaQuestion={currentAssessment.vivaQuestion}
         onSubmitReasoning={handleSubmitReasoning}
         isEvaluating={isEvaluatingReasoning}
         feedback={reasoningFeedback}

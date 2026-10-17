@@ -71,18 +71,57 @@ export const learningService = {
   // =========================================================================
   // COURSES & CONCEPTS
   // =========================================================================
-  async getCourses() {
+  async getCourses(options = {}) {
+    let backendCourses = [];
     try {
-      const response = await apiClient.get('/courses');
-      const courses = Array.isArray(response) ? response : response?.data || response?.courses || [];
-      if (Array.isArray(courses) && courses.length > 0) {
-        setCached(COURSES_KEY, courses);
-        return courses;
-      }
+      const endpoint = options.assignedOnly ? '/courses?assignedOnly=true' : '/courses';
+      const response = await apiClient.get(endpoint);
+      backendCourses = Array.isArray(response) ? response : response?.data || response?.courses || [];
     } catch {
-      // Backend not yet running or route pending
+      // Backend route pending or offline
     }
-    return getCached(COURSES_KEY, []);
+    const cachedCourses = getCached(COURSES_KEY, []);
+    if (backendCourses.length > 0) {
+      const merged = backendCourses.map((bc) => {
+        const cached = cachedCourses.find((c) => c.id === bc.id || c.title === bc.title);
+        if (!cached) return bc;
+        const hasBackendConcepts = (bc.modules || []).some((m) => (m.concepts || []).length > 0);
+        return {
+          ...bc,
+          modules: hasBackendConcepts ? bc.modules : (cached.modules || bc.modules),
+        };
+      });
+      setCached(COURSES_KEY, merged);
+      return merged;
+    }
+    return cachedCourses;
+  },
+
+  async getCourseCurriculum(courseId) {
+    if (!courseId) return null;
+    const cacheKey = `pathwise_curriculum_${courseId}`;
+    try {
+      const response = await apiClient.get(`/courses/${courseId}/curriculum`);
+      const data = response?.data || response;
+      if (data && (data.concepts || data.quizzes || data.codingAssessments)) {
+        setCached(cacheKey, data);
+        return data;
+      }
+    } catch (err) {
+      console.warn(`[learningService] Failed to fetch curriculum for course ${courseId}:`, err);
+    }
+    return getCached(cacheKey, null);
+  },
+
+  async updateCourseCurriculum(courseId, { type, itemId, updates }) {
+    if (!courseId) return null;
+    try {
+      const response = await apiClient.patch(`/courses/${courseId}/curriculum`, { type, itemId, updates });
+      return response?.data || response;
+    } catch (err) {
+      console.warn(`[learningService] Failed to patch curriculum for course ${courseId}:`, err);
+      throw err;
+    }
   },
 
   async getCourseById(courseId) {
@@ -153,19 +192,26 @@ export const learningService = {
   // QUIZZES & DIAGNOSTIC ATTEMPTS
   // =========================================================================
   async getQuizzes() {
+    let backendQuizzes = [];
     try {
       const response = await apiClient.get('/quizzes');
       const rawList = Array.isArray(response) ? response : response?.data || response?.quizzes || [];
-      if (Array.isArray(rawList) && rawList.length > 0) {
-        const quizzes = rawList.map(normalizeQuiz).filter(Boolean);
-        setCached(QUIZZES_KEY, quizzes);
-        return quizzes;
+      if (Array.isArray(rawList)) {
+        backendQuizzes = rawList.map(normalizeQuiz).filter(Boolean);
       }
     } catch {
       // Backend not yet running or route pending
     }
-    const cached = getCached(QUIZZES_KEY, []);
-    return cached.map(normalizeQuiz).filter(Boolean);
+    const cached = getCached(QUIZZES_KEY, []).map(normalizeQuiz).filter(Boolean);
+    const merged = [
+      ...backendQuizzes,
+      ...cached.filter((c) => !backendQuizzes.some((b) => b.id === c.id || b.title === c.title)),
+    ];
+    if (merged.length > 0) {
+      setCached(QUIZZES_KEY, merged);
+      return merged;
+    }
+    return cached;
   },
 
   async getQuizById(quizId) {
@@ -194,19 +240,26 @@ export const learningService = {
   // CODING ASSESSMENTS & JUDGE0 EXECUTION
   // =========================================================================
   async getAssessments() {
+    let backendAssessments = [];
     try {
       const response = await apiClient.get('/assessments');
       const rawList = Array.isArray(response) ? response : response?.data || response?.assessments || [];
-      if (Array.isArray(rawList) && rawList.length > 0) {
-        const assessments = rawList.map(normalizeCodingAssessment).filter(Boolean);
-        setCached(ASSESSMENTS_KEY, assessments);
-        return assessments;
+      if (Array.isArray(rawList)) {
+        backendAssessments = rawList.map(normalizeCodingAssessment).filter(Boolean);
       }
     } catch {
       // Route pending or empty collection
     }
-    const cached = getCached(ASSESSMENTS_KEY, []);
-    return cached.map(normalizeCodingAssessment).filter(Boolean);
+    const cached = getCached(ASSESSMENTS_KEY, []).map(normalizeCodingAssessment).filter(Boolean);
+    const merged = [
+      ...backendAssessments,
+      ...cached.filter((c) => !backendAssessments.some((b) => b.id === c.id || b.title === c.title)),
+    ];
+    if (merged.length > 0) {
+      setCached(ASSESSMENTS_KEY, merged);
+      return merged;
+    }
+    return cached;
   },
 
   async getAssessmentById(id) {
@@ -399,20 +452,29 @@ export const learningService = {
     return { success: true };
   },
 
-  async publishCurriculum(extractedData) {
+  async publishCurriculum(extractedData, courseId = null) {
     if (!extractedData) return false;
+    const courses = await this.getCourses();
+    const targetCourseId = courseId || extractedData.courseId || courses[0]?.id;
 
-    // Send to backend API if available
-    try {
-      await apiClient.post('/courses/curriculum', extractedData);
-    } catch {
-      // Route pending in backend
+    // Send to backend API and await database persistence
+    let backendData = null;
+    if (targetCourseId) {
+      try {
+        const response = await apiClient.post(`/courses/${targetCourseId}/curriculum/publish`, {
+          publishAll: true,
+          extractedData,
+        });
+        backendData = response?.data || response;
+      } catch (err) {
+        console.error(`[learningService] Backend publish error for course ${targetCourseId}:`, err);
+        throw new Error(err.message || 'Failed to publish curriculum to backend database.');
+      }
     }
 
     // 1. Update Courses Store
-    const courses = await this.getCourses();
-    const targetCourse = courses[0] || {
-      id: `course_${Date.now()}`,
+    const targetCourse = courses.find((c) => c.id === targetCourseId) || courses[0] || {
+      id: targetCourseId || `course_${Date.now()}`,
       code: 'CS201',
       title: extractedData.courseTitle || 'Data Structures & Algorithmic Problem Solving (DSA)',
       instructor: 'Department Faculty',
@@ -432,43 +494,47 @@ export const learningService = {
       targetCourse.modules = [targetModule, ...(targetCourse.modules || [])];
     }
 
-    extractedData.concepts.forEach((newConcept) => {
-      const existingIdx = targetModule.concepts.findIndex(
-        (c) => c.name.toLowerCase() === newConcept.name.toLowerCase()
-      );
-      if (existingIdx !== -1) {
-        targetModule.concepts[existingIdx] = { ...targetModule.concepts[existingIdx], ...newConcept };
-      } else {
-        targetModule.concepts.push(newConcept);
-      }
-    });
+    if (Array.isArray(extractedData.concepts)) {
+      extractedData.concepts.forEach((newConcept) => {
+        const existingIdx = targetModule.concepts?.findIndex(
+          (c) => c.name.toLowerCase() === newConcept.name.toLowerCase()
+        ) ?? -1;
+        if (existingIdx !== -1) {
+          targetModule.concepts[existingIdx] = { ...targetModule.concepts[existingIdx], ...newConcept };
+        } else {
+          targetModule.concepts = targetModule.concepts || [];
+          targetModule.concepts.push(newConcept);
+        }
+      });
+    }
 
     const mergedCourses = courses.length > 0 ? courses : [targetCourse];
     setCached(COURSES_KEY, mergedCourses);
 
-    // 2. Update Quizzes Store (Comprehensive 5-question quizzes for each topic)
+    // 2. Update Quizzes Store (10 diagnostic questions per topic)
     if (extractedData.quizzes && extractedData.quizzes.length > 0) {
       const existingQuizzes = await this.getQuizzes();
       const groupedByConcept = {};
 
       extractedData.quizzes.forEach((q) => {
-        if (!groupedByConcept[q.conceptId]) {
-          groupedByConcept[q.conceptId] = {
-            id: `quiz_full_${q.conceptId}`,
-            title: `${q.conceptName}: Diagnostic Mastery Quiz (5 Questions)`,
+        const conceptKey = q.conceptId || q.conceptName || 'default';
+        if (!groupedByConcept[conceptKey]) {
+          groupedByConcept[conceptKey] = {
+            id: `quiz_full_${conceptKey}`,
+            title: `${q.conceptName || 'Topic'}: Diagnostic Mastery Quiz`,
             conceptId: q.conceptId,
             conceptName: q.conceptName,
             difficulty: 'Comprehensive',
-            timeLimit: '15 mins',
+            timeLimit: '20 mins',
             passingScore: 70,
             status: 'pending',
-            questionsCount: 5,
-            estimatedMinutes: 12,
+            questionsCount: 10,
+            estimatedMinutes: 20,
             questions: [],
           };
         }
-        groupedByConcept[q.conceptId].questions.push({
-          id: `q_${q.id}`,
+        groupedByConcept[conceptKey].questions.push({
+          id: `q_${q.id || Math.random().toString(36).substring(7)}`,
           prompt: q.prompt,
           options: q.options,
           correctIndex: q.correctIndex,
@@ -481,7 +547,7 @@ export const learningService = {
       setCached(QUIZZES_KEY, uniqueQuizzes);
     }
 
-    // 3. Update Coding Assessments Store
+    // 3. Update Coding Assessments Store (2 distinct problems per programming topic)
     if (extractedData.codingAssessments && extractedData.codingAssessments.length > 0) {
       const existingAssessments = await this.getAssessments();
       const newAssessments = extractedData.codingAssessments.map((ca) => ({
@@ -494,10 +560,11 @@ export const learningService = {
         status: 'pending',
         description: ca.description,
         constraints: ca.constraints,
-        allowedLanguages: ['python', 'javascript'],
+        allowedLanguages: ['python', 'javascript', 'java'],
         starterCode: {
-          python: ca.starterCode,
-          javascript: `// Implement solution for ${ca.title}\nfunction solve(input) {\n  // TODO\n}`,
+          python: typeof ca.starterCode === 'string' ? ca.starterCode : ca.starterCode?.python || '',
+          javascript: ca.starterCode?.javascript || `// Implement solution for ${ca.title}\nfunction solve(input) {\n  // TODO\n}`,
+          java: ca.starterCode?.java || `// Java Solution for ${ca.title}\nclass Solution {\n    public static void main(String[] args) {\n        // TODO\n    }\n}`,
         },
         sampleTests: ca.sampleTests || [],
         hiddenTestsCount: ca.hiddenTestsCount || 15,
@@ -507,6 +574,21 @@ export const learningService = {
       const mergedAssessments = [...newAssessments, ...existingAssessments];
       const uniqueAssessments = Array.from(new Map(mergedAssessments.map((a) => [a.id, a])).values());
       setCached(ASSESSMENTS_KEY, uniqueAssessments);
+    }
+
+    if (targetCourseId) {
+      setCached(`pathwise_curriculum_${targetCourseId}`, {
+        ...extractedData,
+        status: 'published',
+      });
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pathwise_curriculum_updated', {
+          detail: { courseId: targetCourseId, extractedData },
+        })
+      );
     }
 
     return true;
