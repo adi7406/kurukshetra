@@ -27,6 +27,7 @@ import { useToast } from '../context/ToastContext';
 import { syllabusAiService } from '../services/syllabusAiService';
 import { learningService } from '../services/learningService';
 import { ConceptDiagram } from '../components/common/ConceptDiagram';
+import { request } from '../services/apiClient';
 
 export function TeacherContentUploadPage() {
   const navigate = useNavigate();
@@ -51,6 +52,21 @@ export function TeacherContentUploadPage() {
   const [validationRule, setValidationRule] = useState('Strict DAG (Cycle Validation)');
 
   const [editingItem, setEditingItem] = useState(null);
+  const [isCheckingAi, setIsCheckingAi] = useState(false);
+  const [aiDiagResult, setAiDiagResult] = useState(null);
+
+  const handleCheckAiDiagnostics = async () => {
+    setIsCheckingAi(true);
+    try {
+      const res = await request('/v1/ai/diagnostics');
+      setAiDiagResult(res.data || res);
+      toast.success('AI Model diagnostics checked successfully');
+    } catch (err) {
+      toast.error('AI diagnostics probe failed: ' + (err.message || 'Error'));
+    } finally {
+      setIsCheckingAi(false);
+    }
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -354,7 +370,86 @@ export function TeacherContentUploadPage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
               <Lock size={13} strokeWidth={1.5} color="var(--mastery-solid)" />
-              <span>Connects to AI API Model with rich deterministic fallback.</span>
+              <span>Connects to NVIDIA AI Models with failover and safety controls.</span>
+            </div>
+
+            {/* AI Diagnostics Panel */}
+            <div
+              style={{
+                marginTop: '6px',
+                padding: '12px 14px',
+                background: 'rgba(0,0,0,0.02)',
+                borderRadius: '12px',
+                border: '1px solid var(--border-hairline)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  <Cpu size={14} color="var(--coral)" />
+                  <span>NVIDIA AI Connection</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCheckAiDiagnostics}
+                  disabled={isCheckingAi}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border-hairline)',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    cursor: isCheckingAi ? 'not-allowed' : 'pointer',
+                    color: 'var(--coral)',
+                    fontWeight: 500,
+                  }}
+                >
+                  {isCheckingAi ? 'Probing...' : 'Check Status'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                  <span>Primary (Nemotron-3 550B):</span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color: aiDiagResult?.models?.primary?.success
+                        ? '#16a34a'
+                        : aiDiagResult?.models?.primary
+                        ? '#dc2626'
+                        : 'var(--text-secondary)',
+                    }}
+                  >
+                    {aiDiagResult?.models?.primary
+                      ? aiDiagResult.models.primary.success
+                        ? `Operational (${aiDiagResult.models.primary.latencyMs}ms)`
+                        : `Offline (${aiDiagResult.models.primary.errorCategory})`
+                      : 'Configured'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                  <span>Secondary (GPT-OSS 20B):</span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color: aiDiagResult?.models?.secondary?.success
+                        ? '#16a34a'
+                        : aiDiagResult?.models?.secondary
+                        ? '#dc2626'
+                        : 'var(--text-secondary)',
+                    }}
+                  >
+                    {aiDiagResult?.models?.secondary
+                      ? aiDiagResult.models.secondary.success
+                        ? `Operational (${aiDiagResult.models.secondary.latencyMs}ms)`
+                        : `Offline (${aiDiagResult.models.secondary.errorCategory})`
+                      : 'Configured'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

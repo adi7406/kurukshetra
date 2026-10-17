@@ -4,8 +4,9 @@ import { z } from 'zod';
 const isTestExecution =
   process.env.NODE_ENV === 'test' ||
   process.env.npm_lifecycle_event === 'test' ||
-  process.argv.some((a) => typeof a === 'string' && a.includes('test')) ||
-  process.execArgv.some((a) => typeof a === 'string' && a.includes('test'));
+  Boolean(process.env.NODE_TEST_CONTEXT) ||
+  process.argv.some((a) => typeof a === 'string' && a.toLowerCase().includes('test')) ||
+  process.execArgv.some((a) => typeof a === 'string' && a.toLowerCase().includes('test'));
 
 if (isTestExecution) {
   process.env.NODE_ENV = 'test';

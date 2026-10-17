@@ -265,7 +265,7 @@ export const aiProvider = {
     operation = 'ai_question_generation',
     maxRetries = 2,
     timeoutMs = 25000,
-    mockMode = false,
+    mockMode = null,
   }) {
     // 1. Budget enforcement
     if (userId) {
@@ -277,12 +277,19 @@ export const aiProvider = {
     const secondaryTarget = fallbackModel || (primaryTarget === NVIDIA_CONFIG.PRIMARY_MODEL ? NVIDIA_CONFIG.SECONDARY_MODEL : NVIDIA_CONFIG.PRIMARY_MODEL);
 
     // 3. Automated testing mock mode:
-    // In automated testing (NODE_ENV === 'test' and LIVE_AI !== 'true'), use deterministic mock output
+    // In automated testing (NODE_ENV === 'test', test runner, or test file arg, and LIVE_AI !== 'true'), use deterministic mock output
     // UNLESS mockMode is explicitly false (e.g. for unit testing pipeline logic like fallbacks / error handling).
     // In live mode (NODE_ENV !== 'test' or LIVE_AI === 'true'), NEVER mock - strictly call live models.
+    const isTestRunner =
+      process.env.NODE_ENV === 'test' ||
+      Boolean(process.env.NODE_TEST_CONTEXT) ||
+      process.env.npm_lifecycle_event === 'test' ||
+      process.argv.some((a) => typeof a === 'string' && a.toLowerCase().includes('test')) ||
+      process.execArgv.some((a) => typeof a === 'string' && a.toLowerCase().includes('test'));
+
     const isMock =
       mockMode === true ||
-      (process.env.NODE_ENV === 'test' && process.env.LIVE_AI !== 'true' && mockMode !== false);
+      (isTestRunner && process.env.LIVE_AI !== 'true' && mockMode !== false);
 
     if (isMock) {
       if (userId) {
