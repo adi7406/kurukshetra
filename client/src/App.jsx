@@ -13,7 +13,7 @@ import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ConceptsPage from './pages/ConceptsPage';
 import QuizPage from './pages/QuizPage';
-import CodeAssessmentsPage from './pages/CodeAssessmentsPage';
+const CodeAssessmentsPage = React.lazy(() => import('./pages/CodeAssessmentsPage'));
 import ProgressPage from './pages/ProgressPage';
 import ProfilePage from './pages/ProfilePage';
 import TeacherContentUploadPage from './pages/TeacherContentUploadPage';
@@ -92,8 +92,22 @@ function AppRoutes() {
         <Route path="/content/concepts/:conceptId" element={<ConceptsPage />} />
         <Route path="/content/quizzes" element={<QuizPage />} />
         <Route path="/content/quizzes/:quizId" element={<QuizPage />} />
-        <Route path="/content/coding" element={<CodeAssessmentsPage />} />
-        <Route path="/content/coding/:assessmentId" element={<CodeAssessmentsPage />} />
+        <Route
+          path="/content/coding"
+          element={
+            <React.Suspense fallback={<LoadingState message="Loading coding assessment workspace..." />}>
+              <CodeAssessmentsPage />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/content/coding/:assessmentId"
+          element={
+            <React.Suspense fallback={<LoadingState message="Loading coding assessment workspace..." />}>
+              <CodeAssessmentsPage />
+            </React.Suspense>
+          }
+        />
 
         {/* Backward Compatibility & Convenience Route Aliases */}
         <Route path="/concepts/:conceptId" element={<ConceptsPage />} />
@@ -101,10 +115,31 @@ function AppRoutes() {
         <Route path="/quiz/:quizId" element={<QuizPage />} />
         <Route path="/quizzes" element={<Navigate to="/content/quizzes" replace />} />
         <Route path="/quizzes/:quizId" element={<QuizPage />} />
-        <Route path="/code-assessments" element={<CodeAssessmentsPage />} />
-        <Route path="/code-assessments/:assessmentId" element={<CodeAssessmentsPage />} />
+        <Route
+          path="/code-assessments"
+          element={
+            <React.Suspense fallback={<LoadingState message="Loading coding assessment workspace..." />}>
+              <CodeAssessmentsPage />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/code-assessments/:assessmentId"
+          element={
+            <React.Suspense fallback={<LoadingState message="Loading coding assessment workspace..." />}>
+              <CodeAssessmentsPage />
+            </React.Suspense>
+          }
+        />
         <Route path="/coding" element={<Navigate to="/content/coding" replace />} />
-        <Route path="/coding/:assessmentId" element={<CodeAssessmentsPage />} />
+        <Route
+          path="/coding/:assessmentId"
+          element={
+            <React.Suspense fallback={<LoadingState message="Loading coding assessment workspace..." />}>
+              <CodeAssessmentsPage />
+            </React.Suspense>
+          }
+        />
         <Route path="/concepts" element={<Navigate to="/content/concepts" replace />} />
         <Route path="/replay/:sessionId" element={<SessionReplayPage />} />
         <Route path="/sessions/:sessionId/replay" element={<SessionReplayPage />} />

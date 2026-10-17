@@ -65,6 +65,11 @@ router.post(
 );
 
 // Direct assessment execution endpoints (Frontend compatibility)
+router.get('/coding/languages', authenticate, codingController.getSupportedLanguages);
+router.get('/health/piston', codingController.checkPistonHealth);
+router.get('/coding/assessments/:assessmentId/submissions', authenticate, codingController.listAssessmentSubmissions);
+router.post('/coding/run', authenticate, codingController.runAssessmentCode);
+
 router.post(
   '/assessments/:assessmentId/run',
   authenticate,

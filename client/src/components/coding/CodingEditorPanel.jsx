@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   Play,
@@ -6,10 +6,9 @@ import {
   FileCode,
   RotateCcw,
   Settings2,
-  CheckCircle2,
-  Sparkles,
+  AlertTriangle,
+  Cpu,
 } from 'lucide-react';
-import LoadingState from '../feedback/LoadingState';
 
 export function CodingEditorPanel({
   code,
@@ -23,30 +22,54 @@ export function CodingEditorPanel({
   isSubmitting = false,
   onResetStarter,
   hasUnsavedChanges = false,
+  pistonStatus = 'ready',
 }) {
   const editorRef = useRef(null);
   const [editorTheme, setEditorTheme] = useState('vs-dark');
   const [fontSize, setFontSize] = useState(13.5);
   const [showSettings, setShowSettings] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [editorLoadError, setEditorLoadError] = useState(false);
 
-  const handleEditorDidMount = (editor, _monaco) => {
+  const handleEditorDidMount = (editor) => {
     editorRef.current = editor;
   };
 
-  const monacoLanguage =
-    language === 'python'
-      ? 'python'
-      : language === 'javascript'
-      ? 'javascript'
-      : language === 'java'
-      ? 'java'
-      : language === 'cpp'
-      ? 'cpp'
-      : language === 'c'
-      ? 'c'
-      : language === 'go'
-      ? 'go'
-      : 'python';
+  // Normalize supported languages (can be string array or object array with id/label)
+  const normalizedLanguages = supportedLanguages.map((item) => {
+    if (typeof item === 'object' && item !== null) {
+      return {
+        id: item.id || 'python',
+        label: item.label || (item.id || 'python').toUpperCase(),
+        extension: item.extension || `.${item.id || 'py'}`,
+        monacoLanguage: item.monacoLanguage || item.id || 'python',
+      };
+    }
+    const id = String(item).toLowerCase();
+    const extMap = { python: '.py', javascript: '.js', java: '.java', cpp: '.cpp', c: '.c', go: '.go' };
+    return {
+      id,
+      label: id.toUpperCase(),
+      extension: extMap[id] || `.${id}`,
+      monacoLanguage: id === 'c++' ? 'cpp' : id,
+    };
+  });
+
+  const currentLangObj = normalizedLanguages.find((l) => l.id === language) || {
+    id: language,
+    label: language.toUpperCase(),
+    extension: language === 'python' ? '.py' : language === 'javascript' ? '.js' : `.${language}`,
+    monacoLanguage: language === 'c++' ? 'cpp' : language,
+  };
+
+  const monacoLanguage = currentLangObj.monacoLanguage || 'python';
+
+  const handleConfirmReset = () => {
+    setShowResetConfirm(false);
+    if (onResetStarter) {
+      onResetStarter();
+    }
+  };
 
   return (
     <div
@@ -60,6 +83,7 @@ export function CodingEditorPanel({
         overflow: 'hidden',
         height: '100%',
         minHeight: '440px',
+        position: 'relative',
       }}
     >
       {/* Top Toolbar Bar */}
@@ -80,10 +104,18 @@ export function CodingEditorPanel({
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ECEAE8', fontSize: '13px' }}>
             <FileCode size={15} strokeWidth={1.5} color="var(--coral)" />
             <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
-              solution.{language === 'python' ? 'py' : language === 'javascript' ? 'js' : language === 'java' ? 'java' : 'cpp'}
+              solution{currentLangObj.extension}
             </span>
             {hasUnsavedChanges && (
-              <span style={{ fontSize: '10px', color: 'var(--coral)', background: 'rgba(255, 91, 55, 0.15)', padding: '1px 6px', borderRadius: 'var(--radius-pill)' }}>
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: 'var(--coral)',
+                  background: 'rgba(255, 91, 55, 0.15)',
+                  padding: '1px 6px',
+                  borderRadius: 'var(--radius-pill)',
+                }}
+              >
                 Modified
               </span>
             )}
@@ -92,24 +124,52 @@ export function CodingEditorPanel({
           <select
             value={language}
             onChange={(e) => onLanguageChange(e.target.value)}
+            aria-label="Select Programming Language"
             style={{
               background: '#24242A',
               color: '#ECEAE8',
               border: '1px solid #373742',
               borderRadius: 'var(--radius-pill)',
-              padding: '3px 12px',
+              padding: '4px 12px',
               fontSize: '12px',
               fontFamily: 'var(--font-mono)',
               outline: 'none',
               cursor: 'pointer',
             }}
           >
-            {supportedLanguages.map((l) => (
-              <option key={l} value={l}>
-                {l.toUpperCase()}
+            {normalizedLanguages.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.label}
               </option>
             ))}
           </select>
+
+          {/* Sandbox Status Badge */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '2px 8px',
+              background: '#202028',
+              borderRadius: 'var(--radius-pill)',
+              fontSize: '11px',
+              color: '#A0A0B0',
+              border: '1px solid #2E2E3A',
+            }}
+            title="Isolated code execution sandbox"
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: pistonStatus === 'ready' ? '#10B981' : '#F59E0B',
+              }}
+            />
+            <Cpu size={11} strokeWidth={1.5} />
+            <span style={{ fontFamily: 'var(--font-mono)' }}>Piston Sandbox</span>
+          </div>
         </div>
 
         {/* Right Actions: Settings, Reset, Run, Submit */}
@@ -119,8 +179,9 @@ export function CodingEditorPanel({
               type="button"
               className="icon-btn-circle"
               style={{ width: '32px', height: '32px', background: '#24242A', color: '#ECEAE8', border: '1px solid #373742' }}
-              title="Reset to starter template"
-              onClick={onResetStarter}
+              title="Reset code to starter template"
+              onClick={() => setShowResetConfirm(true)}
+              aria-label="Reset starter code"
             >
               <RotateCcw size={13} strokeWidth={1.5} />
             </button>
@@ -133,6 +194,7 @@ export function CodingEditorPanel({
               style={{ width: '32px', height: '32px', background: '#24242A', color: '#ECEAE8', border: '1px solid #373742' }}
               title="Editor settings"
               onClick={() => setShowSettings(!showSettings)}
+              aria-label="Editor preferences"
             >
               <Settings2 size={13} strokeWidth={1.5} />
             </button>
@@ -204,6 +266,7 @@ export function CodingEditorPanel({
               cursor: isRunning ? 'wait' : 'pointer',
               transition: 'background 150ms ease',
             }}
+            title="Execute against sample test cases (Run)"
           >
             <Play size={12} strokeWidth={2} />
             <span>{isRunning ? 'Running...' : 'Run Code'}</span>
@@ -229,6 +292,7 @@ export function CodingEditorPanel({
               boxShadow: '0 2px 10px rgba(255, 91, 55, 0.3)',
               transition: 'transform 150ms ease, opacity 150ms ease',
             }}
+            title="Official submission for server-side hidden test evaluation"
           >
             <Send size={12} strokeWidth={2} />
             <span>{isSubmitting ? 'Evaluating...' : 'Submit'}</span>
@@ -236,29 +300,135 @@ export function CodingEditorPanel({
         </div>
       </div>
 
+      {/* Confirmed Reset Modal Banner */}
+      {showResetConfirm && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '52px',
+            left: '20px',
+            right: '20px',
+            background: '#231E21',
+            border: '1px solid #5A2A2A',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            zIndex: 90,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangle size={18} color="var(--coral)" style={{ flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#ECEAE8' }}>
+                Reset to starter code?
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#A0A0B0' }}>
+                All unsaved modifications for {currentLangObj.label} will be permanently replaced with the initial starter template.
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setShowResetConfirm(false)}
+              style={{
+                background: 'transparent',
+                border: '1px solid #444450',
+                color: '#ECEAE8',
+                borderRadius: 'var(--radius-pill)',
+                padding: '4px 12px',
+                fontSize: '11.5px',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmReset}
+              style={{
+                background: 'var(--coral)',
+                border: 'none',
+                color: '#FFFFFF',
+                borderRadius: 'var(--radius-pill)',
+                padding: '4px 14px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Confirm Reset
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Monaco Editor Container */}
       <div style={{ flex: 1, position: 'relative', minHeight: '380px' }}>
-        <Editor
-          height="100%"
-          language={monacoLanguage}
-          theme={editorTheme}
-          value={code}
-          onChange={(val) => onChange(val || '')}
-          onMount={handleEditorDidMount}
-          loading={<div style={{ padding: '30px', color: '#9E9EA8' }}>Initializing Monaco Editor...</div>}
-          options={{
-            fontSize,
-            fontFamily: "'Fira Code', 'JetBrains Mono', Consolas, monospace",
-            lineNumbers: 'on',
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            tabSize: 4,
-            bracketPairColorization: { enabled: true },
-            wordWrap: 'on',
-            padding: { top: 12, bottom: 12 },
-          }}
-        />
+        {editorLoadError ? (
+          <div style={{ padding: '30px', textAlign: 'center', color: '#ECEAE8' }}>
+            <AlertTriangle size={32} color="var(--coral)" style={{ marginBottom: '10px' }} />
+            <div style={{ fontSize: '14px', fontWeight: 600 }}>Failed to load Monaco Editor</div>
+            <div style={{ fontSize: '12px', color: '#9E9EA8', marginTop: '6px' }}>
+              Please check your network connection or reload the workspace.
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditorLoadError(false)}
+              style={{
+                marginTop: '12px',
+                background: 'var(--coral)',
+                color: '#fff',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <Editor
+            height="100%"
+            language={monacoLanguage}
+            theme={editorTheme}
+            value={code}
+            onChange={(val) => onChange(val || '')}
+            onMount={handleEditorDidMount}
+            loading={
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9E9EA8', gap: '10px', fontSize: '13px' }}>
+                <span className="animate-spin" style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid #555', borderTopColor: 'var(--coral)', borderRadius: '50%' }} />
+                Initializing Monaco Editor...
+              </div>
+            }
+            options={{
+              fontSize,
+              lineHeight: 22,
+              fontFamily: "'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace",
+              lineNumbers: 'on',
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              tabSize: 4,
+              autoIndent: 'full',
+              formatOnPaste: true,
+              bracketPairColorization: { enabled: true },
+              matchBrackets: 'always',
+              folding: true,
+              quickSuggestions: true,
+              suggestOnTriggerCharacters: true,
+              accessibilitySupport: 'on',
+              wordWrap: 'on',
+              padding: { top: 12, bottom: 12 },
+            }}
+          />
+        )}
       </div>
     </div>
   );

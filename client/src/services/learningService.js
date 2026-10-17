@@ -221,6 +221,42 @@ export const learningService = {
     return list.find((a) => a.id === id) || null;
   },
 
+  async getSupportedLanguages() {
+    try {
+      const response = await apiClient.get('/coding/languages');
+      const data = response?.data || response;
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    } catch {
+      // Fallback to standard verified languages
+    }
+    return [
+      { id: 'python', label: 'Python (3.10)', extension: '.py', monacoLanguage: 'python' },
+      { id: 'javascript', label: 'JavaScript (Node.js)', extension: '.js', monacoLanguage: 'javascript' },
+      { id: 'cpp', label: 'C++ (GCC 10.2)', extension: '.cpp', monacoLanguage: 'cpp' },
+      { id: 'java', label: 'Java (OpenJDK 15)', extension: '.java', monacoLanguage: 'java' },
+    ];
+  },
+
+  async getPistonHealth() {
+    try {
+      const response = await apiClient.get('/health/piston');
+      return response?.data || response;
+    } catch {
+      return { healthy: false, runtimesCount: 0 };
+    }
+  },
+
+  async getSubmissions(assessmentId) {
+    try {
+      const response = await apiClient.get(`/coding/assessments/${assessmentId}/submissions`);
+      return response?.data || response || [];
+    } catch {
+      return [];
+    }
+  },
+
   async runCode(assessmentId, code, language, customInput = null) {
     const response = await apiClient.post(`/assessments/${assessmentId}/run`, {
       code,

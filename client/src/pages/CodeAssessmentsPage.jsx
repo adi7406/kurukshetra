@@ -1,16 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Code2,
-  Clock,
-  ChevronRight,
-  ArrowLeft,
-  Sparkles,
-} from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { learningService } from '../services/learningService';
 import LoadingState from '../components/feedback/LoadingState';
 import EmptyState from '../components/feedback/EmptyState';
-import Chip from '../components/common/Chip';
 import { useToast } from '../context/ToastContext';
 import ProblemStatementPanel from '../components/coding/ProblemStatementPanel';
 import CodingEditorPanel from '../components/coding/CodingEditorPanel';
@@ -19,14 +11,22 @@ import CodeReasoningModal from '../components/coding/CodeReasoningModal';
 
 export function CodeAssessmentsPage() {
   const { assessmentId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
+
+  const topicParam = searchParams.get('conceptId') || searchParams.get('topicId');
 
   const [loading, setLoading] = useState(true);
   const [assessments, setAssessments] = useState([]);
   const [activeAssessment, setActiveAssessment] = useState(null);
+  const [topicMissingAssessment, setTopicMissingAssessment] = useState(false);
 
-  // Editor and Session State
+  // Backend Supported Languages and Piston Runtime Health
+  const [backendLanguages, setBackendLanguages] = useState([]);
+  const [pistonStatus, setPistonStatus] = useState('ready');
+
+  // Editor State
   const [selectedLanguage, setSelectedLanguage] = useState('python');
   const [code, setCode] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -37,14 +37,17 @@ export function CodeAssessmentsPage() {
   const [customInput, setCustomInput] = useState('');
   const [isRunningCustom, setIsRunningCustom] = useState(false);
 
+  // Per-language Draft Cache (Preserves student code drafts when switching languages)
+  const draftsByLanguageRef = useRef({});
+
   // Submission & Reasoning Viva
   const [submissionResult, setSubmissionResult] = useState(null);
   const [isReasoningOpen, setIsReasoningOpen] = useState(false);
   const [isEvaluatingReasoning, setIsEvaluatingReasoning] = useState(false);
   const [reasoningFeedback, setReasoningFeedback] = useState(null);
 
-  // Telemetry Event Recording (Phase 7 & 8)
-  const sessionIdRef = useRef(`sess_${Date.now()}`);
+  // Telemetry Event Recording
+  const sessionIdRef = useRef('sess_init');
   const eventSequenceRef = useRef(0);
   const eventBufferRef = useRef([]);
   const lastCodeLenRef = useRef(0);
@@ -72,7 +75,7 @@ export function CodeAssessmentsPage() {
     }
   }, [flushEvents]);
 
-  // Window Focus & Visibility Telemetry (Phase 8 Proctoring Signals)
+  // Window Focus & Visibility Telemetry
   useEffect(() => {
     const handleVisibilityChange = () => {
       recordEvent('visibility_change', {
@@ -106,24 +109,91 @@ export function CodeAssessmentsPage() {
     };
   }, [recordEvent, flushEvents]);
 
-  // Load Assessments
+  // Load Verified Backend Languages & Piston Sandbox Health
+  useEffect(() => {
+    async function loadBackendRuntimes() {
+      try {
+        const [langs, health] = await Promise.all([
+          learningService.getSupportedLanguages(),
+          learningService.getPistonHealth(),
+        ]);
+        if (Array.isArray(langs) && langs.length > 0) {
+          setBackendLanguages(langs);
+        }
+        if (health) {
+          setPistonStatus(health.healthy ? 'ready' : 'degraded');
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+    loadBackendRuntimes();
+  }, []);
+
+  const selectAssessment = useCallback((item) => {
+    setActiveAssessment(item);
+    setTopicMissingAssessment(false);
+
+    // Reset language drafts for this assessment
+    draftsByLanguageRef.current = {};
+
+    const availableLangs = item.supportedLanguages || ['python', 'javascript'];
+    const initialLang = availableLangs[0] || 'python';
+    setSelectedLanguage(initialLang);
+
+    const starter = item.starterCode?.[initialLang] || '';
+    draftsByLanguageRef.current[initialLang] = starter;
+    setCode(starter);
+    lastCodeLenRef.current = starter.length;
+
+    setHasUnsavedChanges(false);
+    setOutputLog('');
+    setRunStatus(null);
+    setSubmissionResult(null);
+    setReasoningFeedback(null);
+    setIsReasoningOpen(false);
+
+    // Initialize Telemetry session
+    sessionIdRef.current = `sess_${item.id}_${Date.now()}`;
+    eventSequenceRef.current = 0;
+    eventBufferRef.current = [];
+    recordEvent('document_change', { action: 'session_init', assessmentId: item.id, language: initialLang });
+  }, [recordEvent]);
+
+  // Load Assessments and Resolve Current Topic
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
+        setTopicMissingAssessment(false);
         const list = await learningService.getAssessments();
-        setAssessments(list || []);
+        const publishedAssessments = (list || []).filter((a) => a.status === 'published' || !a.status);
+        setAssessments(publishedAssessments);
 
-        if (list && list.length > 0) {
-          if (assessmentId) {
-            const found = list.find((a) => a.id === assessmentId);
+        if (publishedAssessments.length > 0) {
+          if (topicParam) {
+            // Find assessment matching the selected topic / concept
+            const matchedTopic = publishedAssessments.find(
+              (a) =>
+                a.conceptId === topicParam ||
+                a.topicId === topicParam ||
+                a.id === topicParam ||
+                (a.title && a.title.toLowerCase().includes(topicParam.toLowerCase()))
+            );
+            if (matchedTopic) {
+              selectAssessment(matchedTopic);
+            } else {
+              setTopicMissingAssessment(true);
+            }
+          } else if (assessmentId) {
+            const found = publishedAssessments.find((a) => a.id === assessmentId);
             if (found) {
               selectAssessment(found);
             } else {
-              selectAssessment(list[0]);
+              selectAssessment(publishedAssessments[0]);
             }
           } else {
-            selectAssessment(list[0]);
+            selectAssessment(publishedAssessments[0]);
           }
         }
       } catch (err) {
@@ -133,36 +203,20 @@ export function CodeAssessmentsPage() {
       }
     }
     loadData();
-  }, [assessmentId]);
-
-  const selectAssessment = (item) => {
-    setActiveAssessment(item);
-    const lang = item.supportedLanguages?.[0] || 'python';
-    setSelectedLanguage(lang);
-    const starter = item.starterCode?.[lang] || '';
-    setCode(starter);
-    lastCodeLenRef.current = starter.length;
-    setHasUnsavedChanges(false);
-    setOutputLog('');
-    setRunStatus(null);
-    setSubmissionResult(null);
-    setReasoningFeedback(null);
-    setIsReasoningOpen(false);
-
-    // Record session start event
-    sessionIdRef.current = `sess_${item.id}_${Date.now()}`;
-    eventSequenceRef.current = 0;
-    eventBufferRef.current = [];
-    recordEvent('document_change', { action: 'session_init', assessmentId: item.id, language: lang });
-  };
+  }, [assessmentId, topicParam, selectAssessment]);
 
   const handleCodeChange = (newCode) => {
     const delta = newCode.length - lastCodeLenRef.current;
     lastCodeLenRef.current = newCode.length;
-    setCode(newCode);
-    setHasUnsavedChanges(true);
 
-    // Detect large paste event (Phase 8 integrity signal)
+    // Cache draft for current language
+    draftsByLanguageRef.current[selectedLanguage] = newCode;
+    setCode(newCode);
+
+    const starter = activeAssessment?.starterCode?.[selectedLanguage] || '';
+    setHasUnsavedChanges(newCode !== starter);
+
+    // Detect large paste event
     if (delta > 150) {
       recordEvent('paste', {
         charLength: delta,
@@ -178,31 +232,40 @@ export function CodeAssessmentsPage() {
   };
 
   const handleLanguageChange = (newLang) => {
+    // Preserve current language draft
+    draftsByLanguageRef.current[selectedLanguage] = code;
+
     setSelectedLanguage(newLang);
     recordEvent('language_change', { previous: selectedLanguage, next: newLang });
-    if (activeAssessment?.starterCode?.[newLang]) {
-      setCode(activeAssessment.starterCode[newLang]);
-      lastCodeLenRef.current = activeAssessment.starterCode[newLang].length;
-      setHasUnsavedChanges(false);
-    }
+
+    // Retrieve saved draft or fallback to starter code
+    const savedDraft = draftsByLanguageRef.current[newLang];
+    const starter = activeAssessment?.starterCode?.[newLang] || '';
+    const nextCode = savedDraft !== undefined ? savedDraft : starter;
+
+    draftsByLanguageRef.current[newLang] = nextCode;
+    setCode(nextCode);
+    lastCodeLenRef.current = nextCode.length;
+    setHasUnsavedChanges(nextCode !== starter);
   };
 
   const handleResetStarter = () => {
     if (!activeAssessment) return;
     const starter = activeAssessment.starterCode?.[selectedLanguage] || '';
+    draftsByLanguageRef.current[selectedLanguage] = starter;
     setCode(starter);
     lastCodeLenRef.current = starter.length;
     setHasUnsavedChanges(false);
-    toast.info('Reset code to starter template');
+    toast.info(`Reset ${selectedLanguage.toUpperCase()} code to starter template`);
   };
 
-  // Run against sample tests
+  // Run Code against sample tests or public assertions
   const handleRunCode = async () => {
     if (!activeAssessment) return;
     try {
       setIsRunning(true);
       setRunStatus(null);
-      setOutputLog('Executing against sample assertions in isolated runner...');
+      setOutputLog(`[Piston Sandbox: Isolated Execution Initialized]\nLanguage: ${selectedLanguage.toUpperCase()}\nExecuting against sample test cases...`);
       recordEvent('run', { language: selectedLanguage, mode: 'sample' });
 
       const res = await learningService.runCode(activeAssessment.id, code, selectedLanguage);
@@ -223,8 +286,8 @@ export function CodeAssessmentsPage() {
     if (!activeAssessment) return;
     try {
       setIsRunningCustom(true);
-      setOutputLog(`Executing with custom stdin input:\n${customInput}\n...`);
-      recordEvent('run', { language: selectedLanguage, mode: 'custom', inputSize: customInput.length });
+      setOutputLog(`[Piston Sandbox: Running Custom stdin input]\nInput Size: ${(customInput || '').length} bytes\nExecuting...`);
+      recordEvent('run', { language: selectedLanguage, mode: 'custom', inputSize: (customInput || '').length });
 
       const res = await learningService.runCode(activeAssessment.id, code, selectedLanguage, customInput);
       setOutputLog(res.output || JSON.stringify(res.data || res, null, 2));
@@ -237,25 +300,25 @@ export function CodeAssessmentsPage() {
     }
   };
 
-  // Official submission (grades against server-side hidden test cases)
+  // Official submission (grades against backend hidden test cases in Piston sandbox)
   const handleSubmitSolution = async () => {
     if (!activeAssessment) return;
     try {
       setIsSubmitting(true);
       setRunStatus(null);
-      setOutputLog('Submitting solution to Judge0 sandbox for official grading...');
+      setOutputLog('[Piston Sandbox: Official Submission in progress]\nAuthenticating attempt and evaluating against protected server-side hidden test suite...');
       recordEvent('submit', { language: selectedLanguage, codeLength: code.length });
 
       const res = await learningService.submitSolution(activeAssessment.id, code, selectedLanguage);
       setSubmissionResult(res);
       setRunStatus(res.status);
       setOutputLog(
-        `[OFFICIAL JUDGE0 GRADING OUTCOME]\nStatus: ${res.status}\nPassed: ${res.testsPassed || 0} / ${res.totalTests || 18} test cases\nExecution Runtime: ${res.runtimeMs || 35}ms | Memory: ${res.memoryMb || 12.8}MB\n\nOfficial score recorded. Proceed to explain your algorithmic solution in the Viva Defense.`
+        `[OFFICIAL PISTON EVALUATION OUTCOME]\nStatus: ${res.status}\nPassed: ${res.testsPassed || 0} / ${res.totalTests || 18} test cases\nExecution Runtime: ${res.runtimeMs || 35}ms | Memory: ${res.memoryMb || 12.8}MB\n\nOfficial grading persisted. Explain your algorithmic invariants and computational time complexity in the AI Viva Defense.`
       );
       setHasUnsavedChanges(false);
       toast.success('Solution submitted & graded!');
 
-      // Automatically launch Code Reasoning Viva Modal (Phase 6)
+      // Automatically launch Code Reasoning Viva Modal
       setIsReasoningOpen(true);
     } catch (err) {
       setRunStatus('Submission Error');
@@ -266,7 +329,7 @@ export function CodeAssessmentsPage() {
     }
   };
 
-  // Handle Viva Reasoning Submission (Phase 6)
+  // Handle Viva Reasoning Submission
   const handleSubmitReasoning = async (reasoningData) => {
     try {
       setIsEvaluatingReasoning(true);
@@ -278,7 +341,7 @@ export function CodeAssessmentsPage() {
       );
       setReasoningFeedback(feedback);
       toast.success('Viva reasoning evaluated against Bloom rubric!');
-    } catch (err) {
+    } catch {
       toast.error('Viva evaluation failed');
     } finally {
       setIsEvaluatingReasoning(false);
@@ -289,7 +352,34 @@ export function CodeAssessmentsPage() {
     return <LoadingState message="Loading professional coding workspace..." />;
   }
 
-  // If no assessments available in database
+  // If a topic was selected that does not have a published coding assessment
+  if (topicMissingAssessment) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>Home</span>
+          <span>/</span>
+          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/content/concepts')}>Concepts</span>
+          <span>/</span>
+          <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>Coding Assessment</span>
+        </div>
+
+        <EmptyState
+          title="No Published Coding Assessment for This Topic"
+          description={`Topic "${topicParam}" currently does not have a published coding assessment. Practice with another topic or explore available challenges below.`}
+          actionLabel="View All Coding Challenges"
+          onAction={() => {
+            setTopicMissingAssessment(false);
+            if (assessments.length > 0) {
+              selectAssessment(assessments[0]);
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  // If no assessments exist in system
   if (!activeAssessment) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -308,6 +398,11 @@ export function CodeAssessmentsPage() {
       </div>
     );
   }
+
+  // Determine effective supported languages (prefer backend-verified languages if matched)
+  const effectiveLanguages = backendLanguages.length > 0
+    ? backendLanguages
+    : (activeAssessment.supportedLanguages || ['python', 'javascript']);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', height: 'calc(100vh - 100px)' }}>
@@ -330,6 +425,7 @@ export function CodeAssessmentsPage() {
               const selected = assessments.find((a) => a.id === e.target.value);
               if (selected) selectAssessment(selected);
             }}
+            aria-label="Switch coding assessment problem"
             style={{
               background: 'var(--surface)',
               color: 'var(--text-main)',
@@ -354,7 +450,7 @@ export function CodeAssessmentsPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(320px, 1fr) minmax(420px, 1.25fr)',
+          gridTemplateColumns: 'minmax(320px, 1fr) minmax(420px, 1.35fr)',
           gap: '18px',
           flex: 1,
           overflow: 'hidden',
@@ -375,13 +471,14 @@ export function CodeAssessmentsPage() {
               onChange={handleCodeChange}
               language={selectedLanguage}
               onLanguageChange={handleLanguageChange}
-              supportedLanguages={activeAssessment.supportedLanguages || ['python', 'javascript']}
+              supportedLanguages={effectiveLanguages}
               onRun={handleRunCode}
               onSubmit={handleSubmitSolution}
               isRunning={isRunning}
               isSubmitting={isSubmitting}
               onResetStarter={handleResetStarter}
               hasUnsavedChanges={hasUnsavedChanges}
+              pistonStatus={pistonStatus}
             />
           </div>
 
@@ -402,11 +499,11 @@ export function CodeAssessmentsPage() {
         </div>
       </div>
 
-      {/* Code Reasoning Viva Modal (Phase 6) */}
+      {/* Code Reasoning Viva Modal */}
       <CodeReasoningModal
         isOpen={isReasoningOpen}
         onClose={() => setIsReasoningOpen(false)}
-        submissionId={submissionResult?.submissionId || `sub_${Date.now()}`}
+        submissionId={submissionResult?.submissionId || 'sub_active'}
         vivaQuestion={activeAssessment.vivaQuestion}
         onSubmitReasoning={handleSubmitReasoning}
         isEvaluating={isEvaluatingReasoning}

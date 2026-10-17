@@ -39,6 +39,23 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   JUDGE0_API_URL: z.string().url().optional(),
   JUDGE0_API_KEY: z.string().optional(),
+  PISTON_BASE_URL: z.string().url().optional(),
+  PISTON_REQUEST_TIMEOUT_MS: z
+    .string()
+    .default('10000')
+    .transform((val) => parseInt(val, 10)),
+  PISTON_MAX_SOURCE_BYTES: z
+    .string()
+    .default('65536')
+    .transform((val) => parseInt(val, 10)),
+  PISTON_DEFAULT_MEMORY_LIMIT_KB: z
+    .string()
+    .default('128000')
+    .transform((val) => parseInt(val, 10)),
+  PISTON_DEFAULT_CPU_TIME_MS: z
+    .string()
+    .default('3000')
+    .transform((val) => parseInt(val, 10)),
 });
 
 function loadEnv() {

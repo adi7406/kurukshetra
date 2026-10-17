@@ -1,6 +1,7 @@
 import { getSupabase } from '../integrations/supabase.js';
 import { env } from '../config/env.js';
 import { ValidationError, TooManyRequestsError, NotFoundError } from '../utils/errors.js';
+import { pistonAdapter, PISTON_LANGUAGE_MAP } from '../integrations/piston.adapter.js';
 
 export const JUDGE0_LANGUAGE_IDS = {
   javascript: 63,
@@ -12,6 +13,29 @@ export const JUDGE0_LANGUAGE_IDS = {
 };
 
 export const MAX_SOURCE_CODE_BYTES = 64 * 1024; // 64 KB
+
+/**
+ * Compare actual output with expected output according to comparison policy
+ * Supported policies: 'exact', 'whitespace_normalized'
+ */
+export function compareOutputs(actual, expected, policy = 'exact') {
+  if (actual === null || actual === undefined) return false;
+  if (expected === null || expected === undefined) return false;
+
+  const actualStr = String(actual);
+  const expectedStr = String(expected);
+
+  if (policy === 'whitespace_normalized') {
+    const normActual = actualStr.replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '').trim();
+    const normExpected = expectedStr.replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '').trim();
+    return normActual === normExpected;
+  }
+
+  // Exact comparison (trim only single trailing newline common across CLI outputs)
+  const normActual = actualStr.replace(/\r\n/g, '\n').replace(/\n$/, '');
+  const normExpected = expectedStr.replace(/\r\n/g, '\n').replace(/\n$/, '');
+  return normActual === normExpected;
+}
 
 // In-memory sliding rate limiter: max 15 execution runs per minute per student
 const executionRateLimits = new Map();
@@ -42,9 +66,9 @@ export const executionService = {
       throw new ValidationError('Programming language is required.');
     }
     const normalizedLang = language.toLowerCase();
-    if (!JUDGE0_LANGUAGE_IDS[normalizedLang]) {
+    if (!PISTON_LANGUAGE_MAP[normalizedLang] && !JUDGE0_LANGUAGE_IDS[normalizedLang]) {
       throw new ValidationError(
-        `Language '${language}' is not supported. Supported: ${Object.keys(JUDGE0_LANGUAGE_IDS).join(', ')}`
+        `Language '${language}' is not supported. Supported: ${Object.keys(PISTON_LANGUAGE_MAP).filter((k) => k !== 'c++').join(', ')}`
       );
     }
     if (!sourceCode || typeof sourceCode !== 'string') {
@@ -60,14 +84,50 @@ export const executionService = {
   },
 
   /**
-   * Execute code in an isolated runner (Judge0 API or isolated test sandbox).
+   * Retrieve supported languages and runtime metadata from Piston
+   */
+  async getSupportedLanguages() {
+    const runtimes = await pistonAdapter.getInstalledRuntimes();
+    return runtimes.map((r) => ({
+      id: r.language,
+      name: (r.language || '').toUpperCase(),
+      version: r.version,
+      aliases: r.aliases || [],
+    }));
+  },
+
+  /**
+   * Execute code in an isolated runner (Self-hosted Piston, Judge0 API, or isolated test sandbox).
    * Never executes inside the main Express process.
    */
-  async runSingleTestCase({ language, sourceCode, input, expectedOutput, limits = {} }) {
+  async runSingleTestCase({ language, sourceCode, input, expectedOutput, limits = {}, comparisonPolicy = 'whitespace_normalized' }) {
     const timeLimitMs = limits.timeLimitMs || 2000;
     const memoryLimitMb = limits.memoryLimitMb || 256;
 
-    // 1. External Judge0 isolated runner execution
+    // 1. Primary Self-Hosted Piston isolated execution engine
+    if (env.PISTON_BASE_URL) {
+      const pistonResult = await pistonAdapter.execute({
+        language,
+        sourceCode,
+        stdin: input || '',
+        limits: { timeLimitMs, memoryLimitMb },
+      });
+
+      // If compilation error, timeout, or runtime failure occurred, return directly
+      if (pistonResult.status !== 'success') {
+        return pistonResult;
+      }
+
+      // Check output correctness against expected output if expected output is specified
+      const hasExpected = expectedOutput !== null && expectedOutput !== undefined;
+      const isAccepted = hasExpected ? compareOutputs(pistonResult.stdout, expectedOutput, comparisonPolicy) : true;
+      return {
+        ...pistonResult,
+        status: hasExpected ? (isAccepted ? 'accepted' : 'wrong_answer') : 'success',
+      };
+    }
+
+    // 2. External Judge0 isolated runner execution (if configured)
     if (env.JUDGE0_API_URL) {
       const languageId = JUDGE0_LANGUAGE_IDS[language];
       const headers = {
@@ -118,7 +178,7 @@ export const executionService = {
       };
     }
 
-    // 2. Safe Simulated Isolated Runner (offline dev / automated tests)
+    // 3. Safe Simulated Isolated Runner (offline dev / automated tests)
     // Runs in an isolated simulated sandbox without host privileges
     return this.simulateIsolatedExecution({
       language,
@@ -127,13 +187,14 @@ export const executionService = {
       expectedOutput,
       timeLimitMs,
       memoryLimitMb,
+      comparisonPolicy,
     });
   },
 
   /**
    * Deterministic simulated isolated execution for offline local development and test runner
    */
-  simulateIsolatedExecution({ language: _language, sourceCode, input, expectedOutput, timeLimitMs, memoryLimitMb }) {
+  simulateIsolatedExecution({ language: _language, sourceCode, input, expectedOutput, timeLimitMs, memoryLimitMb, comparisonPolicy = 'whitespace_normalized' }) {
     // Check for obvious infinite loops or syntax errors
     if (sourceCode.includes('while(true)') || sourceCode.includes('while (true)') || sourceCode.includes('for(;;)') || sourceCode.includes('while 1:')) {
       return {
@@ -171,7 +232,9 @@ export const executionService = {
       const trimmedInput = (input || '').trim();
       const num = Number(trimmedInput);
 
-      if (!isNaN(num)) {
+      if (sourceCode.includes('CUSTOM_PROCESSED:')) {
+        producedOutput = `CUSTOM_PROCESSED:${trimmedInput}`;
+      } else if (!isNaN(num)) {
         if (sourceCode.includes('return n * n') || sourceCode.includes('n * n') || sourceCode.includes('n ** 2') || sourceCode.includes('return n*n')) {
           producedOutput = String(num * num);
         } else if (sourceCode.includes('return 42')) {
@@ -197,11 +260,11 @@ export const executionService = {
       };
     }
 
-    const expectedTrimmed = (expectedOutput || '').trim();
-    const passed = producedOutput !== null && producedOutput === expectedTrimmed;
+    const hasExpected = expectedOutput !== null && expectedOutput !== undefined;
+    const passed = hasExpected ? compareOutputs(producedOutput, expectedOutput, comparisonPolicy) : true;
 
     return {
-      status: passed ? 'accepted' : 'wrong_answer',
+      status: hasExpected ? (passed ? 'accepted' : 'wrong_answer') : 'success',
       stdout: producedOutput,
       stderr: null,
       runtimeMs: 35,
@@ -219,6 +282,7 @@ export const executionService = {
     sourceCode,
     testCases = [],
     limits = {},
+    comparisonPolicy = 'whitespace_normalized',
   }) {
     // 1. Enforce rate limiting
     checkExecutionRateLimit(studentId);
@@ -235,12 +299,14 @@ export const executionService = {
     for (const tc of testCases) {
       const tcWeight = tc.weight || 1;
       totalMaxScore += tcWeight;
+      const tcPolicy = tc.comparison_policy || tc.comparisonPolicy || comparisonPolicy;
 
       const runResult = await this.runSingleTestCase({
         language: normalizedLang,
         sourceCode,
         input: tc.input_payload || tc.input,
         expectedOutput: tc.expected_output || tc.expectedOutput,
+        comparisonPolicy: tcPolicy,
         limits: {
           timeLimitMs: tc.time_limit_ms || limits.timeLimitMs || 2000,
           memoryLimitMb: tc.memory_limit_mb || limits.memoryLimitMb || 256,

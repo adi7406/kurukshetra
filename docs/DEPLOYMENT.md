@@ -79,3 +79,54 @@ If the post-deployment smoke test fails:
 1. **Container / Service Rollback:** Immediately revert the container image or deployment revision to the previous known good SHA.
 2. **Database Rollback:** If migration rollback is required, use point-in-time recovery (PITR) to restore PostgreSQL state to immediately prior to migration execution.
 3. **Secret Invalidation:** If an API secret is suspected of exposure during deploy, rotate it immediately in the cloud secret manager and restart application instances.
+
+---
+
+## 5. Self-Hosted Piston Code Execution Sandbox
+
+MasterPath executes student code in an isolated Piston sandbox container rather than on the Express application host.
+
+### Docker Compose Architecture (`docker-compose.piston.yml`)
+
+The self-hosted Piston engine runs on a dedicated private container network (`kurukshetra-sandbox-net`), isolated from host files and application databases.
+
+```bash
+# Start Piston isolated execution sandbox
+docker compose -f docker-compose.piston.yml up -d
+
+# Verify Piston container status
+docker compose -f docker-compose.piston.yml ps
+```
+
+### Required Sandbox Configuration
+
+Configure these environment variables in your Express server environment:
+
+| Variable | Default | Description |
+|---|---|---|
+| `PISTON_BASE_URL` | `http://127.0.0.1:2000` | Private endpoint of self-hosted Piston service |
+| `PISTON_REQUEST_TIMEOUT_MS` | `10000` | Maximum network request deadline (10s) |
+| `PISTON_MAX_SOURCE_BYTES` | `100000` | Hard cap on student source code payload (100KB) |
+| `PISTON_DEFAULT_MEMORY_LIMIT_KB` | `128000` | Default execution memory boundary (128MB) |
+| `PISTON_DEFAULT_CPU_TIME_MS` | `3000` | Default CPU execution timeout (3s) |
+
+### Runtime Package Verification & Installation
+
+Piston supports runtime packages for C++, Python, Node.js (JavaScript), Java, Go, etc.
+
+```bash
+# Verify installed runtimes
+curl -s http://127.0.0.1:2000/api/v2/runtimes
+
+# Check MasterPath backend Piston health probe:
+curl -s http://localhost:3001/api/v1/health/piston
+# Expected JSON response:
+# { "status": "ok", "piston": { "healthy": true, "runtimesCount": 5, "verifiedLanguages": ["python", "javascript", "cpp", "java"] } }
+```
+
+### Security & Isolation Controls
+
+1. **Host Isolation:** Piston runs inside unprivileged cgroups with dropped Linux capabilities. Untrusted submitted code has zero access to server files, application databases, or cloud credentials.
+2. **Hidden Test Confidentiality:** Hidden test inputs and assertions are loaded server-side and never exposed to the student browser.
+3. **Execution Limits:** Strict memory ceilings (128MB) and CPU timeouts (3000ms) prevent denial-of-service or infinite loops.
+

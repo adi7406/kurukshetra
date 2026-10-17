@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  piston:
+    image: ghcr.io/engineer-man/piston:latest
+    container_name: masterpath-piston
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2000:2000"
+    tmpfs:
+      - /tmp:exec
+    environment:
+      - PISTON_BIND_ADDRESS=0.0.0.0:2000
+      - PISTON_DISABLE_NETWORKING=true
+    volumes:
+      - piston_packages:/piston/packages
+    networks:
+      - sandbox_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+
+networks:
+  sandbox_net:
+    driver: bridge
+    internal: false
+
+volumes:
+  piston_packages:
+    name: masterpath_piston_packages

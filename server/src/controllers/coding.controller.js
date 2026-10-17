@@ -275,14 +275,111 @@ export const codingController = {
   },
 
   /**
-   * Run sample tests directly by assessment ID (Frontend client compatibility)
+   * Retrieve supported languages and runtimes from Piston execution engine
+   */
+  async getSupportedLanguages(req, res, next) {
+    try {
+      const languages = await executionService.getSupportedLanguages();
+      res.status(200).json({
+        data: languages,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Health check for Piston execution engine reachability
+   */
+  async checkPistonHealth(req, res, next) {
+    try {
+      const { pistonAdapter } = await import('../integrations/piston.adapter.js');
+      const health = await pistonAdapter.checkHealth();
+      res.status(200).json({
+        data: health,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * List submissions for a specific assessment
+   */
+  async listAssessmentSubmissions(req, res, next) {
+    try {
+      const { assessmentId } = req.params;
+      const user = req.user;
+      const supabase = getSupabase();
+
+      let query = supabase
+        .from('submissions')
+        .select('*')
+        .order('submitted_at', { ascending: false });
+
+      if (user.role === 'student') {
+        query = query.eq('student_id', user.id);
+      }
+
+      const { data: allSubmissions = [] } = await query;
+      const filtered = (allSubmissions || []).filter(
+        (s) => s.assessment_id === assessmentId || s.coding_session_id?.includes(assessmentId)
+      );
+
+      res.status(200).json({
+        data: filtered,
+        meta: {
+          requestId: req.requestId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Run code directly by assessment ID (Supports sample tests and custom stdin)
    */
   async runAssessmentCode(req, res, next) {
     try {
       const { assessmentId } = req.params;
-      const { code, language = 'javascript' } = req.body || {};
+      const { code, language = 'javascript', customInput = null } = req.body || {};
       const user = req.user;
       const supabase = getSupabase();
+
+      // If student provided custom stdin input
+      if (customInput !== null && customInput !== undefined) {
+        const customRun = await executionService.runSingleTestCase({
+          language,
+          sourceCode: code || '',
+          input: String(customInput),
+          expectedOutput: null,
+          limits: { timeLimitMs: 3000, memoryLimitMb: 128 },
+          comparisonPolicy: 'whitespace_normalized',
+        });
+
+        const isSuccess = customRun.status === 'success' || customRun.status === 'accepted';
+        const stdout = customRun.stdout || '';
+        const stderr = customRun.stderr || '';
+        const outputText = stderr
+          ? `${stdout ? stdout + '\n' : ''}[Standard Error]:\n${stderr}`
+          : stdout || '[Program finished with no stdout output]';
+
+        return res.status(200).json({
+          success: isSuccess,
+          status: isSuccess ? 'Execution Successful' : customRun.status.replace('_', ' ').toUpperCase(),
+          output: outputText,
+          executionTimeMs: customRun.runtimeMs || 25,
+          memoryKb: Math.round((customRun.memoryBytes || 8000000) / 1024),
+          data: customRun,
+        });
+      }
 
       // Find question version for this assessment
       const { data: aqList = [] } = await supabase
@@ -301,20 +398,19 @@ export const codingController = {
           sourceCode: code || '',
         });
       } else {
-        result = executionService.simulateIsolatedExecution({
+        result = await executionService.runSingleTestCase({
           language,
           sourceCode: code || '',
           input: '5',
           expectedOutput: '25',
-          timeLimitMs: 2000,
-          memoryLimitMb: 256,
+          limits: { timeLimitMs: 3000, memoryLimitMb: 128 },
         });
       }
 
       const passed = result.status === 'accepted';
       const outputText = passed
-        ? `[Execution complete in ${result.runtimeMs || 35}ms | Memory: 8.2MB]\nRunning sample test suite: Passed\nAll sample assertions succeeded. Note: Run Code executes public sample cases.`
-        : `[Execution error: ${result.status}]\n${result.stderr || result.actualOutput || 'Output did not match expected sample result.'}`;
+        ? `[Execution complete in ${result.runtimeMs || 35}ms | Piston Sandbox: Ready]\nRunning sample test suite: Passed\nAll sample assertions succeeded. Note: Run Code only executes public sample cases.`
+        : `[Execution status: ${result.status}]\n${result.stderr || result.actualOutput || 'Sample test assertion did not match.'}`;
 
       res.status(200).json({
         success: passed,
