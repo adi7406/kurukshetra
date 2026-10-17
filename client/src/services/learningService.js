@@ -511,6 +511,42 @@ export const learningService = {
 
     return true;
   },
+
+  /**
+   * Diagnostic Onboarding Methods
+   */
+  async getDiagnosticStatus() {
+    try {
+      const res = await apiClient.get('/v1/diagnostic/status');
+      return res?.data || res;
+    } catch {
+      return { completed: false, count: 0 };
+    }
+  },
+
+  async getDiagnosticAssessment() {
+    try {
+      const res = await apiClient.get('/v1/diagnostic/assessment');
+      return res?.data || res;
+    } catch (err) {
+      console.error('Failed to get diagnostic assessment:', err);
+      return null;
+    }
+  },
+
+  async submitDiagnosticAssessment(answers) {
+    const res = await apiClient.post('/v1/diagnostic/submit', { answers });
+    return res?.data || res;
+  },
+
+  async getDiagnosticResults() {
+    try {
+      const res = await apiClient.get('/v1/diagnostic/results');
+      return res?.data || res;
+    } catch {
+      return null;
+    }
+  },
 };
 
 export default learningService;

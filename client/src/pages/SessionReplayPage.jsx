@@ -27,6 +27,7 @@ export function SessionReplayPage() {
   const [events, setEvents] = useState([]);
   const [signals, setSignals] = useState([]);
   const [instructorNote, setInstructorNote] = useState('');
+  const [verifiedStatus, setVerifiedStatus] = useState(null);
   const [sessionInfo, setSessionInfo] = useState({
     title: 'Coding Session Replay',
     studentName: 'Active Session',

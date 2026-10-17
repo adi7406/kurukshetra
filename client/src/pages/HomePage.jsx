@@ -16,6 +16,7 @@ import {
   Terminal,
   ChevronRight,
   ShieldAlert,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { learningService } from '../services/learningService';
@@ -32,6 +33,7 @@ import ClassHeatmap from '../components/home/ClassHeatmap';
 import PendingApprovalQueue from '../components/home/PendingApprovalQueue';
 import RightContextSidebar from '../components/home/RightContextSidebar';
 import OnboardingTour from '../components/common/OnboardingTour';
+import DiagnosticAssessmentModal from '../components/home/DiagnosticAssessmentModal';
 import { normalizeMastery } from '../utils/mastery';
 
 export function HomePage() {
@@ -45,34 +47,46 @@ export function HomePage() {
   const [assessments, setAssessments] = useState([]);
   const [progressData, setProgressData] = useState(null);
   const [whyThisOpen, setWhyThisOpen] = useState(false);
+  const [diagnosticStatus, setDiagnosticStatus] = useState(null);
+  const [diagnosticModalOpen, setDiagnosticModalOpen] = useState(false);
+
+  async function loadWorkspaceData() {
+    try {
+      setLoading(true);
+      const [
+        loadedCourses,
+        loadedQuizzes,
+        loadedAssessments,
+        loadedStudents,
+        loadedProgress,
+        loadedDiagStatus,
+      ] = await Promise.all([
+        learningService.getCourses(),
+        learningService.getQuizzes(),
+        learningService.getAssessments(),
+        authService.getAllStudents(),
+        learningService.getProgress(),
+        role !== 'teacher' ? learningService.getDiagnosticStatus() : Promise.resolve(null),
+      ]);
+
+      setCourses(loadedCourses || []);
+      setQuizzes(loadedQuizzes || []);
+      setAssessments(loadedAssessments || []);
+      setStudents(loadedStudents || []);
+      setProgressData(loadedProgress || null);
+      if (loadedDiagStatus) {
+        setDiagnosticStatus(loadedDiagStatus);
+      }
+    } catch (err) {
+      console.error('Failed to load workspace data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadWorkspaceData() {
-      try {
-        setLoading(true);
-        const [loadedCourses, loadedQuizzes, loadedAssessments, loadedStudents, loadedProgress] =
-          await Promise.all([
-            learningService.getCourses(),
-            learningService.getQuizzes(),
-            learningService.getAssessments(),
-            authService.getAllStudents(),
-            learningService.getProgress(),
-          ]);
-
-        setCourses(loadedCourses || []);
-        setQuizzes(loadedQuizzes || []);
-        setAssessments(loadedAssessments || []);
-        setStudents(loadedStudents || []);
-        setProgressData(loadedProgress || null);
-      } catch (err) {
-        console.error('Failed to load workspace data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadWorkspaceData();
-  }, []);
+  }, [role]);
 
   if (loading) {
     return <LoadingState message="Loading your Pathwise workspace..." />;
@@ -572,15 +586,116 @@ export function HomePage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="btn-ghost-pill btn-compact"
-            onClick={() => navigate('/content/concepts')}
-          >
-            <Layers size={14} strokeWidth={1.5} />
-            <span>Curriculum Graph</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {diagnosticStatus?.completed && (
+              <button
+                type="button"
+                className="btn-ghost-pill btn-compact"
+                onClick={() => setDiagnosticModalOpen(true)}
+                title="View your initial diagnostic placement scores and calibrated baseline"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(99, 102, 241, 0.1)',
+                  borderColor: 'rgba(99, 102, 241, 0.3)',
+                  color: 'var(--primary-light)',
+                }}
+              >
+                <Sparkles size={14} strokeWidth={1.5} />
+                <span>Placement Calibration</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn-ghost-pill btn-compact"
+              onClick={() => navigate('/content/concepts')}
+            >
+              <Layers size={14} strokeWidth={1.5} />
+              <span>Curriculum Graph</span>
+            </button>
+          </div>
         </div>
+
+        {/* 1.5 Diagnostic Placement Action Banner */}
+        {diagnosticStatus && !diagnosticStatus.completed && (
+          <div
+            style={{
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.12))',
+              border: '1px solid rgba(168,85,247,0.35)',
+              padding: '20px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+              boxShadow: 'var(--shadow-card)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', maxWidth: '620px' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                }}
+              >
+                <Sparkles size={22} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '15.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                    Initial Placement Diagnostic Available
+                  </h3>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(99, 102, 241, 0.2)',
+                      color: 'var(--primary-light)',
+                    }}
+                  >
+                    30 Marks • 3 Subjects
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                  Take our comprehensive 30-mark diagnostic test across OOP, DSA, and OS to calibrate Bayesian Knowledge Tracing and establish your baseline tier (Beginner, Intermediate, Advanced).
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setDiagnosticModalOpen(true)}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                border: 'none',
+                color: '#fff',
+                fontSize: '13.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+              }}
+            >
+              <span>Start Diagnostic Test</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
 
         {/* 2. HERO CARD for "Recommended next action" */}
         {recommendation ? (
@@ -810,6 +925,16 @@ export function HomePage() {
           onStartActivity={() => navigate(recommendation.route)}
         />
       )}
+
+      {/* First-Login Diagnostic Assessment Modal */}
+      <DiagnosticAssessmentModal
+        isOpen={diagnosticModalOpen}
+        onClose={() => setDiagnosticModalOpen(false)}
+        onComplete={(newResults) => {
+          setDiagnosticStatus({ completed: true, results: newResults });
+          loadWorkspaceData();
+        }}
+      />
 
       <OnboardingTour role={role} />
     </div>

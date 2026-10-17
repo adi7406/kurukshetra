@@ -136,7 +136,7 @@ export function QuizPage() {
     }
   };
 
-  const executeSubmission = async () => {
+  async function executeSubmission() {
     setShowUnansweredWarning(false);
     if (timerRef.current) clearInterval(timerRef.current);
     try {
